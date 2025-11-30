@@ -7,10 +7,8 @@ CMakeCache.txt
 cmake_install.cmake
 
 # 2. 平台专属临时配置（队友本地会自动生成）
-proj.android/
 proj.ios_mac/
 proj.linux/
-proj.win32/
 *.sln
 *.vcxproj
 *.vcxproj.user
