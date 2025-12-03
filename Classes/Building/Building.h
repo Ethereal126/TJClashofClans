@@ -5,47 +5,48 @@
 #include <string>
 #include <utility>
 #include "cocos2d.h"
+#include "../Combat/Combat.h"
 
 /*
-BuildingÀà - »ùÀà£¬ËùÓĞ½¨ÖşÎï¶¼»á¼Ì³ĞÕâ¸öÀà
+Buildingç±» - åŸºç±»ï¼Œæ‰€æœ‰å»ºç­‘ç‰©éƒ½ä¼šç»§æ‰¿è¿™ä¸ªç±»
 */
 class Building : public cocos2d::Sprite {
 protected:
-    std::string name_;                // ½¨ÖşÃû³Æ
-    int level_;                       // ½¨ÖşµÈ¼¶
-    int health_;                      // µ±Ç°ÉúÃüÖµ
-    int defense_;                     // ·ÀÓùÖµ
-    int buildtime_;                   // ½¨ÔìÊ±¼ä£¨Ãë£©
-    int buildcost_;                   // ½¨Ôì³É±¾
-    std::pair<int, int> position_;    // ½¨ÖşµÄÎ»ÖÃĞÅÏ¢ (x, y)
+    std::string name_;                // å»ºç­‘åç§°
+    int level_;                       // å»ºç­‘ç­‰çº§
+    int health_;                      // å½“å‰ç”Ÿå‘½å€¼
+    int defense_;                     // é˜²å¾¡å€¼
+    int buildtime_;                   // å»ºé€ æ—¶é—´ï¼ˆç§’ï¼‰
+    int buildcost_;                   // å»ºé€ æˆæœ¬
+    std::pair<int, int> position_;    // å»ºç­‘çš„ä½ç½®ä¿¡æ¯ (x, y)
 
 public:
-    // ¹¹Ôìº¯Êı£º³õÊ¼»¯½¨ÖşÃû³Æ¡¢µÈ¼¶¡¢ÉúÃüÖµ¡¢·ÀÓù¡¢½¨ÔìÊ±¼ä¡¢½¨Ôì³É±¾ºÍÎ»ÖÃ
+    // æ„é€ å‡½æ•°ï¼šåˆå§‹åŒ–å»ºç­‘åç§°ã€ç­‰çº§ã€ç”Ÿå‘½å€¼ã€é˜²å¾¡ã€å»ºé€ æ—¶é—´ã€å»ºé€ æˆæœ¬å’Œä½ç½®
     Building(std::string name, int level, int health, int defense,
         int buildtime, int build_cost, std::pair<int, int> position);
 
-    // Ğéº¯Êı£º½¨Öş¸üĞÂ£¨°üº¬µÈ¼¶ÌáÉı£¬½¨ÖşÊ±¼äºÍ·ÑÓÃ±ä»»£¬½¨ÖşÑªÁ¿ÉÏÏŞºÍ·ÀÓùÖµÌáÉı£©
+    // è™šå‡½æ•°ï¼šå»ºç­‘æ›´æ–°ï¼ˆåŒ…å«ç­‰çº§æå‡ï¼Œå»ºç­‘æ—¶é—´å’Œè´¹ç”¨å˜æ¢ï¼Œå»ºç­‘è¡€é‡ä¸Šé™å’Œé˜²å¾¡å€¼æå‡ï¼‰
     virtual void Upgrade();
 
-    // ½ÓÊÜÉËº¦£¬¼õÉÙÉúÃüÖµ
+    // æ¥å—ä¼¤å®³ï¼Œå‡å°‘ç”Ÿå‘½å€¼
     void TakeDamage(int damage);
 
-    // ĞŞ¸´½¨Öş£¬»Ö¸´ÖÁ×î´óÉúÃüÖµ
+    // ä¿®å¤å»ºç­‘ï¼Œæ¢å¤è‡³æœ€å¤§ç”Ÿå‘½å€¼
     void Repair();
 
-    // ¼ì²é½¨ÖşÊÇ·ñ±»´İ»Ù£¨1±íÊ¾´İ»Ù£¬0±íÊ¾Ã»ÓĞ£©
+    // æ£€æŸ¥å»ºç­‘æ˜¯å¦è¢«æ‘§æ¯ï¼ˆ1è¡¨ç¤ºæ‘§æ¯ï¼Œ0è¡¨ç¤ºæ²¡æœ‰ï¼‰
     bool IsDamaged() const;
 
-    // Ğéº¯Êı£ºÏÔÊ¾½¨ÖşĞÅÏ¢£¨ÀıÈçÃû³Æ¡¢µÈ¼¶¡¢ÉúÃüÖµµÈ£©
+    // è™šå‡½æ•°ï¼šæ˜¾ç¤ºå»ºç­‘ä¿¡æ¯ï¼ˆä¾‹å¦‚åç§°ã€ç­‰çº§ã€ç”Ÿå‘½å€¼ç­‰ï¼‰
     virtual void ShowInfo() const;
 
-    // »ñÈ¡×î´óÉúÃüÖµ£¨¿ÉÄÜ¸ù¾İ½¨ÖşµÈ¼¶±ä»¯£©
+    // è·å–æœ€å¤§ç”Ÿå‘½å€¼ï¼ˆå¯èƒ½æ ¹æ®å»ºç­‘ç­‰çº§å˜åŒ–ï¼‰
     int GetMaxHealth() const;
 
-    // ĞéÎö¹¹º¯Êı£¬È·±£×ÓÀà¶ÔÏóÕıÈ·Ïú»Ù
+    // è™šææ„å‡½æ•°ï¼Œç¡®ä¿å­ç±»å¯¹è±¡æ­£ç¡®é”€æ¯
     virtual ~Building() = default;
 
-    // Getterº¯Êı£¨Ìá¹©³£Á¿·ÃÎÊ£¬²»ĞŞ¸Ä×´Ì¬£©
+    // Getterå‡½æ•°ï¼ˆæä¾›å¸¸é‡è®¿é—®ï¼Œä¸ä¿®æ”¹çŠ¶æ€ï¼‰
     const std::string& GetName() const;
     int GetLevel() const;
     int GetHealth() const;
@@ -56,38 +57,38 @@ public:
 };
 
 /*
-SourceBuildingÀà - ¼Ì³Ğ×ÔBuildingÀà£¬±íÊ¾Ò»¸ö×ÊÔ´Àà½¨Öş
+SourceBuildingç±» - ç»§æ‰¿è‡ªBuildingç±»ï¼Œè¡¨ç¤ºä¸€ä¸ªèµ„æºç±»å»ºç­‘
 */
 class SourceBuilding : public Building{
 private:
-    int production_rate_;  // Ã¿Ğ¡Ê±Éú²úµÄ½ğ±ÒÊıÁ¿
+    int production_rate_;   // æ¯å°æ—¶ç”Ÿäº§çš„é‡‘å¸æ•°é‡
 
 public:
-    // ¹¹Ôìº¯Êı£º³õÊ¼»¯×ÊÔ´½¨ÖşµÄµÈ¼¶¡¢Î»ÖÃ£¬ÉèÖÃ×ÊÔ´Éú²úËÙÂÊ
+    // æ„é€ å‡½æ•°ï¼šåˆå§‹åŒ–èµ„æºå»ºç­‘çš„ç­‰çº§ã€ä½ç½®ï¼Œè®¾ç½®èµ„æºç”Ÿäº§é€Ÿç‡
     SourceBuilding(int level, std::pair<int, int> position);
 
-    // Ğéº¯Êı£ºÉú²ú×ÊÔ´
+    // è™šå‡½æ•°ï¼šç”Ÿäº§èµ„æº
     virtual int ProduceResource();
 
-    // overrideĞéº¯Êı£ºÏÔÊ¾×ÊÔ´½¨ÖşĞÅÏ¢
+    // overrideè™šå‡½æ•°ï¼šæ˜¾ç¤ºèµ„æºå»ºç­‘ä¿¡æ¯
     virtual void ShowInfo() const override;
 };
 
 /*
-AttackBuildingÀà - ¼Ì³Ğ×ÔBuildingÀà£¬±íÊ¾Ò»¸ö¹¥»÷Ëş
+AttackBuildingç±» - ç»§æ‰¿è‡ªBuildingç±»ï¼Œè¡¨ç¤ºä¸€ä¸ªæ”»å‡»å¡”
 */
 class AttackBuilding : public Building {
 private:
-    int Range_;  // ¹¥»÷·¶Î§
+    int Range_;  // æ”»å‡»èŒƒå›´
 
 public:
-    // ¹¹Ôìº¯Êı£º³õÊ¼»¯¹¥»÷ËşµÄµÈ¼¶¡¢Î»ÖÃ£¬ÉèÖÃ¹¥»÷·¶Î§
+    // æ„é€ å‡½æ•°ï¼šåˆå§‹åŒ–æ”»å‡»å¡”çš„ç­‰çº§ã€ä½ç½®ï¼Œè®¾ç½®æ”»å‡»èŒƒå›´
     AttackBuilding(int level, std::pair<int, int> position);
 
-    // Ğéº¯Êı£ºÖ´ĞĞ¹¥»÷
+    // è™šå‡½æ•°ï¼šæ‰§è¡Œæ”»å‡»
     void Attack(Soilder& target);
 
-    // overrideĞéº¯Êı£ºÏÔÊ¾¹¥»÷ËşĞÅÏ¢
+    // overrideè™šå‡½æ•°ï¼šæ˜¾ç¤ºæ”»å‡»å¡”ä¿¡æ¯
     virtual void ShowInfo() const override;
 };
 
