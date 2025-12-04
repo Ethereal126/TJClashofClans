@@ -5,7 +5,6 @@
 #include <string>
 #include <utility>
 #include "cocos2d.h"
-#include "../Combat/Combat.h"
 
 /*
 Building类 - 基类，所有建筑物都会继承这个类
@@ -16,9 +15,9 @@ protected:
     int level_;                       // 建筑等级
     int health_;                      // 当前生命值
     int defense_;                     // 防御值
-    int buildtime_;                   // 建造时间（秒）
-    int buildcost_;                   // 建造成本
-    std::pair<int, int> position_;    // 建筑的位置信息 (x, y)
+    int build_time_;                   // 建造时间（秒）
+    int build_cost_;                   // 建造成本
+    cocos2d::Vec2 position_;    // 建筑的位置信息 (x, y)
 
 public:
     // 构造函数：初始化建筑名称、等级、生命值、防御、建造时间、建造成本和位置
@@ -85,11 +84,12 @@ public:
     // 构造函数：初始化攻击塔的等级、位置，设置攻击范围
     AttackBuilding(int level, std::pair<int, int> position);
 
-    // 虚函数：执行攻击
-    void Attack(Soilder& target);
-
     // override虚函数：显示攻击塔信息
     virtual void ShowInfo() const override;
 };
 
+//napper:尽管好像不需要做什么额外实现但是为了炸弹兵对墙体的特殊索敌最好还是拆出来
+class WallBuilding : public Building{
+
+};
 #endif // __BUILDING_H__
