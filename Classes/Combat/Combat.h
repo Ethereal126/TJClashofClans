@@ -9,49 +9,11 @@
 #include <vector>
 #include <unordered_set>
 #include "cocos2d.h"
+#include "Building/Building.h"
+#include "Soldier/Soldier.h"
+#include "Map/Map.h"
 
 
-//可能也应该在其他文件中定义，负责在营地中展示士兵，以及管理士兵升级时的属性变化等，本处实现较为粗糙
-class Soldier : public cocos2d::Sprite {
-public:
-    // 构造函数
-    Soldier();
-    // 析构函数
-    virtual ~Soldier();
-
-    // 创建士兵
-    static Soldier* Create(const std::string& filename);
-
-    // 初始化函数
-    virtual bool Init(const std::string& filename);
-
-    // 获取生命值
-    int GetHealth() const;
-    // 设置生命值
-    void SetHealth(int health);
-
-    // 获取攻击力
-    int GetDamage() const;
-    // 设置攻击力
-    void SetDamage(int damage);
-
-    // 获取攻击距离
-    double GetAttackRange() const;
-    // 设置攻击距离
-    void SetAttackRange(float range);
-
-    // 获取移动速度
-    double GetMoveSpeed() const;
-    // 设置移动速度
-    void SetMoveSpeed(float speed);
-
-protected:
-    int health_;
-    int damage_;
-    double attack_range_;//攻击范围
-    double attack_time_;//一次攻击所花费的时间
-    double move_speed_;
-};
 
 enum class SoldierStatus : int{
     kMoving,
@@ -78,10 +40,6 @@ public:
     void MoveTo(const cocos2d::Vec2& position);
 };
 
-// 在其他文件中定义，管理建筑的基本属性，包括所处位置、血量、攻击、攻击范围、一个判定选择攻击对象优先级的比较器
-class Building{
-
-};
 
 class BuildingInCombat : public Building{
 public:
@@ -120,7 +78,7 @@ class CombatScene : public cocos2d::Scene{
 class Combat{
 private:
     std::vector<Soldier*> soldiers_;
-    std::vector<BuildingInCombat*> buildings_;
+    Map map_;
     CombatScene scene_;
     int destroy_degree_;
 
