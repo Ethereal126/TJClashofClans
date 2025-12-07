@@ -7,24 +7,23 @@
 
 #include <cocos2d.h>
 
+enum class SoldierType {
+    kBarbarian,  // 野蛮人
+    kArcher,     // 弓箭手
+    kBomber,     // 炸弹人
+    kGiant       // 巨人
+};
+
 //TODO:完善此类实现，使其真正满足Soldier所需具备的完整能力
-class Soldier : public cocos2d::Sprite {
+class Soldier {
 public:
     // 构造函数
     Soldier();
-    // 析构函数
-    virtual ~Soldier();
-
-    // 创建士兵
-    static Soldier* Create(const std::string& filename);
-
-    // 初始化函数
-    virtual bool Init(const std::string& filename);
 
     // 获取生命值
-    int GetHealth() const;
+    int GetHealth() const {return health_;}
     // 设置生命值
-    void SetHealth(int health);
+    void SetHealth(int health){health_ = health;};
 
     // 获取攻击力
     int GetDamage() const;
@@ -32,20 +31,29 @@ public:
     void SetDamage(int damage);
 
     // 获取攻击距离
-    double GetAttackRange() const;
+    float GetAttackRange() const;
     // 设置攻击距离
-    void SetAttackRange(float range);
-
+    void SetAttackRange(double range);
+    // 获取攻击距离
+    float GetAttackDelay() const;
+    // 设置攻击距离
+    void SetAttackDelay(double delay);
     // 获取移动速度
-    double GetMoveSpeed() const;
+    float GetMoveSpeed() const;
     // 设置移动速度
-    void SetMoveSpeed(float speed);
+    void SetMoveSpeed(double speed);
+
+    std::string GetName() const;
+    void SetName(std::string name);
+
 
 protected:
+    SoldierType type_;
     int health_;
     int damage_;
-    double attack_range_;//攻击范围
-    double attack_time_;//一次攻击所花费的时间
-    double move_speed_;
+    float attack_range_;//攻击范围
+    float attack_delay_;//一次攻击所花费的时间
+    float move_speed_;
+    std::string name;
 };
 #endif //TJCLASHOFCLANS_SOLDIER_H
