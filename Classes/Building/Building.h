@@ -1,3 +1,7 @@
+//
+// Created by Faith_Oriest on 2025/12/1.
+//
+
 #pragma once
 #ifndef __BUILDING_H__
 #define __BUILDING_H__
@@ -6,9 +10,10 @@
 #include <utility>
 #include "cocos2d.h"
 
-/*
-Building类 - 基类，所有建筑物都会继承这个类
-*/
+/**
+ * @brief Building类
+ * 基类，所有建筑物都会继承自该类。
+ */
 class Building : public cocos2d::Sprite {
 protected:
     std::string name_;                // 建筑名称
@@ -20,76 +25,156 @@ protected:
     cocos2d::Vec2 position_;    // 建筑的位置信息 (x, y)
 
 public:
-    // 构造函数：初始化建筑名称、等级、生命值、防御、建造时间、建造成本和位置
+    /**
+     * @brief 构造函数
+     * 初始化建筑名称、等级、生命值、防御、建造时间、建造成本和位置。
+     */
     Building(std::string name, int level, int health, int defense,
         int buildtime, int build_cost, std::pair<int, int> position);
 
-    // 虚函数：建筑更新（包含等级提升，建筑时间和费用变换，建筑血量上限和防御值提升）
+    /**
+     * @brief 建筑升级接口
+     * 包含等级提升、建造时间和费用变化、生命值上限和防御值提升等逻辑。
+     */
     virtual void Upgrade();
 
-    // 接受伤害，减少生命值
+    /**
+     * @brief 建筑承受伤害
+     * 根据传入伤害值减少当前生命值。
+     * @param damage 外部传入的伤害值。
+     */
     void TakeDamage(int damage);
 
-    // 修复建筑，恢复至最大生命值
+    /**
+     * @brief 修复建筑
+     * 将当前生命值恢复至最大生命值。
+     */
     void Repair();
 
-    // 检查建筑是否被摧毁（1表示摧毁，0表示没有）
+    /**
+     * @brief 检查建筑是否被摧毁
+     * @return true 表示建筑被摧毁（生命值小于等于 0），false 表示未被摧毁。
+     */
     bool IsDamaged() const;
 
-    // 虚函数：显示建筑信息（例如名称、等级、生命值等）
+    /**
+     * @brief 显示建筑信息
+     * 例如名称、等级、生命值等，用于调试或 UI 显示。
+     */
     virtual void ShowInfo() const;
 
-    // 获取最大生命值（可能根据建筑等级变化）
+    /**
+     * @brief 获取最大生命值
+     * 最大生命值可能会随着建筑等级变化。
+     * @return 返回最大生命值。
+     */
     int GetMaxHealth() const;
 
-    // 虚析构函数，确保子类对象正确销毁
+    /**
+     * @brief 虚析构函数
+     * 确保通过基类指针删除派生类对象时能够正确析构。
+     */
     virtual ~Building() = default;
 
-    // Getter函数（提供常量访问，不修改状态）
+    /**
+     * @brief 获取建筑名称
+     * @return 建筑名称的常量引用。
+     */
     const std::string& GetName() const;
+
+    /**
+     * @brief 获取建筑等级
+     * @return 当前等级数值。
+     */
     int GetLevel() const;
+
+    /**
+     * @brief 获取当前生命值
+     * @return 当前生命值数值。
+     */
     int GetHealth() const;
+
+    /**
+     * @brief 获取防御值
+     * @return 当前防御数值。
+     */
     int GetDefense() const;
+
+    /**
+     * @brief 获取建造时间
+     * @return 建造所需时间（单位：秒）。
+     */
     int GetBuildTime() const;
+
+    /**
+     * @brief 获取建造成本
+     * @return 建造所需资源成本。
+     */
     int GetBuildCost() const;
+
+    /**
+     * @brief 获取建筑位置
+     * @return 以 std::pair<int,int> 形式返回的建筑坐标。
+     */
     std::pair<int, int> GetPosition() const;
 };
 
-/*
-SourceBuilding类 - 继承自Building类，表示一个资源类建筑
-*/
-class SourceBuilding : public Building{
+/**
+ * @brief SourceBuilding类
+ * 继承自Building类，表示一个资源类建筑，用于生产资源。
+ */
+class SourceBuilding : public Building {
 private:
-    int production_rate_;   // 每小时生产的金币数量
+    int production_rate_;   // 每小时生产的资源数量
 
 public:
-    // 构造函数：初始化资源建筑的等级、位置，设置资源生产速率
-    SourceBuilding(int level, std::pair<int, int> position);
+    /**
+     * @brief 构造函数
+     * 使用基准值 base 和位置初始化资源建筑，并设置资源生产速率与纹理。
+     */
+    SourceBuilding(std::string name, int base, std::pair<int, int> position, std::string texture);
 
-    // 虚函数：生产资源
+    /**
+     * @brief 生产资源
+     * @return 本次生产的资源数量。
+     */
     virtual int ProduceResource();
 
-    // override虚函数：显示资源建筑信息
+    /**
+     * @brief 显示资源建筑信息
+     * 在基类显示信息基础上，附加资源生产相关信息。
+     */
     virtual void ShowInfo() const override;
 };
 
-/*
-AttackBuilding类 - 继承自Building类，表示一个攻击塔
-*/
+/**
+ * @brief AttackBuilding类
+ * 继承自Building类，表示一个攻击塔建筑。
+ */
 class AttackBuilding : public Building {
 private:
     int Range_;  // 攻击范围
 
 public:
-    // 构造函数：初始化攻击塔的等级、位置，设置攻击范围
-    AttackBuilding(int level, std::pair<int, int> position);
+    /**
+     * @brief 构造函数
+     * 初始化攻击塔的名称、基准数值、位置、纹理以及攻击范围。
+     */
+    AttackBuilding(std::string name, int base, std::pair<int, int> position, std::string texture, int range);
 
-    // override虚函数：显示攻击塔信息
+    /**
+     * @brief 显示攻击塔信息
+     * 在基类显示信息基础上，附加攻击范围等属性。
+     */
     virtual void ShowInfo() const override;
 };
 
-//napper:尽管好像不需要做什么额外实现但是为了炸弹兵对墙体的特殊索敌最好还是拆出来
-class WallBuilding : public Building{
+/**
+ * @brief WallBuilding类
+ * 继承自Building类，表示墙体建筑。
+ * napper: 尽管好像不需要做什么额外实现，但是为了炸弹兵对墙体的特殊索敌逻辑，最好还是拆成单独类。
+ */
+class WallBuilding : public Building {
 
 };
 #endif // __BUILDING_H__
