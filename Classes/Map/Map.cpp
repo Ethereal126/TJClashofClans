@@ -2,11 +2,16 @@
 #include "Map.h"
 #include <algorithm>
 #include <cmath>
-#include "../Building/Building.h"
 
 Map::Map():_width(0),_length(0),_gridSize(0),_terrainType(TerrainType::Home){}
 
 Map::~Map() {
+    // 先移除批处理地面节点
+    if (_groundBatch) {
+        _groundBatch->removeFromParent();
+        _groundBatch = nullptr;
+    }
+
     for (int x = 0; x < _width; ++x) {
         for (int y = 0; y < _length; ++y) {
             cocos2d::Sprite* spr = (x < (int)_gridObstacles.size() && y < (int)_gridObstacles[x].size())
@@ -53,6 +58,36 @@ void Map::initGrids() {
     _gridObstacles.assign(_width, std::vector<cocos2d::Sprite*>(_length, nullptr));
     _noDeploy.assign(_width, std::vector<bool>(_length, false));
     _buildings.clear();
+
+    // 创建/重建地面批处理节点
+    if (_groundBatch) {
+        _groundBatch->removeFromParent();
+        _groundBatch = nullptr;
+    }
+
+    const std::string groundTilePath = "....Resources/tiles/ground_iso.png"; 
+    if (cocos2d::FileUtils::getInstance()->isFileExist(groundTilePath)) {
+        auto tempSprite = cocos2d::Sprite::create(groundTilePath);
+        if (tempSprite) {
+            auto texture = tempSprite->getTexture();
+            _groundBatch = cocos2d::SpriteBatchNode::createWithTexture(texture);
+            // 地面层置于最底层
+            this->addChild(_groundBatch, -10);
+
+            for (int x = 0; x < _width; ++x) {
+                for (int y = 0; y < _length; ++y) {
+                    auto tile = cocos2d::Sprite::createWithTexture(texture);
+                    tile->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
+                    tile->setPosition(gridToWorld(x, y));
+                    // 如需与格子宽度对齐，可按需缩放（根据资源决定是否启用）
+                    // float targetWidth = static_cast<float>(_gridSize);
+                    // float scaleX = targetWidth / tile->getContentSize().width;
+                    // tile->setScale(scaleX);
+                    _groundBatch->addChild(tile);
+                }
+            }
+        }
+    }
 }
 
 std::pair<int, int> Map::getMapSize() const {

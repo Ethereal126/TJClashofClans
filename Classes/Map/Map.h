@@ -125,6 +125,9 @@ private:
     // 地图格子状态（二维数组：[x][y]）
     std::vector<std::vector<GridState>> _gridStates;
 
+    // 批处理地面tile节点（单一纹理的批次渲染）
+    cocos2d::SpriteBatchNode* _groundBatch = nullptr;
+
     // 地图上的建筑引用（二维数组：[x][y]），用于快速查找
     std::vector<std::vector<Building*>> _gridBuildings;
 
