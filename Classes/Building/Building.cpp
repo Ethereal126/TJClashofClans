@@ -5,11 +5,11 @@
 #include <iostream>
 #include "Building/Building.h"
 
-// ==================== Building »ùÀàº¯ÊıµÄÊµÏÖ ====================
+// ==================== Building åŸºç±»å‡½æ•°çš„å®ç° ====================
 
 /**
- * @brief Building ¹¹Ôìº¯Êı
- * ³õÊ¼»¯½¨ÖşÃû³Æ¡¢µÈ¼¶¡¢ÉúÃü¡¢·ÀÓù¡¢½¨ÔìÊ±¼äÓë½¨Ôì³É±¾£¬²¢ÉèÖÃÔÚ³¡¾°ÖĞµÄ×ø±ê¡£
+ * @brief Building æ„é€ å‡½æ•°
+ * åˆå§‹åŒ–å»ºç­‘åç§°ã€ç­‰çº§ã€ç”Ÿå‘½ã€é˜²å¾¡ã€å»ºé€ æ—¶é—´ä¸å»ºé€ æˆæœ¬ï¼Œå¹¶è®¾ç½®åœ¨åœºæ™¯ä¸­çš„åæ ‡ã€‚
  */
 Building::Building(std::string name, int level, int health, int defense,
     int buildtime, int build_cost, std::pair<int, int> position)
@@ -20,142 +20,142 @@ Building::Building(std::string name, int level, int health, int defense,
 }
 
 /**
- * @brief ½¨ÖşÉı¼¶
- * ÌáÉı½¨ÖşµÈ¼¶£¬Í¬Ê±µ÷Õû½¨ÔìÊ±¼ä¡¢½¨Ôì³É±¾¡¢·ÀÓù²¢½«ÉúÃüÖµ»ØÂú¡£
+ * @brief å»ºç­‘å‡çº§
+ * æå‡å»ºç­‘ç­‰çº§ï¼ŒåŒæ—¶è°ƒæ•´å»ºé€ æ—¶é—´ã€å»ºé€ æˆæœ¬ã€é˜²å¾¡å¹¶å°†ç”Ÿå‘½å€¼å›æ»¡ã€‚
  */
 void Building::Upgrade() {
     level_ += 1;
-    build_time_ = static_cast<int>(build_time_ * (1.2 + 0.3 * level_)); // Éı¼¶Ê±¼äÔö¼Ó
-    build_cost_ = static_cast<int>(build_cost_ * (1.2 + 0.3 * level_)); // Éı¼¶³É±¾Ôö¼Ó
-    health_ = GetMaxHealth(); // ÑªÁ¿»ØÂú
-    defense_ = static_cast<int>(defense_ * (1.1 + 0.2 * level_)); // ·ÀÓùÌáÉı
+    build_time_ = static_cast<int>(build_time_ * (1.2 + 0.3 * level_)); // å‡çº§æ—¶é—´å¢åŠ 
+    build_cost_ = static_cast<int>(build_cost_ * (1.2 + 0.3 * level_)); // å‡çº§æˆæœ¬å¢åŠ 
+    health_ = GetMaxHealth(); // è¡€é‡å›æ»¡
+    defense_ = static_cast<int>(defense_ * (1.1 + 0.2 * level_)); // é˜²å¾¡æå‡
 }
 
 /**
- * @brief ½¨ÖşÊÜµ½ÉËº¦
- * ¸ù¾İ´«ÈëÉËº¦¼ÆËãÊµ¼ÊÉËº¦Öµ²¢¿Û¼õÉúÃü£¬ÖÁÉÙÔì³É 1 µãÉËº¦¡£
+ * @brief å»ºç­‘å—åˆ°ä¼¤å®³
+ * æ ¹æ®ä¼ å…¥ä¼¤å®³è®¡ç®—å®é™…ä¼¤å®³å€¼å¹¶æ‰£å‡ç”Ÿå‘½ï¼Œè‡³å°‘é€ æˆ 1 ç‚¹ä¼¤å®³ã€‚
  */
 void Building::TakeDamage(int damage) {
     int actualDamage = damage - defense_;
-    if (actualDamage < 1) actualDamage = 1; // ÖÁÉÙÔì³É1µãÉËº¦
+    if (actualDamage < 1) actualDamage = 1; // è‡³å°‘é€ æˆ1ç‚¹ä¼¤å®³
     health_ -= actualDamage;
     if (health_ < 0) health_ = 0;
 }
 
 /**
- * @brief ĞŞ¸´½¨Öş
- * ½«µ±Ç°ÉúÃüÖµ»Ö¸´Îª×î´óÉúÃüÖµ¡£
+ * @brief ä¿®å¤å»ºç­‘
+ * å°†å½“å‰ç”Ÿå‘½å€¼æ¢å¤ä¸ºæœ€å¤§ç”Ÿå‘½å€¼ã€‚
  */
 void Building::Repair() {
     health_ = GetMaxHealth();
 }
 
 /**
- * @brief ¼ì²é½¨ÖşÊÇ·ñ±»´İ»Ù
- * @return true ±íÊ¾ÉúÃüÖµĞ¡ÓÚµÈÓÚ 0£¬½¨ÖşÒÑ±»´İ»Ù£»·ñÔòÎª false¡£
+ * @brief æ£€æŸ¥å»ºç­‘æ˜¯å¦è¢«æ‘§æ¯
+ * @return true è¡¨ç¤ºç”Ÿå‘½å€¼å°äºç­‰äº 0ï¼Œå»ºç­‘å·²è¢«æ‘§æ¯ï¼›å¦åˆ™ä¸º falseã€‚
  */
 bool Building::IsDamaged() const {
     return health_ <= 0;
 }
 
 /**
- * @brief Êä³ö½¨ÖşĞÅÏ¢
- * Ê¹ÓÃ cocos2d::log ´òÓ¡½¨ÖşµÄÃû³Æ¡¢µÈ¼¶¡¢ÉúÃü¡¢·ÀÓù¡¢½¨ÔìÊ±¼ä¡¢³É±¾ºÍ×ø±ê¡£
+ * @brief è¾“å‡ºå»ºç­‘ä¿¡æ¯
+ * ä½¿ç”¨ cocos2d::log æ‰“å°å»ºç­‘çš„åç§°ã€ç­‰çº§ã€ç”Ÿå‘½ã€é˜²å¾¡ã€å»ºé€ æ—¶é—´ã€æˆæœ¬å’Œåæ ‡ã€‚
  */
 void Building::ShowInfo() const {
-    cocos2d::log("=== ½¨ÖşĞÅÏ¢ ===");
-    cocos2d::log("Ãû³Æ: %s", name_.c_str());
-    cocos2d::log("µÈ¼¶: %d", level_);
-    cocos2d::log("ÑªÁ¿: %d/%d", health_, GetMaxHealth());
-    cocos2d::log("·ÀÓù: %d", defense_);
-    cocos2d::log("½¨ÔìÊ±¼ä: %dÃë", build_time_);
-    cocos2d::log("½¨Ôì³É±¾: %d½ğ±Ò", build_cost_);
-    cocos2d::log("Î»ÖÃ: (%.1f, %.1f)", position_.x, position_.y);
+    cocos2d::log("=== å»ºç­‘ä¿¡æ¯ ===");
+    cocos2d::log("åç§°: %s", name_.c_str());
+    cocos2d::log("ç­‰çº§: %d", level_);
+    cocos2d::log("è¡€é‡: %d/%d", health_, GetMaxHealth());
+    cocos2d::log("é˜²å¾¡: %d", defense_);
+    cocos2d::log("å»ºé€ æ—¶é—´: %dç§’", build_time_);
+    cocos2d::log("å»ºé€ æˆæœ¬: %dé‡‘å¸", build_cost_);
+    cocos2d::log("ä½ç½®: (%.1f, %.1f)", position_.x, position_.y);
 }
 
 /**
- * @brief »ñÈ¡×î´óÉúÃüÖµ
- * ×î´óÉúÃüÖµ°´¡°·ÀÓùÖµµÄ°Ë±¶¡±½øĞĞ¼ÆËã¡£
+ * @brief è·å–æœ€å¤§ç”Ÿå‘½å€¼
+ * æœ€å¤§ç”Ÿå‘½å€¼æŒ‰â€œé˜²å¾¡å€¼çš„å…«å€â€è¿›è¡Œè®¡ç®—ã€‚
  */
 int Building::GetMaxHealth() const {
-    return static_cast<int>(defense_ * 8);//×î´óÑªÁ¿Éè¶¨ÎªÎª°Ë±¶µÄ·ÀÓùÖµ
+    return static_cast<int>(defense_ * 8);//æœ€å¤§è¡€é‡è®¾å®šä¸ºä¸ºå…«å€çš„é˜²å¾¡å€¼
 }
 
-//¸÷ÀàGetº¯Êı
+//å„ç±»Getå‡½æ•°
 
 /**
- * @brief »ñÈ¡½¨ÖşÃû³Æ
- * @return ½¨ÖşÃû³Æ×Ö·û´®ÒıÓÃ¡£
+ * @brief è·å–å»ºç­‘åç§°
+ * @return å»ºç­‘åç§°å­—ç¬¦ä¸²å¼•ç”¨ã€‚
  */
 const std::string& Building::GetName() const {
     return name_;
 }
 
 /**
- * @brief »ñÈ¡½¨ÖşµÈ¼¶
- * @return µ±Ç°µÈ¼¶ÊıÖµ¡£
+ * @brief è·å–å»ºç­‘ç­‰çº§
+ * @return å½“å‰ç­‰çº§æ•°å€¼ã€‚
  */
 int Building::GetLevel() const {
     return level_;
 }
 
 /**
- * @brief »ñÈ¡µ±Ç°ÉúÃüÖµ
- * @return µ±Ç°ÉúÃüÖµÊıÖµ¡£
+ * @brief è·å–å½“å‰ç”Ÿå‘½å€¼
+ * @return å½“å‰ç”Ÿå‘½å€¼æ•°å€¼ã€‚
  */
 int Building::GetHealth() const {
     return health_;
 }
 
 /**
- * @brief »ñÈ¡·ÀÓùÖµ
- * @return µ±Ç°·ÀÓùÊıÖµ¡£
+ * @brief è·å–é˜²å¾¡å€¼
+ * @return å½“å‰é˜²å¾¡æ•°å€¼ã€‚
  */
 int Building::GetDefense() const {
     return defense_;
 }
 
 /**
- * @brief »ñÈ¡½¨ÔìÊ±¼ä
- * @return ½¨ÔìÊ±¼ä£¨Ãë£©¡£
+ * @brief è·å–å»ºé€ æ—¶é—´
+ * @return å»ºé€ æ—¶é—´ï¼ˆç§’ï¼‰ã€‚
  */
 int Building::GetBuildTime() const {
     return build_time_;
 }
 
 /**
- * @brief »ñÈ¡½¨Ôì³É±¾
- * @return ½¨ÔìËùĞè½ğ±ÒÊıÁ¿¡£
+ * @brief è·å–å»ºé€ æˆæœ¬
+ * @return å»ºé€ æ‰€éœ€é‡‘å¸æ•°é‡ã€‚
  */
 int Building::GetBuildCost() const {
     return build_cost_;
 }
 
 /**
- * @brief »ñÈ¡½¨Öş×ø±ê
- * @return ÒÔÕûÊı¶ÔĞÎÊ½±íÊ¾µÄÎ»ÖÃ×ø±ê¡£
+ * @brief è·å–å»ºç­‘åæ ‡
+ * @return ä»¥æ•´æ•°å¯¹å½¢å¼è¡¨ç¤ºçš„ä½ç½®åæ ‡ã€‚
  */
 std::pair<int, int> Building::GetPosition() const {
     return std::make_pair(static_cast<int>(position_.x), static_cast<int>(position_.y));
 }
 
-// ==================== SourceBuilding ³ÉÔ±º¯ÊıµÄÊµÏÖ ====================
+// ==================== SourceBuilding æˆå‘˜å‡½æ•°çš„å®ç° ====================
 
 /**
- * @brief SourceBuilding ¹¹Ôìº¯Êı
- * °´¸ø¶¨»ùÊı base ³õÊ¼»¯×ÊÔ´½¨ÖşµÄÉúÃü¡¢·ÀÓù¡¢½¨ÔìÊ±¼äºÍ³É±¾£¬²¢ÉèÖÃÎÆÀí¡£
+ * @brief SourceBuilding æ„é€ å‡½æ•°
+ * æŒ‰ç»™å®šåŸºæ•° base åˆå§‹åŒ–èµ„æºå»ºç­‘çš„ç”Ÿå‘½ã€é˜²å¾¡ã€å»ºé€ æ—¶é—´å’Œæˆæœ¬ï¼Œå¹¶è®¾ç½®çº¹ç†ã€‚
  */
 SourceBuilding::SourceBuilding(std::string name, int base, std::pair<int, int> position, std::string texture)
     : Building(name, 1, 16 * base, 2 * base,
         base, base * 500, position),
     production_rate_(base * 50) {
-    // ÉèÖÃ×ÊÔ´½¨ÖşµÄÎÆÀí
+    // è®¾ç½®èµ„æºå»ºç­‘çš„çº¹ç†
     this->setTexture(texture);
 }
 
 /**
- * @brief Éú²ú×ÊÔ´
- * @return ±¾´ÎÉú²úµÄ×ÊÔ´ÊıÁ¿£¨Óë production_rate_ ÏàÍ¬£©¡£
+ * @brief ç”Ÿäº§èµ„æº
+ * @return æœ¬æ¬¡ç”Ÿäº§çš„èµ„æºæ•°é‡ï¼ˆä¸ production_rate_ ç›¸åŒï¼‰ã€‚
  */
 int SourceBuilding::ProduceResource() {
     int resource = production_rate_;
@@ -163,19 +163,19 @@ int SourceBuilding::ProduceResource() {
 }
 
 /**
- * @brief Êä³ö SourceBuilding ÏêÏ¸ĞÅÏ¢
- * µ÷ÓÃ»ùÀà ShowInfo ÔÙ¶îÍâÊä³ö×ÊÔ´Éú²úËÙÂÊ¡£
+ * @brief è¾“å‡º SourceBuilding è¯¦ç»†ä¿¡æ¯
+ * è°ƒç”¨åŸºç±» ShowInfo å†é¢å¤–è¾“å‡ºèµ„æºç”Ÿäº§é€Ÿç‡ã€‚
  */
 void SourceBuilding::ShowInfo() const {
     Building::ShowInfo();
-    cocos2d::log("×ÊÔ´Éú²úËÙÂÊ: %d µã/Ãë", production_rate_);
+    cocos2d::log("èµ„æºç”Ÿäº§é€Ÿç‡: %d ç‚¹/ç§’", production_rate_);
 }
 
-// ==================== AttackBuilding ³ÉÔ±º¯ÊıµÄÊµÏÖ ====================
+// ==================== AttackBuilding æˆå‘˜å‡½æ•°çš„å®ç° ====================
 
 /**
- * @brief AttackBuilding ¹¹Ôìº¯Êı
- * ³õÊ¼»¯¹¥»÷½¨ÖşµÄÉúÃü¡¢·ÀÓù¡¢½¨ÔìÊ±¼äºÍ³É±¾£¬²¢ÉèÖÃ¹¥»÷·¶Î§ÓëÎÆÀí¡£
+ * @brief AttackBuilding æ„é€ å‡½æ•°
+ * åˆå§‹åŒ–æ”»å‡»å»ºç­‘çš„ç”Ÿå‘½ã€é˜²å¾¡ã€å»ºé€ æ—¶é—´å’Œæˆæœ¬ï¼Œå¹¶è®¾ç½®æ”»å‡»èŒƒå›´ä¸çº¹ç†ã€‚
  */
 AttackBuilding::AttackBuilding(std::string name, int base, std::pair<int, int> position, std::string texture, int range)
     : Building(name, 1, 6 * base, base,
@@ -185,10 +185,10 @@ AttackBuilding::AttackBuilding(std::string name, int base, std::pair<int, int> p
 }
 
 /**
- * @brief Êä³ö AttackBuilding ÏêÏ¸ĞÅÏ¢
- * µ÷ÓÃ»ùÀà ShowInfo ÔÙ¶îÍâÊä³ö¹¥»÷·¶Î§ĞÅÏ¢¡£
+ * @brief è¾“å‡º AttackBuilding è¯¦ç»†ä¿¡æ¯
+ * è°ƒç”¨åŸºç±» ShowInfo å†é¢å¤–è¾“å‡ºæ”»å‡»èŒƒå›´ä¿¡æ¯ã€‚
  */
 void AttackBuilding::ShowInfo() const {
     Building::ShowInfo();
-    cocos2d::log("¹¥»÷·¶Î§: %d ¸ñ", Range_);
+    cocos2d::log("æ”»å‡»èŒƒå›´: %d æ ¼", Range_);
 }

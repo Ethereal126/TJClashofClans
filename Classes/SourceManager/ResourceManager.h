@@ -45,13 +45,13 @@ public:
     virtual void PlayFullCapacityAnimation();
     virtual void PlayNotEnoughAnimation();
 
-    // Getter 方法
+    // Get 函数
     virtual const std::string& GetName() const { return name_; }
     virtual int GetCapacity() const { return capacity_; }
     virtual int GetCurrentAmount() const { return current_amount_; }
     virtual bool IsActive() const { return is_active_; }
 
-    // Setter 方法
+    // Set 函数
     virtual void SetName(const std::string& name) { name_ = name; }
     virtual void SetActive(bool active) { is_active_ = active; }
 
@@ -153,7 +153,7 @@ private:
  */
 class ElixirStorage : public NonCombatResourceManager {
 public:
-    virtual ~ElixirStorage() override = default;
+    virtual ~ElixirStorage() = 0;
 
     virtual bool Init() override;
 
