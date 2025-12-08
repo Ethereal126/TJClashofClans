@@ -6,45 +6,50 @@
 #define PROGRAMMING_PARADIGM_FINAL_PROJECT_COMBAT_H
 
 #include <string>
-#include <vector>
-#include <unordered_set>
 #include "cocos2d.h"
 #include "Building/Building.h"
 #include "Soldier/Soldier.h"
 #include "Map/Map.h"
 
 
+class SoldierInCombat;
+class BuildingInCombat;
+class Combat;
 
-enum class SoldierStatus : int{
-    kMoving,
-    kFighting,
-    kDead
+class SoldierInCombat : public cocos2d::Sprite{
+public:
+    ~SoldierInCombat();
+    cocos2d::Vec2 location_;
+    bool is_alive_;
+
+    SoldierInCombat* Create(Soldier* soldier, const cocos2d::Vec2& spawn_pos);
+    // 初始化函数
+    bool Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos);
+
+private:
+    Soldier* soldier_template_;
+    int current_health_;
+    BuildingInCombat* current_target_;
+
+    void SetTarget(BuildingInCombat* target);
+    void Die();
+    void MoveToTarget();
+    void StartAttack();
+    void DealDamageToTarget();
+    void CheckTargetAlive();
+    BuildingInCombat* FindNextTarget();
+
+    // -------------------------- 动画资源（静态共享） --------------------------
+    void LoadAnimationFrames();
+    static cocos2d::Vector<cocos2d::SpriteFrame*> move_frames_;   // 移动动画帧
+    static cocos2d::Vector<cocos2d::SpriteFrame*> attack_frames_; // 攻击动画帧
+    static cocos2d::Vector<cocos2d::SpriteFrame*> die_frames_;    // 死亡动画帧
+    static bool is_animation_loaded_; // 标记动画资源是否已加载（避免重复加载）
 };
 
-class SoldierInCombat : public Soldier{
+
+class BuildingInCombat : public cocos2d::Sprite{
 public:
-    cocos2d::Vec2 location;
-
-    int status;
-
-    //通过schedule功能为士兵安排一条移动向某个建筑附近的路径，并订阅目标建筑
-    void PlanPath();
-
-    // 攻击函数
-    void Attack(cocos2d::Node* target);
-
-    // 被攻击函数
-    void BeAttacked(int damage);
-
-    // 移动到指定位置
-    void MoveTo(const cocos2d::Vec2& position);
-};
-
-
-class BuildingInCombat : public Building{
-public:
-    std::unordered_set<Soldier*> subscribers;
-
     // 构造函数
     BuildingInCombat();
     // 析构函数
@@ -54,7 +59,7 @@ public:
     virtual bool Init(const std::string& filename);
 
     // 被攻击函数
-    void BeAttacked(int damage);
+    void TakeDamage(int damage);
 
     //使用时应确保建筑类型为防御类建筑，函数参数有待确定，暂时考虑通过轮询方式搜索攻击目标，如果有更好的想法再做优化
     void Attack();
@@ -62,10 +67,11 @@ public:
     // 判断是否存活
     bool IsAlive() const;
 
-    //设置is_alive_，修改动画展示，向subscribers广播信息，为其重新规划路径
     void Destroyed();
 
 private:
+    Building* building_template;
+    int current_health;
     bool is_alive_;
 };
 
