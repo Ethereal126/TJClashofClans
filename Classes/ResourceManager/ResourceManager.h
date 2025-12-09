@@ -18,8 +18,8 @@
 USING_NS_CC;
 
 /**
- * @brief ×ÊÔ´¹ÜÀíÆ÷»ùÀà
- * ¼Ì³Ğ×Ô Node£¬Ö§³Ö Cocos2d-x µÄ×Ô¶¯ÄÚ´æ¹ÜÀíºÍ UI ¼¯³É
+ * @brief èµ„æºç®¡ç†å™¨åŸºç±»
+ * ç»§æ‰¿è‡ª Nodeï¼Œæ”¯æŒ Cocos2d-x çš„è‡ªåŠ¨å†…å­˜ç®¡ç†å’Œ UI é›†æˆ
  */
 class ResourceManager : public Node {
 public:
@@ -28,38 +28,38 @@ public:
 
     virtual bool Init();
 
-    // ×ÊÔ´²Ù×÷
+    // èµ„æºæ“ä½œ
     virtual bool AddResource(int amount);
     virtual bool UseResource(int amount);
     virtual bool CanAfford(int amount) const;
 
-    // ÈİÁ¿¹ÜÀí
+    // å®¹é‡ç®¡ç†
     virtual void UpgradeCapacity(int additional_capacity);
     virtual float GetFillPercentage() const;
 
-    // UI ¸üĞÂ
+    // UI æ›´æ–°
     virtual void UpdateUi();
 
-    // ¶¯»­Ğ§¹û
+    // åŠ¨ç”»æ•ˆæœ
     virtual void PlayStorageAnimation();
     virtual void PlayFullCapacityAnimation();
     virtual void PlayNotEnoughAnimation();
 
-    // Get º¯Êı
+    // Get å‡½æ•°
     virtual const std::string& GetName() const { return name_; }
     virtual int GetCapacity() const { return capacity_; }
     virtual int GetCurrentAmount() const { return current_amount_; }
     virtual bool IsActive() const { return is_active_; }
 
-    // Set º¯Êı
+    // Set å‡½æ•°
     virtual void SetName(const std::string& name) { name_ = name; }
     virtual void SetActive(bool active) { is_active_ = active; }
 
-    // ÊÂ¼ş»Øµ÷ÉèÖÃ
+    // äº‹ä»¶å›è°ƒè®¾ç½®
     void SetOnAmountChangedCallback(const std::function<void(int, int)>& callback);
     void SetOnCapacityFullCallback(const std::function<void()>& callback);
 
-    // UI ×é¼şÉèÖÃ
+    // UI ç»„ä»¶è®¾ç½®
     void SetUiIcon(const std::string& icon_path);
     void SetUiLabel(Label* label);
     void SetProgressBar(ProgressTimer* progress_bar);
@@ -67,30 +67,30 @@ public:
 protected:
     ResourceManager();
 
-    // ³õÊ¼»¯·½·¨
+    // åˆå§‹åŒ–æ–¹æ³•
     virtual void InitUiComponents();
     virtual void InitAnimations();
 
-    // »Øµ÷´¥·¢
+    // å›è°ƒè§¦å‘
     virtual void TriggerAmountChanged(int old_amount, int new_amount);
     virtual void TriggerCapacityFull();
 
-    // ³ÉÔ±±äÁ¿
+    // æˆå‘˜å˜é‡
     std::string name_;
     int capacity_;
     int current_amount_;
     bool is_active_;
 
-    // UI ×é¼ş
+    // UI ç»„ä»¶
     Sprite* ui_icon_;
     Label* ui_label_;
     ProgressTimer* progress_bar_;
 
-    // ¶¯»­×é¼ş
+    // åŠ¨ç”»ç»„ä»¶
     Action* storage_effect_;
     ParticleSystemQuad* particle_effect_;
 
-    // ÊÂ¼ş»Øµ÷
+    // äº‹ä»¶å›è°ƒ
     std::function<void(int, int)> on_amount_changed_callback_;
     std::function<void()> on_capacity_full_callback_;
 
@@ -99,11 +99,11 @@ private:
     ResourceManager& operator=(const ResourceManager&) = delete;
 };
 
-// ==================== ·ÇÕ½¶·×ÊÔ´¹ÜÀí»ùÀà ====================
+// ==================== éæˆ˜æ–—èµ„æºç®¡ç†åŸºç±» ====================
 
 /**
- * @brief ·ÇÕ½¶·×ÊÔ´¹ÜÀí»ùÀà
- * ¹ÜÀíÊ¥Ë®ºÍ½ğ±ÒµÈ·ÇÕ½¶·×ÊÔ´µÄ¹²Í¬¹¦ÄÜ
+ * @brief éæˆ˜æ–—èµ„æºç®¡ç†åŸºç±»
+ * ç®¡ç†åœ£æ°´å’Œé‡‘å¸ç­‰éæˆ˜æ–—èµ„æºçš„å…±åŒåŠŸèƒ½
  */
 class NonCombatResourceManager : public ResourceManager {
 public:
@@ -111,31 +111,31 @@ public:
 
     virtual bool Init();
 
-    // Éú²ú¹ÜÀí
+    // ç”Ÿäº§ç®¡ç†
     virtual void StartProduction();
     virtual void StopProduction();
     virtual void CollectResources();
 
-    // Éú²úËÙÂÊÏà¹Ø
+    // ç”Ÿäº§é€Ÿç‡ç›¸å…³
     virtual int GetProductionRate() const { return production_rate_; }
     virtual void UpgradeProductionRate(int additional_rate);
 
-    // Éı¼¶Ïà¹Ø
+    // å‡çº§ç›¸å…³
     virtual void UpgradeCapacity(int additional_capacity) override;
 
-    // ¶¯»­Ğ§¹ûÖØĞ´
+    // åŠ¨ç”»æ•ˆæœé‡å†™
     virtual void PlayStorageAnimation() override;
 
 protected:
     NonCombatResourceManager();
 
-    // ³õÊ¼»¯·½·¨
+    // åˆå§‹åŒ–æ–¹æ³•
     virtual void InitProductionSystem();
 
-    // Éú²ú¸üĞÂ£¨ÓÉ¶¨Ê±Æ÷µ÷ÓÃ£©
+    // ç”Ÿäº§æ›´æ–°ï¼ˆç”±å®šæ—¶å™¨è°ƒç”¨ï¼‰
     virtual void OnProductionUpdate(float delta_time);
 
-    // ³ÉÔ±±äÁ¿
+    // æˆå‘˜å˜é‡
     int production_rate_;
     float production_timer_;
     std::vector<Sprite*> collectors_;
@@ -145,11 +145,11 @@ private:
     NonCombatResourceManager& operator=(const NonCombatResourceManager&) = delete;
 };
 
-// ==================== Ê¥Ë®´¢¹ŞÀà ====================
+// ==================== åœ£æ°´å‚¨ç½ç±» ====================
 
 /**
- * @brief Ê¥Ë®´¢¹ŞÀà
- * ¹ÜÀíÊ¥Ë®×ÊÔ´µÄ´æ´¢ºÍÉú²ú
+ * @brief åœ£æ°´å‚¨ç½ç±»
+ * ç®¡ç†åœ£æ°´èµ„æºçš„å­˜å‚¨å’Œç”Ÿäº§
  */
 class ElixirStorage : public NonCombatResourceManager {
 public:
@@ -157,36 +157,36 @@ public:
 
     virtual bool Init() override;
 
-    // Ê¥Ë®ÌØÓĞ¹¦ÄÜ
+    // åœ£æ°´ç‰¹æœ‰åŠŸèƒ½
     void SetCollectionRadius(float radius);
     float GetCollectionRadius() const { return collection_radius_; }
 
-    // ÊÕ¼¯¶¯»­£¨Ê¥Ë®ÌØÓĞ£©
+    // æ”¶é›†åŠ¨ç”»ï¼ˆåœ£æ°´ç‰¹æœ‰ï¼‰
     void PlayCollectionAnimation(const Vec2& target_position);
 
-    // ¶¯»­ÖØĞ´
+    // åŠ¨ç”»é‡å†™
     virtual void PlayStorageAnimation() override;
 
 protected:
     ElixirStorage();
 
-    // ³õÊ¼»¯Ê¥Ë®ÌØÓĞ×é¼ş
+    // åˆå§‹åŒ–åœ£æ°´ç‰¹æœ‰ç»„ä»¶
     virtual void InitElixirSpecificComponents();
 
-    // ³ÉÔ±±äÁ¿
+    // æˆå‘˜å˜é‡
     float collection_radius_;
-    Color4F elixir_color_;  // Ê¥Ë®ÑÕÉ«£¬ÓÃÓÚÌØĞ§
+    Color4F elixir_color_;  // åœ£æ°´é¢œè‰²ï¼Œç”¨äºç‰¹æ•ˆ
 
 private:
     ElixirStorage(const ElixirStorage&) = delete;
     ElixirStorage& operator=(const ElixirStorage&) = delete;
 };
 
-// ==================== ½ğ±Ò´¢¹ŞÀà ====================
+// ==================== é‡‘å¸å‚¨ç½ç±» ====================
 
 /**
- * @brief ½ğ±Ò´¢¹ŞÀà
- * ¹ÜÀí½ğ±Ò×ÊÔ´µÄ´æ´¢ºÍÉú²ú
+ * @brief é‡‘å¸å‚¨ç½ç±»
+ * ç®¡ç†é‡‘å¸èµ„æºçš„å­˜å‚¨å’Œç”Ÿäº§
  */
 class GoldStorage : public NonCombatResourceManager {
 public:
@@ -194,34 +194,34 @@ public:
 
     virtual bool Init() override;
 
-    // ½ğ¿â±£»¤¹¦ÄÜ
+    // é‡‘åº“ä¿æŠ¤åŠŸèƒ½
     void ActivateProtection(bool active);
     bool IsVaultProtected() const { return is_vault_protected_; }
 
     void UpgradeProtection(float additional_percentage);
     float GetProtectionPercentage() const { return protection_percentage_; }
 
-    // ±»¹¥»÷Ê±×ÊÔ´ËğÊ§¼ÆËã
+    // è¢«æ”»å‡»æ—¶èµ„æºæŸå¤±è®¡ç®—
     int CalculateRaidLoss(int attempted_steal) const;
 
-    // ¶¯»­ÖØĞ´
+    // åŠ¨ç”»é‡å†™
     virtual void PlayStorageAnimation() override;
 
-    // ±£»¤Ïà¹Ø¶¯»­
+    // ä¿æŠ¤ç›¸å…³åŠ¨ç”»
     void PlayProtectionActivationAnimation();
     void PlayRaidDefenseAnimation();
 
 protected:
     GoldStorage();
 
-    // ³õÊ¼»¯½ğ±ÒÌØÓĞ×é¼ş
+    // åˆå§‹åŒ–é‡‘å¸ç‰¹æœ‰ç»„ä»¶
     virtual void InitGoldSpecificComponents();
 
-    // ³ÉÔ±±äÁ¿
+    // æˆå‘˜å˜é‡
     bool is_vault_protected_;
     float protection_percentage_;
 
-    // ±£»¤ÕÖÊÓ¾õĞ§¹û
+    // ä¿æŠ¤ç½©è§†è§‰æ•ˆæœ
     Sprite* protection_shield_;
     ClippingNode* shield_effect_;
 
@@ -230,15 +230,15 @@ private:
     GoldStorage& operator=(const GoldStorage&) = delete;
 };
 
-// ==================== Õ½¶·×ÊÔ´¹ÜÀíÀà ====================
+// ==================== æˆ˜æ–—èµ„æºç®¡ç†ç±» ====================
 
 /**
- * @brief ±øÓªÀà
- * ¹ÜÀíÊ¿±øµÄÑµÁ·ºÍ´æ´¢
+ * @brief å…µè¥ç±»
+ * ç®¡ç†å£«å…µçš„è®­ç»ƒå’Œå­˜å‚¨
  */
 class Barracks : public ResourceManager {
 public:
-    // ÑµÁ·¶ÓÁĞ½á¹¹Ìå - ĞèÒªÔÚ¹«ÓĞ²¿·Ö¶¨Òå£¬ÒÔ±ãÍâ²¿¿ÉÒÔ·ÃÎÊ
+    // è®­ç»ƒé˜Ÿåˆ—ç»“æ„ä½“ - éœ€è¦åœ¨å…¬æœ‰éƒ¨åˆ†å®šä¹‰ï¼Œä»¥ä¾¿å¤–éƒ¨å¯ä»¥è®¿é—®
     struct TrainingUnit {
         std::string troop_type;
         int remaining_time;
@@ -254,34 +254,34 @@ public:
 
     virtual bool Init();
 
-    // ±øÖÖ¹ÜÀí
+    // å…µç§ç®¡ç†
     bool UnlockTroopType(const std::string& troop_type, const std::string& icon_path);
     bool IsTroopAvailable(const std::string& troop_type) const;
 
-    // ÑµÁ·¹ÜÀí
+    // è®­ç»ƒç®¡ç†
     bool TrainTroop(const std::string& troop_type, int count);
     void CancelTraining(int queue_index);
 
-    // ÈİÁ¿¹ÜÀíÖØĞ´
+    // å®¹é‡ç®¡ç†é‡å†™
     virtual void UpgradeCapacity(int additional_capacity) override;
     void UpgradeTroopCapacity(const std::string& troop_type, int additional_capacity);
 
-    // ²¿ÊğÊ¿±ø
+    // éƒ¨ç½²å£«å…µ
     bool DeployTroops(const std::string& troop_type, int count);
 
-    // ¶ÓÁĞ¹ÜÀí
+    // é˜Ÿåˆ—ç®¡ç†
     const std::vector<TrainingUnit>& GetTrainingQueue() const;
     int GetQueueSize() const;
 
-    // ĞÅÏ¢»ñÈ¡
+    // ä¿¡æ¯è·å–
     int GetTrainedTroopCount(const std::string& troop_type) const;
     int GetTroopCapacity(const std::string& troop_type) const;
     const std::vector<std::string>& GetAvailableTroops() const;
 
-    // UI ¸üĞÂ£¨ÖØĞ´»ùÀà·½·¨£©
+    // UI æ›´æ–°ï¼ˆé‡å†™åŸºç±»æ–¹æ³•ï¼‰
     virtual void UpdateUi() override;
 
-    // ¶¯»­Ğ§¹û
+    // åŠ¨ç”»æ•ˆæœ
     void PlayTrainingStartAnimation(const std::string& troop_type);
     void PlayTrainingCompleteAnimation(const std::string& troop_type);
     void PlayTroopDeployAnimation(const Vec2& deploy_position);
@@ -289,16 +289,16 @@ public:
 protected:
     Barracks();
 
-    // ÑµÁ·Íê³É»Øµ÷
+    // è®­ç»ƒå®Œæˆå›è°ƒ
     void OnTrainingComplete(const std::string& troop_type, int count);
 
-    // ´´½¨±øÖÖÍ¼±ê
+    // åˆ›å»ºå…µç§å›¾æ ‡
     Sprite* CreateTroopIcon(const std::string& troop_type, const std::string& icon_path);
 
-    // ÑµÁ·¸üĞÂ
+    // è®­ç»ƒæ›´æ–°
     void OnTrainingUpdate(float delta_time);
 
-    // ³ÉÔ±±äÁ¿
+    // æˆå‘˜å˜é‡
     std::unordered_map<std::string, int> troop_capacity_;
     std::vector<std::string> available_troops_;
     std::unordered_map<std::string, Sprite*> troop_icons_;
