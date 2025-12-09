@@ -173,3 +173,100 @@ void SoldierInCombat::CheckTargetAlive() {
 BuildingInCombat* SoldierInCombat::FindNextTarget() {
     return nullptr;
 }
+
+//// -------------------------- 坐标映射（核心：地图→屏幕） --------------------------
+//// 示例：斜45°俯视角映射规则（若需其他俯视角可修改）
+//Vec2 SoldierInCombat::MapPosToScreenPos(const Vec2& map_pos) const {
+//    // 斜45°规则：screen_x = 原点x + map_x*瓦片宽/2 - map_y*瓦片宽/2
+//    //            screen_y = 原点y + map_x*瓦片高/4 + map_y*瓦片高/4
+//    // 原点默认设为屏幕中心（可外部调整map_origin_修改）
+//    if (map_origin_.isZero()) {
+//        map_origin_ = Vec2(Director::getInstance()->getVisibleSize().width / 2,
+//                           Director::getInstance()->getVisibleSize().height / 2);
+//    }
+//    float screen_x = map_origin_.x + (map_pos.x * tile_width_ / 2) - (map_pos.y * tile_width_ / 2);
+//    float screen_y = map_origin_.y + (map_pos.x * tile_height_ / 4) + (map_pos.y * tile_height_ / 4);
+//    return Vec2(screen_x, screen_y);
+//}
+
+// -------------------------- 动画加载（4方向5帧+死亡6帧） --------------------------
+void SoldierInCombat::LoadSoldierAnimations() {
+    auto frame_cache = cocos2d::SpriteFrameCache::getInstance();
+    // 1. 加载动画资源plist（需将所有士兵动画帧打包为soldier_anim.plist+png，放在Resources目录）
+    frame_cache->addSpriteFramesWithFile("soldier_anim.plist", "soldier_anim.png");
+
+    // 2. 4方向移动动画（每方向5帧）
+    const std::string direction_names[] = {"up", "down", "left", "right"};
+    for (const auto& dir_name : direction_names) {
+        cocos2d::Vector<cocos2d::SpriteFrame*> move_frames;
+        for (int i = 1; i <= 5; ++i) { // 严格按要求：每个方向5帧
+            std::string frame_name = soldier_template_->GetName() + "move_" + dir_name + "_" + std::to_string(i) + ".png";
+            auto frame = frame_cache->getSpriteFrameByName(frame_name);
+            if (frame) move_frames.pushBack(frame);
+        }
+        // 动画缓存：自动释放，全游戏共享
+        auto move_anim = cocos2d::Animation::createWithSpriteFrames(move_frames, 0.1f); // 0.1秒/帧
+        cocos2d::AnimationCache::getInstance()->addAnimation(move_anim, soldier_template_->GetName() + "move_" + dir_name);
+    }
+
+    // 3. 死亡动画（6帧）
+    cocos2d::Vector<cocos2d::SpriteFrame*> death_frames;
+    for (int i = 1; i <= 6; ++i) { // 严格按要求：死亡6帧
+        std::string frame_name = soldier_template_->GetName() + "death_" + std::to_string(i) + ".png";
+        auto frame = frame_cache->getSpriteFrameByName(frame_name);
+        if (frame) death_frames.pushBack(frame);
+    }
+    auto death_anim = cocos2d::Animation::createWithSpriteFrames(death_frames, 0.15f);
+    cocos2d::AnimationCache::getInstance()->addAnimation(death_anim, soldier_template_->GetName() + "death");
+}
+
+enum class MoveDirection {
+    UP = 0,
+    DOWN = 1,
+    LEFT = 2,
+    RIGHT = 3
+};
+// -------------------------- 4方向判断（核心：根据移动向量） --------------------------
+MoveDirection SoldierInCombat::GetMoveDirection(const cocos2d::Vec2& move_delta) const {
+    if (move_delta.isZero()) return MoveDirection::DOWN; // 默认方向
+    float abs_x = abs(move_delta.x);
+    float abs_y = abs(move_delta.y);
+    // x分量占比大→左右方向；y分量占比大→上下方向
+    if (abs_x > abs_y) {
+        return move_delta.x > 0 ? MoveDirection::RIGHT : MoveDirection::LEFT;
+    } else {
+        return move_delta.y > 0 ? MoveDirection::UP : MoveDirection::DOWN;
+    }
+}
+
+// -------------------------- 核心：封装单段直线移动Action（Spawn同步MoveTo+动画） --------------------------
+cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos) {
+    // 1. 计算移动参数
+    cocos2d::Vec2 current_map_pos = this->getPosition(); // 若需直接用地图坐标，可外部保存map_pos变量
+    cocos2d::Vec2 move_delta = target_map_pos - current_map_pos;
+    float move_distance = move_delta.length();
+    float move_time = move_distance / soldier_template_->move_speed; // 基于数据类的移动速度
+
+    // 2. 创建MoveTo（目标为地图坐标→屏幕坐标）
+    cocos2d::Vec2 target_screen_pos = MapPosToScreenPos(target_map_pos);
+    auto move_to = cocos2d::MoveTo::create(move_time, target_screen_pos);
+
+    // 3. 获取对应方向的动画
+    MoveDirection dir = GetMoveDirection(move_delta);
+    const std::string direction_names[] = {"up", "down", "left", "right"};
+    std::string dir_name = direction_names[static_cast<int>(dir)];
+    auto move_anim = cocos2d::AnimationCache::getInstance()->getAnimation(soldier_template_->name + "move_" + dir_name);
+    auto animate = cocos2d::RepeatForever::create(cocos2d::Animate::create(move_anim)); // 移动期间循环播放动画
+
+    // 4. Spawn同步两个Action（Cocos自动更新，无需手动调度）
+    return cocos2d::Spawn::create(move_to, animate, nullptr);
+}
+
+// -------------------------- 死亡动画实现 --------------------------
+void SoldierInCombat::PlayDeathAnim() {
+    auto death_anim = cocos2d::AnimationCache::getInstance()->getAnimation("Death");
+    auto animate = cocos2d::Animate::create(death_anim);
+    auto remove_self = cocos2d::CallFunc::create([this]() { this->removeFromParent(); });
+    auto death_sequence = cocos2d::Sequence::create(animate, remove_self, nullptr);
+    this->runAction(death_sequence);
+}

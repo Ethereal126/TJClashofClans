@@ -120,7 +120,6 @@ endif()
 set(all_code_files
     ${GAME_HEADER}
     ${GAME_SOURCE}
-        Classes/Combat/Combat.h
         Classes/Combat/Combat.cpp
 )
 if(NOT ANDROID)

@@ -7,9 +7,11 @@
 
 #include <string>
 #include "cocos2d.h"
+#include "cocos-ext.h"
 #include "Building/Building.h"
 #include "Soldier/Soldier.h"
 #include "Map/Map.h"
+
 
 
 class SoldierInCombat;
@@ -25,6 +27,8 @@ public:
     SoldierInCombat* Create(Soldier* soldier, const cocos2d::Vec2& spawn_pos);
     // 初始化函数
     bool Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos);
+    // 被攻击函数
+    void TakeDamage(int damage);
 
 private:
     Soldier* soldier_template_;
@@ -75,9 +79,34 @@ private:
     bool is_alive_;
 };
 
-//负责管理战斗中部署士兵的交互实现，以及其他与动画相关的细节，等具体开始实现Combat时填充内容
-class CombatScene : public cocos2d::Scene{
+class CombatScene : public cocos2d::Layer {
+public:
+    // Cocos2d-x标准场景创建接口
+    static cocos2d::Scene* CreateScene();
 
+protected:
+    CombatScene() = default;  // 构造函数保护，仅允许工厂方法创建
+    ~CombatScene() override;
+
+    // 重写初始化函数（核心逻辑在这里）
+    bool init() override;
+
+    // -------------------------- 伪等轴场景核心工具函数 --------------------------
+    // 1. 瓦片坐标→屏幕坐标转换（Cocos2d-x原生支持，封装后更易用）
+    cocos2d::Vec2 TileToScreenPos(const cocos2d::Vec2& tile_pos) const;
+    // 2. 屏幕坐标→瓦片坐标转换
+    cocos2d::Vec2 ScreenToTilePos(const cocos2d::Vec2& screen_pos) const;
+    // 3. 自动深度排序（根据Y坐标设置Z轴，解决伪等轴遮挡）
+    void AutoSortDepth(cocos2d::Node* node) const;
+
+private:
+    // -------------------------- 成员变量 --------------------------
+    cocos2d::TMXTiledMap* map_ = nullptr;  // 伪等轴地图实例
+    float map_min_y_ = 0;  // 地图Y轴最小边界（用于士兵透视缩放）
+    float map_max_y_ = 0;  // 地图Y轴最大边界（用于士兵透视缩放）
+
+    // 宏定义：注册场景为Cocos2d-x自动创建对象
+    CREATE_FUNC(CombatScene);
 };
 
 //负责统筹管理整个战斗过程，仅包含最基本的需求
@@ -104,5 +133,6 @@ public:
     //退出战斗，返回破坏度（destroy_degree_）
     int EndCombat();
 };
+
 
 #endif //PROGRAMMING_PARADIGM_FINAL_PROJECT_COMBAT_H
