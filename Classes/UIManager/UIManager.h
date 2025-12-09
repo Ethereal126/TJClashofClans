@@ -59,7 +59,6 @@ enum class UIPanelType {
 enum class ResourceType {
     Gold,             // 金币
     Elixir,           // 圣水
-    DarkElixir,       // 暗黑重油
     Gem,              // 宝石
     Population,       // 人口容量
     CurrentPopulation // 当前人口

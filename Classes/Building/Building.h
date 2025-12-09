@@ -117,6 +117,8 @@ public:
      * @return 以 std::pair<int,int> 形式返回的建筑坐标。
      */
     std::pair<int, int> GetPosition() const;
+	int GetWidth() const;
+	int GetLength() const;
 };
 
 /**
