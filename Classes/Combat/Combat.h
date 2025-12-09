@@ -24,7 +24,7 @@ public:
     cocos2d::Vec2 location_;
     bool is_alive_;
 
-    SoldierInCombat* Create(Soldier* soldier, const cocos2d::Vec2& spawn_pos);
+    SoldierInCombat* Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos);
     // 初始化函数
     bool Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos);
     // 被攻击函数
@@ -34,6 +34,7 @@ private:
     Soldier* soldier_template_;
     int current_health_;
     BuildingInCombat* current_target_;
+    Map* map_;
 
     void SetTarget(BuildingInCombat* target);
     void Die();
@@ -42,9 +43,9 @@ private:
     void DealDamageToTarget();
     void CheckTargetAlive();
     BuildingInCombat* FindNextTarget();
-
+    cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos);
     // -------------------------- 动画资源（静态共享） --------------------------
-    void LoadAnimationFrames();
+    void LoadSoldierAnimations();
     static cocos2d::Vector<cocos2d::SpriteFrame*> move_frames_;   // 移动动画帧
     static cocos2d::Vector<cocos2d::SpriteFrame*> attack_frames_; // 攻击动画帧
     static cocos2d::Vector<cocos2d::SpriteFrame*> die_frames_;    // 死亡动画帧
@@ -113,7 +114,7 @@ private:
 class Combat{
 private:
     std::vector<Soldier*> soldiers_;
-    Map map_;
+    Map* map_;
     CombatScene scene_;
     int destroy_degree_;
 
