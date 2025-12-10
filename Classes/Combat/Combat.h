@@ -42,8 +42,10 @@ private:
     void StartAttack();
     void DealDamageToTarget();
     void CheckTargetAlive();
-    BuildingInCombat* FindNextTarget();
+    BuildingInCombat* GetNextTarget();
     cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos);
+    void RedirectPath(std::vector<cocos2d::Vec2>& path);
+    void SimplifyPath(std::vector<cocos2d::Vec2>& path);
     // -------------------------- 动画资源（静态共享） --------------------------
     void LoadSoldierAnimations();
     static cocos2d::Vector<cocos2d::SpriteFrame*> move_frames_;   // 移动动画帧
@@ -56,7 +58,10 @@ private:
 class BuildingInCombat : public cocos2d::Sprite{
 public:
     // 构造函数
-    BuildingInCombat();
+    BuildingInCombat(Building* b): building_template(b){
+        current_health = building_template->GetHealth();
+        is_alive_ = true;
+    };
     // 析构函数
     virtual ~BuildingInCombat();
 
@@ -113,17 +118,44 @@ private:
 //负责统筹管理整个战斗过程，仅包含最基本的需求
 class Combat{
 private:
-    std::vector<Soldier*> soldiers_;
+    // ========== 单例核心：私有构造/拷贝/赋值 ==========
+    // 1. 私有构造函数（禁止外部创建实例）
+    Combat();
+    // 2. 私有析构函数（禁止外部delete）
+    ~Combat();
+    // 3. 禁用拷贝构造和赋值运算符（确保唯一实例）
+    Combat(const Combat&) = delete;
+    Combat& operator=(const Combat&) = delete;
+
+
     Map* map_;
     CombatScene scene_;
     int destroy_degree_;
 
-public:
-    Combat();
-    ~Combat();
+    static Combat& GetInstanceInternal() {
+        static Combat instance; // 第一次调用时初始化，仅初始化一次
+        return instance;
+    }
 
+public:
+    std::vector<SoldierInCombat*> soldiers_;
+    std::vector<BuildingInCombat*> buildings_;
+    // ========== 单例核心：对外暴露的获取实例接口 ==========
+    // 外部唯一获取实例的方式（全局可访问）
+    static Combat& GetInstance() {
+        return GetInstanceInternal();
+    }
     //初始化战场中的建筑，返回初始化结果
-    bool Init();
+    bool Init(Map* map){
+        if(map== nullptr) return false;
+        this->map_=map;
+        for(auto building:map_->getAllBuildings()){
+            auto b = new BuildingInCombat(building);
+            buildings_.push_back(b);
+        }
+        destroy_degree_ = 0;
+        return true;
+    };
 
     //在接收到交互指令后，将士兵加入到战斗中；
     void SendSoldier();

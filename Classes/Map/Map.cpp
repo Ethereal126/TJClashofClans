@@ -106,6 +106,10 @@ bool Map::isValidGrid(int gridX, int gridY) const {
     return gridX >= 0 && gridY >= 0 && gridX < _width && gridY < _length;
 }
 
+bool Map::isValidGrid(const cocos2d::Vec2& grid_pos){
+    return isValidGrid(std::floor(grid_pos.x),std::floor(grid_pos.y));
+}
+
 GridState Map::getGridState(int gridX, int gridY) const {
     if (!isValidGrid(gridX, gridY)) {
         return GridState::Obstacle;
@@ -134,7 +138,7 @@ bool Map::isRangeAvailable(int gridX, int gridY, int width, int length) const {
 }
 
 //对于士兵类型的特别重载
-bool Map::IsRangeAvailable(cocos2d::Vec2 pos) const{
+bool Map::IsGridAvailable(const cocos2d::Vec2& pos) const{
     return isRangeAvailable(std::floor(pos.x),std::floor(pos.y),1,1);
 }
 
