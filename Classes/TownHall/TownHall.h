@@ -169,20 +169,6 @@ public:
     int GetMaxElixirCapacity() const { return max_elixir_capacity_; }
 
     /**
-     * @brief 获取当前金币存储比例
-     * 计算当前金币存储量占总容量的比例。
-     * @return 金币存储比例（0.0-1.0）。
-     */
-    float GetGoldStorageRatio() const;
-
-    /**
-     * @brief 获取当前圣水存储比例
-     * 计算当前圣水存储量占总容量的比例。
-     * @return 圣水存储比例（0.0-1.0）。
-     */
-    float GetElixirStorageRatio() const;
-
-    /**
      * @brief 检查金币是否已达上限
      * 判断当前金币存储量是否已达到最大容量。
      * @return 如果金币已满返回 true，否则返回 false。
@@ -246,6 +232,18 @@ public:
      * 在大本营生命值降为 0 时触发，例如爆炸特效、震动镜头等。
      */
     void PlayDestroyedEffect();
+
+    /**
+     * @brief 播放资源满特效
+     * 在资源大于资源总容量时触发，例如变红特效、抖动镜头等。
+     */
+    void PlayFullCapacityAnimation();
+
+    /**
+     * @brief 播放资源不足特效
+     * 在资源小于资源需求时触发，例如变红特效、抖动镜头等。
+     */
+    void PlayNotEnoughAnimation();
 
     /**
      * @brief 显示大本营详细信息
