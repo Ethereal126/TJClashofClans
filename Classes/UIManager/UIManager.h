@@ -8,6 +8,9 @@
 #include <map>
 #include <functional>
 
+// 前向声明
+class Building;
+
 // UI层级枚举（用于控制显示顺序）
 enum class UILayer {
     Background = 0,   // 背景层
@@ -20,48 +23,52 @@ enum class UILayer {
 
 // UI面板类型枚举
 enum class UIPanelType {
+    // ===== 加载界面 =====
+    LoadingScreen,    // 游戏启动加载界面（背景图+进度条）
+
     // ===== 主界面 =====
-    MainMenu,         // 主菜单（启动后第一个界面）
-    GameHUD,          // 游戏HUD（资源栏+快捷按钮）
+    GameHUD,          // 游戏HUD（资源栏+设置/商店/进攻按钮）
 
     // ===== 建筑相关 =====
-    BuildMenu,        // 建造菜单（选择建筑类型）
-    BuildingInfo,     // 建筑信息面板（点击建筑面板的信息按钮显示详情）
-	BuildingOptions,  // 建筑操作面板（升级/查看详细信息/收集）
-    BuildingUpgrade,  // 建筑升级面板（升级确认+需求资源）
+    BuildingOptions,  // 建筑操作浮窗（信息/升级/训练按钮）
+    BuildingInfo,     // 建筑信息面板（建筑图像+属性列表）
+    BuildingUpgrade,  // 建筑升级面板（属性对比+所需资源+确认按钮）
 
     // ===== 资源相关 =====
-    ResourceBar,      // 资源栏（金币/圣水/人口容量）
+    ResourceBar,      // 资源栏（金币/圣水）
 
     // ===== 军队相关 =====
-    ArmyTraining,     // 军队训练界面（弓箭手/野蛮人/炸弹人/巨人）
+    ArmyTraining,     // 军队训练界面（左侧已分配/右侧可选士兵）
 
     // ===== 战斗相关 =====
-    BattlePreparation,// 战斗准备（选择攻击目标）
-    BattleHUD,        // 战斗界面（部署部队+技能按钮）
+    BattleHUD,        // 战斗界面（部署部队+倒计时+星级）
     BattleResult,     // 战斗结果（胜利/失败统计）
-	MapSelection,    // 地图选择界面（选择战斗地图）
+    MapSelection,     // 地图选择界面（线路图+可选节点）
 
     // ===== 系统界面 =====
-    Settings,         // 设置面板（音乐/音效/语言）
-    Pause,            // 暂停菜单（继续/退出）
-    Shop,             // 商店（购买宝石/资源包）
+    Settings,         // 设置面板（音量滑块）
+    Shop,             // 商店（建筑列表+确认购买对话框）
 
-	// ===== 提示与对话框 =====
-	ToastMessage,     // 提示文本（短暂显示的操作反馈）
+    // ===== 提示与对话框 =====
+    ToastMessage,     // 提示文本（短暂显示的操作反馈）
+    ConfirmDialog,    // 确认对话框（确认/取消按钮）
 
     // ===== 其他 =====
-    LoadingBattleField,          // 加载战斗地图界面
-
+    LoadingBattleField, // 加载战斗地图界面
 };
 
 // 资源类型枚举（用于资源显示更新）
 enum class ResourceType {
     Gold,             // 金币
     Elixir,           // 圣水
-    Gem,              // 宝石
-    Population,       // 人口容量
-    CurrentPopulation // 当前人口
+};
+
+// 建筑类型枚举（用于判断BuildingOptions显示哪些按钮）
+enum class BuildingCategory {
+    Normal,           // 普通建筑（信息/升级）
+    Resource,         // 资源建筑（信息/升级）
+    Military,         // 军事建筑/军营（信息/升级/训练）
+    Defense,          // 防御建筑（信息/升级）
 };
 
 // UI管理器：单例模式，负责管理所有UI界面的创建、显示、隐藏和销毁
@@ -78,19 +85,12 @@ public:
 
     // ========== 面板管理 ==========
     // 显示指定类型的UI面板
-    // 参数：面板类型、层级、是否模态（阻挡底层交互）
-    // 调用时机：点击按钮、触发事件时
-    // 例如：点击"建造"按钮 -> showPanel(UIPanelType::BuildMenu)
-    void showPanel(UIPanelType panelType, UILayer layer = UILayer::Game, bool modal = false);
+    void showPanel(UIPanelType panelType, UILayer layer = UILayer::Dialog, bool modal = false);
 
     // 隐藏指定类型的UI面板
-    // removeFromParent=false：只隐藏，保留在内存中（快速再次显示）
-    // removeFromParent=true：从父节点移除，释放内存
-    // 调用时机：关闭面板时
     void hidePanel(UIPanelType panelType, bool removeFromParent = false);
 
     // 切换面板显示状态（显示↔隐藏）
-    // 调用时机：快捷键切换（如ESC键切换暂停菜单）
     void togglePanel(UIPanelType panelType);
 
     // 检查指定面板是否正在显示
@@ -100,59 +100,97 @@ public:
     cocos2d::Node* getPanel(UIPanelType panelType) const;
 
     // 关闭所有面板（场景切换时使用）
-    // 调用时机：切换场景前（如主菜单->游戏场景）
     void closeAllPanels();
+
+    // ========== 建筑操作面板 ==========
+    // 显示建筑操作浮窗（根据建筑类型显示不同按钮）
+    // position: 建筑在屏幕上的位置（浮窗显示在建筑下方）
+    // category: 建筑类别（决定显示哪些按钮）
+    // building: 当前选中的建筑指针（用于后续操作）
+    void showBuildingOptions(const cocos2d::Vec2& position, BuildingCategory category, Building* building);
+
+    // 显示建筑信息面板
+    void showBuildingInfo(Building* building);
+
+    // 显示建筑升级面板
+    void showBuildingUpgrade(Building* building);
+
+    // 显示军队训练面板
+    void showArmyTraining(Building* building);
+
+    // ========== 升级进度覆盖层 ==========
+    // 在建筑上方显示升级进度条
+    // building: 正在升级的建筑
+    // totalTime: 升级总时间（秒）
+    // remainingTime: 剩余时间（秒）
+    void showUpgradeProgress(Building* building, float totalTime, float remainingTime);
+
+    // 更新升级进度
+    void updateUpgradeProgress(Building* building, float remainingTime);
+
+    // 移除升级进度覆盖层
+    void removeUpgradeProgress(Building* building);
 
     // ========== 提示与对话框 ==========
     // 创建并显示提示文本（Toast）
-    // 调用时机：操作反馈（如"资源不足"、"建造成功"）
-    // 自动消失，不需要用户操作
     void showToast(const std::string& message, float duration = 2.0f);
 
     // 创建并显示确认对话框
-    // 调用时机：需要用户确认的操作（如"是否花费500金币升级？"）
-    // 区别于Toast：需要用户点击"确定"或"取消"
     void showConfirmDialog(const std::string& title,
         const std::string& content,
         const std::function<void()>& onConfirm,
         const std::function<void()>& onCancel = nullptr);
 
     // 显示信息对话框（仅显示信息，只有"确定"按钮）
-    // 调用时机：提示性信息（如"恭喜升级到2级！"）
     void showInfoDialog(const std::string& title, const std::string& content);
 
     // ========== 加载界面 ==========
-    // 显示加载界面（阻挡所有交互）
-    // 调用时机：加载资源时、网络请求时
-    void showLoading(const std::string& tips = "Loading...");
+    // 显示游戏启动加载界面
+    void showLoadingScreen();
 
-    // 隐藏加载界面
-    void hideLoading();
+    // 更新加载进度（0.0 ~ 1.0）
+    void updateLoadingProgress(float progress);
+
+    // 隐藏加载界面并进入游戏
+    void hideLoadingScreen();
+
+    // 显示战斗地图加载界面
+    void showBattleLoading(const std::string& tips = "Loading...");
+
+    // 隐藏战斗地图加载界面
+    void hideBattleLoading();
 
     // ========== 资源显示更新 ==========
-    // 更新资源显示（金币、宝石、人口等）
-    // 调用时机：资源变化时（建造消耗、战斗获得、定时生产）
-    // 参数：resourceType使用ResourceType枚举，amount为当前数值
+    // 更新资源显示（金币、圣水）
     void updateResourceDisplay(ResourceType resourceType, int amount);
 
+    // ========== 商店相关 ==========
+    // 显示商店面板
+    void showShop();
+
+    // 显示购买确认对话框
+    // buildingName: 建筑名称
+    // cost: 建造成本
+    // onConfirm: 确认购买回调（进入放置模式）
+    void showPurchaseConfirm(const std::string& buildingName, int cost,
+        const std::function<void()>& onConfirm);
+
+    // ========== 地图选择相关 ==========
+    // 显示地图选择界面
+    void showMapSelection();
+
+    // 播放节点选择动画并进入战斗
+    // mapIndex: 选择的地图索引（0或1）
+    void playMapSelectAnimation(int mapIndex, const std::function<void()>& onComplete);
 
     // ========== UI事件系统 ==========
-    // 设置UI事件回调
-    // 例如：setUICallback("OnBuildingSelected", []() { showPanel(BuildingInfo); })
-    // 调用时机：初始化时注册回调
     void setUICallback(const std::string& eventName, const std::function<void()>& callback);
-
-    // 触发UI事件
-    // 调用时机：事件发生时（如点击建筑、完成训练）
     void triggerUIEvent(const std::string& eventName);
 
     // ========== 屏幕适配工具 ==========
     cocos2d::Size getVisibleSize() const;
     cocos2d::Vec2 getVisibleOrigin() const;
     float getScaleFactor() const;
-
-    // 坐标转换工具（百分比 -> 实际坐标）
-    // percentX=0.5, percentY=0.5 表示屏幕中心
     cocos2d::Vec2 getUIPosition(float percentX, float percentY) const;
 
 protected:
@@ -162,10 +200,28 @@ protected:
     // 创建具体的UI面板（工厂方法）
     cocos2d::Node* createPanel(UIPanelType panelType);
 
+    // 各面板创建方法
+    cocos2d::Node* createLoadingScreen();
+    cocos2d::Node* createGameHUD();
+    cocos2d::Node* createResourceBar();
+    cocos2d::Node* createSettings();
+    cocos2d::Node* createShop();
+    cocos2d::Node* createMapSelection();
+    cocos2d::Node* createBuildingOptions(const cocos2d::Vec2& position, BuildingCategory category);
+    cocos2d::Node* createBuildingInfo(Building* building);
+    cocos2d::Node* createBuildingUpgrade(Building* building);
+    cocos2d::Node* createArmyTraining(Building* building);
+    cocos2d::Node* createBattleHUD();
+    cocos2d::Node* createBattleResult();
+    cocos2d::Node* createUpgradeProgressOverlay(Building* building, float totalTime, float remainingTime);
+
+    // 创建通用关闭按钮（右上角❌）
+    cocos2d::ui::Button* createCloseButton(const std::function<void()>& onClose);
+
     // 添加面板到场景
     void addPanelToScene(cocos2d::Node* panel, UILayer layer, bool modal);
 
-    // 创建模态遮罩层（阻挡底层交互的半透明黑色层）
+    // 创建模态遮罩层
     cocos2d::LayerColor* createModalLayer();
 
     // 面板显示/隐藏动画
@@ -178,7 +234,7 @@ private:
     cocos2d::Scene* _rootScene;              // 根场景引用
     cocos2d::Size _visibleSize;              // 可见区域大小
     cocos2d::Vec2 _visibleOrigin;            // 可见区域原点
-    float _scaleFactor;                       // 缩放因子
+    float _scaleFactor;                      // 缩放因子
 
     // 面板缓存（面板类型 -> 面板节点）
     std::map<UIPanelType, cocos2d::Node*> _panels;
@@ -186,11 +242,21 @@ private:
     // 模态遮罩层缓存
     std::map<UIPanelType, cocos2d::LayerColor*> _modalLayers;
 
-    // UI事件回调映射（事件名 -> 回调函数）
+    // UI事件回调映射
     std::map<std::string, std::function<void()>> _callbacks;
 
-    // 当前正在显示的加载界面
-    cocos2d::Node* _loadingPanel;
+    // 当前选中的建筑（用于BuildingOptions/Info/Upgrade）
+    Building* _selectedBuilding;
+
+    // 升级进度覆盖层缓存（建筑指针 -> 进度条节点）
+    std::map<Building*, cocos2d::Node*> _upgradeProgressNodes;
+
+    // 资源栏标签引用（用于快速更新）
+    cocos2d::Label* _goldLabel;
+    cocos2d::Label* _elixirLabel;
+
+    // 加载界面进度条引用
+    cocos2d::ui::LoadingBar* _loadingProgressBar;
 };
 
 #endif // __UI_MANAGER_H__
