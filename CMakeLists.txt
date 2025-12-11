@@ -62,7 +62,7 @@ list(APPEND GAME_SOURCE
 list(APPEND GAME_HEADER
      Classes/AppDelegate.h
      Classes/HelloWorldScene.h
-     )
+)
 
 if(ANDROID)
     # change APP_NAME to the share library name for Android, it's value depend on AndroidManifest.xml
@@ -120,8 +120,6 @@ endif()
 set(all_code_files
     ${GAME_HEADER}
     ${GAME_SOURCE}
-        Classes/Combat/Combat.h
-        Classes/Combat/Combat.cpp
 )
 if(NOT ANDROID)
     add_executable(${APP_NAME} ${all_code_files})

@@ -106,6 +106,10 @@ bool Map::isValidGrid(int gridX, int gridY) const {
     return gridX >= 0 && gridY >= 0 && gridX < _width && gridY < _length;
 }
 
+bool Map::isValidGrid(const cocos2d::Vec2& grid_pos){
+    return isValidGrid(std::floor(grid_pos.x),std::floor(grid_pos.y));
+}
+
 GridState Map::getGridState(int gridX, int gridY) const {
     if (!isValidGrid(gridX, gridY)) {
         return GridState::Obstacle;
@@ -117,6 +121,7 @@ void Map::setGridState(int gridX, int gridY, GridState state) {
     if (!isValidGrid(gridX, gridY)) return;
     _gridStates[gridX][gridY] = state;
 }
+
 
 bool Map::isRangeAvailable(int gridX, int gridY, int width, int length) const {
     // 边界检查
@@ -130,6 +135,11 @@ bool Map::isRangeAvailable(int gridX, int gridY, int width, int length) const {
         }
     }
     return true;
+}
+
+//对于士兵类型的特别重载
+bool Map::IsGridAvailable(const cocos2d::Vec2& pos) const{
+    return isRangeAvailable(std::floor(pos.x),std::floor(pos.y),1,1);
 }
 
 bool Map::isPositionAvailable(int gridX, int gridY, const Building* building ) const {
@@ -169,6 +179,9 @@ bool Map::placeBuilding(Building* building, int gridX, int gridY) {
 
     updateBuildingGrids(building, gridX, gridY, true);
     _buildings.push_back(building);
+    if(typeid(*building)!=typeid(WallBuilding)){
+        _buildings_except_for_wall.push_back(building);
+    }
     return true;
 }
 
@@ -182,6 +195,11 @@ bool Map::removeBuilding(int gridX, int gridY) {
 
     auto it = std::find(_buildings.begin(), _buildings.end(), b);
     if (it != _buildings.end()) _buildings.erase(it);
+
+    if(typeid(*b)!=typeid(WallBuilding)){
+        auto itt = std::find(_buildings_except_for_wall.begin(), _buildings_except_for_wall.end(), b);
+        if (itt != _buildings_except_for_wall.end()) _buildings_except_for_wall.erase(itt);
+    }
 
     return true;
 }
@@ -204,27 +222,36 @@ bool Map::moveBuilding(int fromX, int fromY, int toX, int toY) {
 
 
 cocos2d::Vec2 Map::gridToWorld(int gridX, int gridY) const {
+    auto grid_pos = cocos2d::Vec2(static_cast<float>(gridX),static_cast<float>(gridY));
+
+    return vecToWorld(grid_pos);
+}
+
+std::pair<int, int> Map::worldToGrid(const cocos2d::Vec2& worldPos) const {
+    auto vec_pos = worldToVec(worldPos);
+
+    const int ix = static_cast<int>(std::floor(vec_pos.x));
+    const int iy = static_cast<int>(std::floor(vec_pos.y));
+    return { ix, iy };
+}
+
+cocos2d::Vec2 Map::vecToWorld(cocos2d::Vec2 vec) const{
     const float halfW = static_cast<float>(_gridSize) * 0.5f;
     const float quarterH = static_cast<float>(_gridSize) * 0.25f;
 
-    const float sx = (static_cast<float>(gridX) - static_cast<float>(gridY)) * halfW;
-    const float sy = (static_cast<float>(gridX) + static_cast<float>(gridY)) * quarterH;
+    const float sx = (vec.x - vec.y) * halfW;
+    const float sy = (vec.x + vec.y) * quarterH;
 
     return cocos2d::Vec2(sx, sy);
 }
 
-
-std::pair<int, int> Map::worldToGrid(const cocos2d::Vec2& worldPos) const {
-    
+cocos2d::Vec2 Map::worldToVec(cocos2d::Vec2 worldPos) const{
     const float halfW = static_cast<float>(_gridSize) * 0.5f;
     const float quarterH = static_cast<float>(_gridSize) * 0.25f;
 
     const float gx = (worldPos.y / quarterH + worldPos.x / halfW) * 0.5f;
     const float gy = (worldPos.y / quarterH - worldPos.x / halfW) * 0.5f;
-
-    const int ix = static_cast<int>(std::floor(gx));
-    const int iy = static_cast<int>(std::floor(gy));
-    return { ix, iy };
+    return cocos2d::Vec2(gx,gy);
 }
 
 Building* Map::getBuildingAt(int gridX, int gridY) const {
