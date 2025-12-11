@@ -4,10 +4,10 @@
 USING_NS_CC;
 using namespace cocos2d::ui;
 
-// ==================== ¾²Ì¬³ÉÔ±³õÊ¼»¯ ====================
+// ==================== é™æ€æˆå‘˜åˆå§‹åŒ– ====================
 UIManager* UIManager::_instance = nullptr;
 
-// ==================== µ¥Àı¹ÜÀí ====================
+// ==================== å•ä¾‹ç®¡ç† ====================
 UIManager* UIManager::getInstance() {
     if (_instance == nullptr) {
         _instance = new (std::nothrow) UIManager();
@@ -22,7 +22,7 @@ void UIManager::destroyInstance() {
     }
 }
 
-// ==================== ¹¹Ôì/Îö¹¹ ====================
+// ==================== æ„é€ /ææ„ ====================
 UIManager::UIManager()
     : _rootScene(nullptr)
     , _scaleFactor(1.0f)
@@ -37,7 +37,7 @@ UIManager::~UIManager() {
     closeAllPanels();
 }
 
-// ==================== ³õÊ¼»¯ ====================
+// ==================== åˆå§‹åŒ– ====================
 bool UIManager::init(Scene* rootScene) {
     if (!rootScene) {
         return false;
@@ -47,7 +47,7 @@ bool UIManager::init(Scene* rootScene) {
     _visibleSize = Director::getInstance()->getVisibleSize();
     _visibleOrigin = Director::getInstance()->getVisibleOrigin();
 
-    // ¼ÆËãËõ·ÅÒò×Ó£¨»ùÓÚÉè¼Æ·Ö±æÂÊ1280x720£©
+    // è®¡ç®—ç¼©æ”¾å› å­ï¼ˆåŸºäºè®¾è®¡åˆ†è¾¨ç‡1280x720ï¼‰
     float designWidth = 1280.0f;
     float designHeight = 720.0f;
     _scaleFactor = std::min(_visibleSize.width / designWidth, _visibleSize.height / designHeight);
@@ -55,9 +55,9 @@ bool UIManager::init(Scene* rootScene) {
     return true;
 }
 
-// ==================== Ãæ°å¹ÜÀí ====================
+// ==================== é¢æ¿ç®¡ç† ====================
 void UIManager::showPanel(UIPanelType panelType, UILayer layer, bool modal) {
-    // ¼ì²éÊÇ·ñÒÑ´æÔÚ
+    // æ£€æŸ¥æ˜¯å¦å·²å­˜åœ¨
     auto it = _panels.find(panelType);
     if (it != _panels.end() && it->second) {
         it->second->setVisible(true);
@@ -65,7 +65,7 @@ void UIManager::showPanel(UIPanelType panelType, UILayer layer, bool modal) {
         return;
     }
 
-    // ´´½¨ĞÂÃæ°å
+    // åˆ›å»ºæ–°é¢æ¿
     Node* panel = createPanel(panelType);
     if (panel) {
         _panels[panelType] = panel;
@@ -82,7 +82,7 @@ void UIManager::hidePanel(UIPanelType panelType, bool removeFromParent) {
                 it->second->removeFromParent();
                 _panels.erase(panelType);
 
-                // ÒÆ³ı¶ÔÓ¦µÄÄ£Ì¬²ã
+                // ç§»é™¤å¯¹åº”çš„æ¨¡æ€å±‚
                 auto modalIt = _modalLayers.find(panelType);
                 if (modalIt != _modalLayers.end()) {
                     modalIt->second->removeFromParent();
@@ -133,7 +133,7 @@ void UIManager::closeAllPanels() {
     _modalLayers.clear();
 }
 
-// ==================== Ãæ°å´´½¨¹¤³§ ====================
+// ==================== é¢æ¿åˆ›å»ºå·¥å‚ ====================
 Node* UIManager::createPanel(UIPanelType panelType) {
     switch (panelType) {
         case UIPanelType::LoadingScreen:
@@ -157,36 +157,36 @@ Node* UIManager::createPanel(UIPanelType panelType) {
     }
 }
 
-// ==================== ¼ÓÔØ½çÃæ ====================
+// ==================== åŠ è½½ç•Œé¢ ====================
 Node* UIManager::createLoadingScreen() {
     auto panel = Node::create();
     panel->setContentSize(_visibleSize);
     panel->setPosition(_visibleOrigin);
 
-    // ±³¾°Í¼Æ¬
+    // èƒŒæ™¯å›¾ç‰‡
     auto bg = Sprite::create("..../Resource/loading_bg.png"); 
     if (bg) {
         bg->setPosition(_visibleSize / 2);
-        // Ëõ·Å±³¾°Í¼ÒÔ¸²¸ÇÕû¸öÆÁÄ»
+        // ç¼©æ”¾èƒŒæ™¯å›¾ä»¥è¦†ç›–æ•´ä¸ªå±å¹•
         float scaleX = _visibleSize.width / bg->getContentSize().width;
         float scaleY = _visibleSize.height / bg->getContentSize().height;
         bg->setScale(std::max(scaleX, scaleY));
         panel->addChild(bg, 0);
     }
     else {
-        // Èç¹ûÃ»ÓĞ±³¾°Í¼£¬Ê¹ÓÃ´¿É«±³¾°
+        // å¦‚æœæ²¡æœ‰èƒŒæ™¯å›¾ï¼Œä½¿ç”¨çº¯è‰²èƒŒæ™¯
         auto colorBg = LayerColor::create(Color4B(30, 30, 50, 255), _visibleSize.width, _visibleSize.height);
         panel->addChild(colorBg, 0);
     }
 
-    // ½ø¶ÈÌõ±³¾°
+    // è¿›åº¦æ¡èƒŒæ™¯
     auto progressBg = Sprite::create();
     progressBg->setTextureRect(Rect(0, 0, 400 * _scaleFactor, 30 * _scaleFactor));
     progressBg->setColor(Color3B(50, 50, 50));
     progressBg->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height * 0.25f));
     panel->addChild(progressBg, 1);
 
-    // ½ø¶ÈÌõ
+    // è¿›åº¦æ¡
     _loadingProgressBar = LoadingBar::create();
     _loadingProgressBar->setScale9Enabled(true);
     _loadingProgressBar->setCapInsets(Rect(0, 0, 1, 1));
@@ -196,7 +196,7 @@ Node* UIManager::createLoadingScreen() {
     _loadingProgressBar->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height * 0.25f));
     panel->addChild(_loadingProgressBar, 2);
 
-    // ¼ÓÔØÌáÊ¾ÎÄ×Ö
+    // åŠ è½½æç¤ºæ–‡å­—
     auto loadingLabel = Label::createWithTTF("Loading...", "fonts/arial.ttf", 24 * _scaleFactor);
     loadingLabel->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height * 0.18f));
     loadingLabel->setColor(Color3B::WHITE);
@@ -218,7 +218,7 @@ void UIManager::updateLoadingProgress(float progress) {
 
 void UIManager::hideLoadingScreen() {
     hidePanel(UIPanelType::LoadingScreen, true);
-    // ¼ÓÔØÍê³ÉºóÏÔÊ¾GameHUD
+    // åŠ è½½å®Œæˆåæ˜¾ç¤ºGameHUD
     showPanel(UIPanelType::GameHUD, UILayer::HUD, false);
 }
 
@@ -228,20 +228,20 @@ Node* UIManager::createGameHUD() {
     panel->setContentSize(_visibleSize);
     panel->setPosition(_visibleOrigin);
 
-    // ===== ¶¥²¿×ÊÔ´À¸ =====
+    // ===== é¡¶éƒ¨èµ„æºæ  =====
     auto resourceBar = createResourceBar();
     if (resourceBar) {
         panel->addChild(resourceBar, 1);
     }
 
-    // ===== ÓÒ²à°´Å¥À¸ =====
+    // ===== å³ä¾§æŒ‰é’®æ  =====
     float buttonSize = 60 * _scaleFactor;
     float buttonMargin = 20 * _scaleFactor;
     float rightX = _visibleSize.width - buttonSize / 2 - buttonMargin;
     float startY = _visibleSize.height * 0.6f;
 
-    // ÉèÖÃ°´Å¥
-    auto settingsBtn = Button::create("UI/btn_settings.png", "UI/btn_settings_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê°´Å¥Í¼Æ¬
+    // è®¾ç½®æŒ‰é’®
+    auto settingsBtn = Button::create("UI/btn_settings.png", "UI/btn_settings_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æŒ‰é’®å›¾ç‰‡
     if (!settingsBtn->getVirtualRenderer()) {
         settingsBtn = Button::create();
         settingsBtn->setTitleText("Settings");
@@ -255,8 +255,8 @@ Node* UIManager::createGameHUD() {
         });
     panel->addChild(settingsBtn, 1);
 
-    // ÉÌµê°´Å¥
-    auto shopBtn = Button::create("UI/btn_shop.png", "UI/btn_shop_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê°´Å¥Í¼Æ¬
+    // å•†åº—æŒ‰é’®
+    auto shopBtn = Button::create("UI/btn_shop.png", "UI/btn_shop_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æŒ‰é’®å›¾ç‰‡
     if (!shopBtn->getVirtualRenderer()) {
         shopBtn = Button::create();
         shopBtn->setTitleText("Shop");
@@ -270,8 +270,8 @@ Node* UIManager::createGameHUD() {
         });
     panel->addChild(shopBtn, 1);
 
-    // ½ø¹¥°´Å¥
-    auto attackBtn = Button::create("UI/btn_attack.png", "UI/btn_attack_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê°´Å¥Í¼Æ¬
+    // è¿›æ”»æŒ‰é’®
+    auto attackBtn = Button::create("UI/btn_attack.png", "UI/btn_attack_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æŒ‰é’®å›¾ç‰‡
     if (!attackBtn->getVirtualRenderer()) {
         attackBtn = Button::create();
         attackBtn->setTitleText("Attack");
@@ -288,14 +288,14 @@ Node* UIManager::createGameHUD() {
     return panel;
 }
 
-// ==================== ×ÊÔ´À¸ ====================
+// ==================== èµ„æºæ  ====================
 Node* UIManager::createResourceBar() {
     auto bar = Node::create();
     float barHeight = 50 * _scaleFactor;
     bar->setContentSize(Size(_visibleSize.width, barHeight));
     bar->setPosition(Vec2(0, _visibleSize.height - barHeight));
 
-    // °ëÍ¸Ã÷±³¾°
+    // åŠé€æ˜èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(0, 0, 0, 150), _visibleSize.width * 0.4f, barHeight);
     bg->setPosition(Vec2(10 * _scaleFactor, 0));
     bar->addChild(bg, 0);
@@ -304,38 +304,38 @@ Node* UIManager::createResourceBar() {
     float startX = 30 * _scaleFactor;
     float centerY = barHeight / 2;
 
-    // ½ğ±ÒÍ¼±ê
-    auto goldIcon = Sprite::create("UI/icon_gold.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê½ğ±ÒÍ¼±ê
+    // é‡‘å¸å›¾æ ‡
+    auto goldIcon = Sprite::create("UI/icon_gold.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…é‡‘å¸å›¾æ ‡
     if (goldIcon) {
         goldIcon->setScale(iconSize / goldIcon->getContentSize().width);
         goldIcon->setPosition(Vec2(startX, centerY));
         bar->addChild(goldIcon, 1);
     }
 
-    // ½ğ±ÒÊıÁ¿
-    int currentGold = 1000; // ÕâÀïĞèÒªÌæ»»Îª resource->getGold() »ñÈ¡Êµ¼Ê½ğ±ÒÊıÁ¿
+    // é‡‘å¸æ•°é‡
+    int currentGold = 1000; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º resource->getGold() è·å–å®é™…é‡‘å¸æ•°é‡
     _goldLabel = Label::createWithTTF(std::to_string(currentGold), "fonts/arial.ttf", 20 * _scaleFactor);
     _goldLabel->setPosition(Vec2(startX + iconSize + 10 * _scaleFactor, centerY));
     _goldLabel->setAnchorPoint(Vec2(0, 0.5f));
-    _goldLabel->setColor(Color3B(255, 215, 0)); // ½ğÉ«
+    _goldLabel->setColor(Color3B(255, 215, 0)); // é‡‘è‰²
     bar->addChild(_goldLabel, 1);
 
     float secondX = startX + 150 * _scaleFactor;
 
-    // Ê¥Ë®Í¼±ê
-    auto elixirIcon = Sprite::create("UI/icon_elixir.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÊ¥Ë®Í¼±ê
+    // åœ£æ°´å›¾æ ‡
+    auto elixirIcon = Sprite::create("UI/icon_elixir.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…åœ£æ°´å›¾æ ‡
     if (elixirIcon) {
         elixirIcon->setScale(iconSize / elixirIcon->getContentSize().width);
         elixirIcon->setPosition(Vec2(secondX, centerY));
         bar->addChild(elixirIcon, 1);
     }
 
-    // Ê¥Ë®ÊıÁ¿
-    int currentElixir = 500; // ÕâÀïĞèÒªÌæ»»Îª resource->getElixir() »ñÈ¡Êµ¼ÊÊ¥Ë®ÊıÁ¿
+    // åœ£æ°´æ•°é‡
+    int currentElixir = 500; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º resource->getElixir() è·å–å®é™…åœ£æ°´æ•°é‡
     _elixirLabel = Label::createWithTTF(std::to_string(currentElixir), "fonts/arial.ttf", 20 * _scaleFactor);
     _elixirLabel->setPosition(Vec2(secondX + iconSize + 10 * _scaleFactor, centerY));
     _elixirLabel->setAnchorPoint(Vec2(0, 0.5f));
-    _elixirLabel->setColor(Color3B(200, 100, 255)); // ×ÏÉ«
+    _elixirLabel->setColor(Color3B(200, 100, 255)); // ç´«è‰²
     bar->addChild(_elixirLabel, 1);
 
     return bar;
@@ -356,39 +356,39 @@ void UIManager::updateResourceDisplay(ResourceType resourceType, int amount) {
     }
 }
 
-// ==================== ÉèÖÃÃæ°å ====================
+// ==================== è®¾ç½®é¢æ¿ ====================
 Node* UIManager::createSettings() {
     auto panel = Node::create();
 
-    // Ãæ°å´óĞ¡
+    // é¢æ¿å¤§å°
     Size panelSize(400 * _scaleFactor, 300 * _scaleFactor);
     panel->setContentSize(panelSize);
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(40, 40, 60, 240), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
+    // æ ‡é¢˜
     auto title = Label::createWithTTF("Settings", "fonts/arial.ttf", 28 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
     panel->addChild(title, 1);
 
-    // ¹Ø±Õ°´Å¥
+    // å…³é—­æŒ‰é’®
     auto closeBtn = createCloseButton([this]() {
         hidePanel(UIPanelType::Settings, true);
         });
     closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
     panel->addChild(closeBtn, 2);
 
-    // ÒôÀÖÒôÁ¿»¬¿é
+    // éŸ³ä¹éŸ³é‡æ»‘å—
     float sliderY = panelSize.height - 100 * _scaleFactor;
     auto musicLabel = Label::createWithTTF("Music Volume", "fonts/arial.ttf", 18 * _scaleFactor);
     musicLabel->setPosition(Vec2(30 * _scaleFactor, sliderY));
@@ -397,22 +397,22 @@ Node* UIManager::createSettings() {
     panel->addChild(musicLabel, 1);
 
     auto musicSlider = Slider::create();
-    musicSlider->loadBarTexture("UI/slider_bg.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»¬¿é±³¾°Í¼Æ¬
-    musicSlider->loadProgressBarTexture("UI/slider_progress.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»¬¿é½ø¶ÈÍ¼Æ¬
-    musicSlider->loadSlidBallTextures("UI/slider_ball.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»¬¿é°´Å¥Í¼Æ¬
+    musicSlider->loadBarTexture("UI/slider_bg.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ»‘å—èƒŒæ™¯å›¾ç‰‡
+    musicSlider->loadProgressBarTexture("UI/slider_progress.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ»‘å—è¿›åº¦å›¾ç‰‡
+    musicSlider->loadSlidBallTextures("UI/slider_ball.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ»‘å—æŒ‰é’®å›¾ç‰‡
     musicSlider->setPosition(Vec2(panelSize.width - 120 * _scaleFactor, sliderY));
-    musicSlider->setPercent(80); // ÕâÀïĞèÒªÌæ»»Îª audioManager->getMusicVolume() * 100
+    musicSlider->setPercent(80); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º audioManager->getMusicVolume() * 100
     musicSlider->addEventListener([](Ref* sender, Slider::EventType type) {
         if (type == Slider::EventType::ON_PERCENTAGE_CHANGED) {
             auto slider = dynamic_cast<Slider*>(sender);
             float volume = slider->getPercent() / 100.0f;
-            // ÕâÀïĞèÒªÌæ»»Îª audioManager->setMusicVolume(volume);
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º audioManager->setMusicVolume(volume);
             CCLOG("Music volume: %.2f", volume);
         }
         });
     panel->addChild(musicSlider, 1);
 
-    // ÒôĞ§ÒôÁ¿»¬¿é
+    // éŸ³æ•ˆéŸ³é‡æ»‘å—
     float sfxSliderY = sliderY - 60 * _scaleFactor;
     auto sfxLabel = Label::createWithTTF("SFX Volume", "fonts/arial.ttf", 18 * _scaleFactor);
     sfxLabel->setPosition(Vec2(30 * _scaleFactor, sfxSliderY));
@@ -421,16 +421,16 @@ Node* UIManager::createSettings() {
     panel->addChild(sfxLabel, 1);
 
     auto sfxSlider = Slider::create();
-    sfxSlider->loadBarTexture("UI/slider_bg.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»¬¿é±³¾°Í¼Æ¬
-    sfxSlider->loadProgressBarTexture("UI/slider_progress.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»¬¿é½ø¶ÈÍ¼Æ¬
-    sfxSlider->loadSlidBallTextures("UI/slider_ball.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»¬¿é°´Å¥Í¼Æ¬
+    sfxSlider->loadBarTexture("UI/slider_bg.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ»‘å—èƒŒæ™¯å›¾ç‰‡
+    sfxSlider->loadProgressBarTexture("UI/slider_progress.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ»‘å—è¿›åº¦å›¾ç‰‡
+    sfxSlider->loadSlidBallTextures("UI/slider_ball.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ»‘å—æŒ‰é’®å›¾ç‰‡
     sfxSlider->setPosition(Vec2(panelSize.width - 120 * _scaleFactor, sfxSliderY));
-    sfxSlider->setPercent(80); // ÕâÀïĞèÒªÌæ»»Îª audioManager->getSFXVolume() * 100
+    sfxSlider->setPercent(80); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º audioManager->getSFXVolume() * 100
     sfxSlider->addEventListener([](Ref* sender, Slider::EventType type) {
         if (type == Slider::EventType::ON_PERCENTAGE_CHANGED) {
             auto slider = dynamic_cast<Slider*>(sender);
             float volume = slider->getPercent() / 100.0f;
-            // ÕâÀïĞèÒªÌæ»»Îª audioManager->setSFXVolume(volume);
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º audioManager->setSFXVolume(volume);
             CCLOG("SFX volume: %.2f", volume);
         }
         });
@@ -439,39 +439,39 @@ Node* UIManager::createSettings() {
     return panel;
 }
 
-// ==================== ÉÌµêÃæ°å ====================
+// ==================== å•†åº—é¢æ¿ ====================
 Node* UIManager::createShop() {
     auto panel = Node::create();
 
-    // Ãæ°å´óĞ¡
+    // é¢æ¿å¤§å°
     Size panelSize(600 * _scaleFactor, 450 * _scaleFactor);
     panel->setContentSize(panelSize);
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(40, 40, 60, 240), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
+    // æ ‡é¢˜
     auto title = Label::createWithTTF("Shop - Buildings", "fonts/arial.ttf", 28 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
     panel->addChild(title, 1);
 
-    // ¹Ø±Õ°´Å¥
+    // å…³é—­æŒ‰é’®
     auto closeBtn = createCloseButton([this]() {
         hidePanel(UIPanelType::Shop, true);
         });
     closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
     panel->addChild(closeBtn, 2);
 
-    // ¹ö¶¯ÊÓÍ¼
+    // æ»šåŠ¨è§†å›¾
     auto scrollView = ScrollView::create();
     scrollView->setDirection(ScrollView::Direction::VERTICAL);
     scrollView->setBounceEnabled(true);
@@ -479,7 +479,7 @@ Node* UIManager::createShop() {
     scrollView->setPosition(Vec2(20 * _scaleFactor, 20 * _scaleFactor));
     panel->addChild(scrollView, 1);
 
-    // ½¨ÖşÁĞ±íÊı¾İ - ÕâÀïĞèÒªÌæ»»Îª´ÓÅäÖÃÎÄ¼ş»òBuildingManager»ñÈ¡
+    // å»ºç­‘åˆ—è¡¨æ•°æ® - è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºä»é…ç½®æ–‡ä»¶æˆ–BuildingManagerè·å–
     struct BuildingData {
         std::string name;
         std::string icon;
@@ -510,12 +510,12 @@ Node* UIManager::createShop() {
         auto& data = buildings[i];
         float itemY = container->getContentSize().height - (i + 1) * itemHeight + itemHeight / 2;
 
-        // ½¨ÖşÏî±³¾°
+        // å»ºç­‘é¡¹èƒŒæ™¯
         auto itemBg = LayerColor::create(Color4B(60, 60, 80, 200), itemWidth - 10 * _scaleFactor, itemHeight - 5 * _scaleFactor);
         itemBg->setPosition(Vec2(5 * _scaleFactor, itemY - itemHeight / 2 + 2.5f * _scaleFactor));
         container->addChild(itemBg, 0);
 
-        // ½¨ÖşÍ¼±ê
+        // å»ºç­‘å›¾æ ‡
         auto icon = Sprite::create(data.icon);
         if (!icon) {
             icon = Sprite::create();
@@ -526,21 +526,21 @@ Node* UIManager::createShop() {
         icon->setScale(50 * _scaleFactor / std::max(icon->getContentSize().width, icon->getContentSize().height));
         container->addChild(icon, 1);
 
-        // ½¨ÖşÃû³Æ
+        // å»ºç­‘åç§°
         auto nameLabel = Label::createWithTTF(data.name, "fonts/arial.ttf", 18 * _scaleFactor);
         nameLabel->setPosition(Vec2(100 * _scaleFactor, itemY + 10 * _scaleFactor));
         nameLabel->setAnchorPoint(Vec2(0, 0.5f));
         nameLabel->setColor(Color3B::WHITE);
         container->addChild(nameLabel, 1);
 
-        // ½¨Ôì³É±¾
+        // å»ºé€ æˆæœ¬
         auto costLabel = Label::createWithTTF("Cost: " + std::to_string(data.cost), "fonts/arial.ttf", 14 * _scaleFactor);
         costLabel->setPosition(Vec2(100 * _scaleFactor, itemY - 10 * _scaleFactor));
         costLabel->setAnchorPoint(Vec2(0, 0.5f));
         costLabel->setColor(Color3B(255, 215, 0));
         container->addChild(costLabel, 1);
 
-        // ¹ºÂò°´Å¥
+        // è´­ä¹°æŒ‰é’®
         auto buyBtn = Button::create();
         buyBtn->setTitleText("Buy");
         buyBtn->setTitleFontSize(16 * _scaleFactor);
@@ -553,7 +553,7 @@ Node* UIManager::createShop() {
         buyBtn->addClickEventListener([this, buildingName, buildingCost](Ref* sender) {
             showPurchaseConfirm(buildingName, buildingCost, [this, buildingName]() {
                 hidePanel(UIPanelType::Shop, true);
-                // ÕâÀïĞèÒªÌæ»»Îª½øÈë½¨Öş·ÅÖÃÄ£Ê½µÄÂß¼­
+                // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºè¿›å…¥å»ºç­‘æ”¾ç½®æ¨¡å¼çš„é€»è¾‘
                 // map->enterPlacementMode(buildingName);
                 showToast("Select a location to place " + buildingName);
                 triggerUIEvent("OnEnterPlacementMode");
@@ -572,11 +572,11 @@ void UIManager::showShop() {
 void UIManager::showPurchaseConfirm(const std::string& buildingName, int cost, const std::function<void()>& onConfirm) {
     std::string content = "Purchase " + buildingName + " for " + std::to_string(cost) + " gold?";
 
-    int currentGold = 1000; // ÕâÀïĞèÒªÌæ»»Îª resource->getGold() »ñÈ¡Êµ¼Ê½ğ±Ò
+    int currentGold = 1000; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º resource->getGold() è·å–å®é™…é‡‘å¸
 
     if (currentGold >= cost) {
         showConfirmDialog("Confirm Purchase", content, [this, cost, onConfirm]() {
-            // ÕâÀïĞèÒªÌæ»»Îª resource->spendGold(cost);
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º resource->spendGold(cost);
             if (onConfirm) onConfirm();
             });
     }
@@ -585,18 +585,18 @@ void UIManager::showPurchaseConfirm(const std::string& buildingName, int cost, c
     }
 }
 
-// ==================== µØÍ¼Ñ¡ÔñÃæ°å ====================
+// ==================== åœ°å›¾é€‰æ‹©é¢æ¿ ====================
 Node* UIManager::createMapSelection() {
     auto panel = Node::create();
 
-    // Ãæ°å´óĞ¡
+    // é¢æ¿å¤§å°
     Size panelSize(700 * _scaleFactor, 500 * _scaleFactor);
     panel->setContentSize(panelSize);
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°£¨µØÍ¼Í¼Æ¬£©
-    auto bg = Sprite::create("UI/map_selection_bg.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊµÄµØÍ¼Ñ¡Ôñ±³¾°Í¼
+    // èƒŒæ™¯ï¼ˆåœ°å›¾å›¾ç‰‡ï¼‰
+    auto bg = Sprite::create("UI/map_selection_bg.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…çš„åœ°å›¾é€‰æ‹©èƒŒæ™¯å›¾
     if (bg) {
         bg->setPosition(Vec2(panelSize.width / 2, panelSize.height / 2));
         float scaleX = panelSize.width / bg->getContentSize().width;
@@ -609,34 +609,34 @@ Node* UIManager::createMapSelection() {
         panel->addChild(colorBg, 0);
     }
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
+    // æ ‡é¢˜
     auto title = Label::createWithTTF("Select Battle Map", "fonts/arial.ttf", 28 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
     title->enableOutline(Color4B::BLACK, 2);
     panel->addChild(title, 1);
 
-    // ¹Ø±Õ°´Å¥
+    // å…³é—­æŒ‰é’®
     auto closeBtn = createCloseButton([this]() {
         hidePanel(UIPanelType::MapSelection, true);
         });
     closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
     panel->addChild(closeBtn, 2);
 
-    // »æÖÆÁ¬½ÓÏß
+    // ç»˜åˆ¶è¿æ¥çº¿
     auto pathLine = DrawNode::create();
     Vec2 node1Pos(panelSize.width * 0.3f, panelSize.height * 0.5f);
     Vec2 node2Pos(panelSize.width * 0.7f, panelSize.height * 0.5f);
     pathLine->drawLine(node1Pos, node2Pos, Color4F(1, 1, 1, 0.5f));
     panel->addChild(pathLine, 1);
 
-    // µØÍ¼½Úµã1
-    auto node1 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê½ÚµãÍ¼Æ¬
+    // åœ°å›¾èŠ‚ç‚¹1
+    auto node1 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…èŠ‚ç‚¹å›¾ç‰‡
     if (!node1->getVirtualRenderer()) {
         node1 = Button::create();
         auto circle1 = DrawNode::create();
@@ -650,7 +650,7 @@ Node* UIManager::createMapSelection() {
         playMapSelectAnimation(0, [this]() {
             hidePanel(UIPanelType::MapSelection, true);
             showBattleLoading("Loading Battle Map 1...");
-            // ÕâÀïĞèÒªÌæ»»Îª¼ÓÔØÕ½¶·³¡¾°µÄÂß¼­
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºåŠ è½½æˆ˜æ–—åœºæ™¯çš„é€»è¾‘
             triggerUIEvent("OnBattleStart_Map1");
             });
         });
@@ -661,8 +661,8 @@ Node* UIManager::createMapSelection() {
     node1Label->setColor(Color3B::WHITE);
     panel->addChild(node1Label, 1);
 
-    // µØÍ¼½Úµã2
-    auto node2 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê½ÚµãÍ¼Æ¬
+    // åœ°å›¾èŠ‚ç‚¹2
+    auto node2 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…èŠ‚ç‚¹å›¾ç‰‡
     if (!node2->getVirtualRenderer()) {
         node2 = Button::create();
         auto circle2 = DrawNode::create();
@@ -676,7 +676,7 @@ Node* UIManager::createMapSelection() {
         playMapSelectAnimation(1, [this]() {
             hidePanel(UIPanelType::MapSelection, true);
             showBattleLoading("Loading Battle Map 2...");
-            // ÕâÀïĞèÒªÌæ»»Îª¼ÓÔØÕ½¶·³¡¾°µÄÂß¼­
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºåŠ è½½æˆ˜æ–—åœºæ™¯çš„é€»è¾‘
             triggerUIEvent("OnBattleStart_Map2");
             });
         });
@@ -701,7 +701,7 @@ void UIManager::playMapSelectAnimation(int mapIndex, const std::function<void()>
         return;
     }
 
-    // ´´½¨Ñ¡ÖĞĞ§¹û¶¯»­
+    // åˆ›å»ºé€‰ä¸­æ•ˆæœåŠ¨ç”»
     auto flash = LayerColor::create(Color4B(255, 255, 255, 0), panel->getContentSize().width, panel->getContentSize().height);
     panel->addChild(flash, 100);
 
@@ -716,11 +716,11 @@ void UIManager::playMapSelectAnimation(int mapIndex, const std::function<void()>
     flash->runAction(Sequence::create(fadeIn, fadeOut, delay, callFunc, removeSelf, nullptr));
 }
 
-// ==================== ½¨Öş²Ù×÷Ãæ°å ====================
+// ==================== å»ºç­‘æ“ä½œé¢æ¿ ====================
 void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory category, Building* building) {
     _selectedBuilding = building;
 
-    // ÏÈÒş²ØÖ®Ç°µÄBuildingOptions
+    // å…ˆéšè—ä¹‹å‰çš„BuildingOptions
     hidePanel(UIPanelType::BuildingOptions, true);
 
     auto panel = createBuildingOptions(position, category);
@@ -742,22 +742,22 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
 
     panel->setContentSize(Size(panelWidth, panelHeight));
 
-    // µ÷ÕûÎ»ÖÃÊ¹Ãæ°åÔÚ½¨ÖşÏÂ·½¾ÓÖĞ
+    // è°ƒæ•´ä½ç½®ä½¿é¢æ¿åœ¨å»ºç­‘ä¸‹æ–¹å±…ä¸­
     Vec2 adjustedPos = position;
     adjustedPos.x -= panelWidth / 2;
     adjustedPos.y -= panelHeight + 20 * _scaleFactor;
 
-    // È·±£²»³¬³öÆÁÄ»±ß½ç
+    // ç¡®ä¿ä¸è¶…å‡ºå±å¹•è¾¹ç•Œ
     adjustedPos.x = std::max(_visibleOrigin.x, std::min(adjustedPos.x, _visibleOrigin.x + _visibleSize.width - panelWidth));
     adjustedPos.y = std::max(_visibleOrigin.y, adjustedPos.y);
 
     panel->setPosition(adjustedPos);
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(50, 50, 70, 220), panelWidth, panelHeight);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelWidth, panelHeight), Color4F::WHITE);
     panel->addChild(border, 1);
@@ -765,8 +765,8 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     float currentX = buttonMargin + buttonSize / 2;
     float centerY = panelHeight / 2;
 
-    // ĞÅÏ¢°´Å¥
-    auto infoBtn = Button::create("UI/btn_info.png", "UI/btn_info_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê°´Å¥Í¼Æ¬
+    // ä¿¡æ¯æŒ‰é’®
+    auto infoBtn = Button::create("UI/btn_info.png", "UI/btn_info_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æŒ‰é’®å›¾ç‰‡
     if (!infoBtn->getVirtualRenderer()) {
         infoBtn = Button::create();
         infoBtn->setTitleText("Info");
@@ -783,8 +783,8 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
 
     currentX += buttonSize + buttonMargin;
 
-    // Éı¼¶°´Å¥
-    auto upgradeBtn = Button::create("UI/btn_upgrade.png", "UI/btn_upgrade_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê°´Å¥Í¼Æ¬
+    // å‡çº§æŒ‰é’®
+    auto upgradeBtn = Button::create("UI/btn_upgrade.png", "UI/btn_upgrade_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æŒ‰é’®å›¾ç‰‡
     if (!upgradeBtn->getVirtualRenderer()) {
         upgradeBtn = Button::create();
         upgradeBtn->setTitleText("Up");
@@ -801,9 +801,9 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
 
     currentX += buttonSize + buttonMargin;
 
-    // ÑµÁ·°´Å¥£¨½ö¾üÓª£©
+    // è®­ç»ƒæŒ‰é’®ï¼ˆä»…å†›è¥ï¼‰
     if (category == BuildingCategory::Military) {
-        auto trainBtn = Button::create("UI/btn_train.png", "UI/btn_train_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê°´Å¥Í¼Æ¬
+        auto trainBtn = Button::create("UI/btn_train.png", "UI/btn_train_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æŒ‰é’®å›¾ç‰‡
         if (!trainBtn->getVirtualRenderer()) {
             trainBtn = Button::create();
             trainBtn->setTitleText("Train");
@@ -819,7 +819,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
         panel->addChild(trainBtn, 1);
     }
 
-    // µã»÷Ãæ°åÍâ²¿¹Ø±Õ
+    // ç‚¹å‡»é¢æ¿å¤–éƒ¨å…³é—­
     auto touchListener = EventListenerTouchOneByOne::create();
     touchListener->setSwallowTouches(true);
     touchListener->onTouchBegan = [this, panel](Touch* touch, Event* event) -> bool {
@@ -836,7 +836,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     return panel;
 }
 
-// ==================== ½¨ÖşĞÅÏ¢Ãæ°å ====================
+// ==================== å»ºç­‘ä¿¡æ¯é¢æ¿ ====================
 void UIManager::showBuildingInfo(Building* building) {
     _selectedBuilding = building;
 
@@ -858,35 +858,35 @@ Node* UIManager::createBuildingInfo(Building* building) {
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(40, 40, 60, 240), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
-    std::string buildingName = building ? "Building" : "Unknown"; // ÕâÀïĞèÒªÌæ»»Îª building->getName()
+    // æ ‡é¢˜
+    std::string buildingName = building ? "Building" : "Unknown"; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º building->getName()
     if (building) {
-        // buildingName = building->getName(); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»ñÈ¡½¨ÖşÃû³ÆµÄ·½·¨
+        // buildingName = building->getName(); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…è·å–å»ºç­‘åç§°çš„æ–¹æ³•
     }
     auto title = Label::createWithTTF(buildingName + " Info", "fonts/arial.ttf", 24 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
     panel->addChild(title, 1);
 
-    // ¹Ø±Õ°´Å¥
+    // å…³é—­æŒ‰é’®
     auto closeBtn = createCloseButton([this]() {
         hidePanel(UIPanelType::BuildingInfo, true);
         });
     closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
     panel->addChild(closeBtn, 2);
 
-    // ×ó²à£º½¨ÖşÍ¼Ïñ
+    // å·¦ä¾§ï¼šå»ºç­‘å›¾åƒ
     float leftWidth = panelSize.width * 0.4f;
-    auto buildingSprite = Sprite::create("UI/building_placeholder.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê½¨ÖşÍ¼Æ¬
+    auto buildingSprite = Sprite::create("UI/building_placeholder.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å»ºç­‘å›¾ç‰‡
     if (!buildingSprite) {
         buildingSprite = Sprite::create();
         buildingSprite->setTextureRect(Rect(0, 0, 100 * _scaleFactor, 100 * _scaleFactor));
@@ -897,12 +897,12 @@ Node* UIManager::createBuildingInfo(Building* building) {
     buildingSprite->setScale(spriteScale);
     panel->addChild(buildingSprite, 1);
 
-    // ÓÒ²à£ºÊôĞÔÁĞ±í
+    // å³ä¾§ï¼šå±æ€§åˆ—è¡¨
     float rightX = leftWidth + 20 * _scaleFactor;
     float lineHeight = 30 * _scaleFactor;
     float startY = panelSize.height - 80 * _scaleFactor;
 
-    // »ñÈ¡½¨ÖşÊôĞÔ - ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊµÄbuilding·½·¨µ÷ÓÃ
+    // è·å–å»ºç­‘å±æ€§ - è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…çš„buildingæ–¹æ³•è°ƒç”¨
     int level = building ? building->GetLevel() : 1;
     int health = building ? building->GetHealth() : 100;
     int maxHealth = building ? building->GetMaxHealth() : 100;
@@ -926,15 +926,15 @@ Node* UIManager::createBuildingInfo(Building* building) {
     defenseLabel->setColor(Color3B(100, 100, 255));
     panel->addChild(defenseLabel, 1);
 
-    // ÕâÀï¿ÉÒÔ¸ù¾İ½¨ÖşÀàĞÍÌí¼Ó¸ü¶àÊôĞÔ
-    // ÀıÈç×ÊÔ´½¨ÖşµÄÈİÁ¿¡¢Éú²úËÙ¶È
-    // ¹¥»÷½¨ÖşµÄÉËº¦¡¢¹¥»÷·¶Î§µÈ
-    // ĞèÒª¸ù¾İ BuildingCategory »ò½¨Öş×ÓÀàÀ´ÅĞ¶Ï
+    // è¿™é‡Œå¯ä»¥æ ¹æ®å»ºç­‘ç±»å‹æ·»åŠ æ›´å¤šå±æ€§
+    // ä¾‹å¦‚èµ„æºå»ºç­‘çš„å®¹é‡ã€ç”Ÿäº§é€Ÿåº¦
+    // æ”»å‡»å»ºç­‘çš„ä¼¤å®³ã€æ”»å‡»èŒƒå›´ç­‰
+    // éœ€è¦æ ¹æ® BuildingCategory æˆ–å»ºç­‘å­ç±»æ¥åˆ¤æ–­
 
     return panel;
 }
 
-// ==================== ½¨ÖşÉı¼¶Ãæ°å ====================
+// ==================== å»ºç­‘å‡çº§é¢æ¿ ====================
 void UIManager::showBuildingUpgrade(Building* building) {
     _selectedBuilding = building;
 
@@ -956,32 +956,32 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(40, 40, 60, 240), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
-    std::string buildingName = "Building"; // ÕâÀïĞèÒªÌæ»»Îª building->getName()
+    // æ ‡é¢˜
+    std::string buildingName = "Building"; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º building->getName()
     auto title = Label::createWithTTF(buildingName + " Upgrade", "fonts/arial.ttf", 24 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
     panel->addChild(title, 1);
 
-    // ¹Ø±Õ°´Å¥
+    // å…³é—­æŒ‰é’®
     auto closeBtn = createCloseButton([this]() {
         hidePanel(UIPanelType::BuildingUpgrade, true);
         });
     closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
     panel->addChild(closeBtn, 2);
 
-    // ×ó²à£º½¨ÖşÍ¼Ïñ
+    // å·¦ä¾§ï¼šå»ºç­‘å›¾åƒ
     float leftWidth = panelSize.width * 0.4f;
-    auto buildingSprite = Sprite::create("UI/building_placeholder.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê½¨ÖşÍ¼Æ¬
+    auto buildingSprite = Sprite::create("UI/building_placeholder.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å»ºç­‘å›¾ç‰‡
     if (!buildingSprite) {
         buildingSprite = Sprite::create();
         buildingSprite->setTextureRect(Rect(0, 0, 100 * _scaleFactor, 100 * _scaleFactor));
@@ -992,20 +992,20 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     buildingSprite->setScale(spriteScale);
     panel->addChild(buildingSprite, 1);
 
-    // ÓÒ²à£ºÊôĞÔ¶Ô±È
+    // å³ä¾§ï¼šå±æ€§å¯¹æ¯”
     float rightX = leftWidth + 20 * _scaleFactor;
     float lineHeight = 28 * _scaleFactor;
     float startY = panelSize.height - 80 * _scaleFactor;
 
-    // »ñÈ¡µ±Ç°ºÍÉı¼¶ºóÊôĞÔ - ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊµÄbuilding·½·¨µ÷ÓÃ
+    // è·å–å½“å‰å’Œå‡çº§åå±æ€§ - è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…çš„buildingæ–¹æ³•è°ƒç”¨
     int currentLevel = building ? building->GetLevel() : 1;
     int nextLevel = currentLevel + 1;
     int currentHealth = building ? building->GetMaxHealth() : 100;
-    int nextHealth = currentHealth + 50; // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÉı¼¶ºóµÄÉúÃüÖµ
+    int nextHealth = currentHealth + 50; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å‡çº§åçš„ç”Ÿå‘½å€¼
     int currentDefense = building ? building->GetDefense() : 10;
-    int nextDefense = currentDefense + 5; // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÉı¼¶ºóµÄ·ÀÓùÖµ
-    int upgradeCost = building ? building->GetBuildCost() * currentLevel : 500; // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÉı¼¶³É±¾
-    int upgradeTime = building ? building->GetBuildTime() : 60; // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÉı¼¶Ê±¼ä
+    int nextDefense = currentDefense + 5; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å‡çº§åçš„é˜²å¾¡å€¼
+    int upgradeCost = building ? building->GetBuildCost() * currentLevel : 500; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å‡çº§æˆæœ¬
+    int upgradeTime = building ? building->GetBuildTime() : 60; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å‡çº§æ—¶é—´
 
     auto levelLabel = Label::createWithTTF("Level: " + std::to_string(currentLevel) + " -> " + std::to_string(nextLevel), "fonts/arial.ttf", 18 * _scaleFactor);
     levelLabel->setPosition(Vec2(rightX, startY));
@@ -1025,14 +1025,14 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     defenseLabel->setColor(Color3B(100, 100, 255));
     panel->addChild(defenseLabel, 1);
 
-    // Éı¼¶³É±¾
+    // å‡çº§æˆæœ¬
     auto costLabel = Label::createWithTTF("Cost: " + std::to_string(upgradeCost) + " Gold", "fonts/arial.ttf", 18 * _scaleFactor);
     costLabel->setPosition(Vec2(rightX, startY - 4 * lineHeight));
     costLabel->setAnchorPoint(Vec2(0, 0.5f));
     costLabel->setColor(Color3B(255, 215, 0));
     panel->addChild(costLabel, 1);
 
-    // Éı¼¶Ê±¼ä
+    // å‡çº§æ—¶é—´
     int minutes = upgradeTime / 60;
     int seconds = upgradeTime % 60;
     std::string timeStr = std::to_string(minutes) + "m " + std::to_string(seconds) + "s";
@@ -1042,8 +1042,8 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     timeLabel->setColor(Color3B(200, 200, 200));
     panel->addChild(timeLabel, 1);
 
-    // È·ÈÏÉı¼¶°´Å¥
-    int currentGold = 1000; // ÕâÀïĞèÒªÌæ»»Îª resource->getGold() »ñÈ¡Êµ¼Ê½ğ±Ò
+    // ç¡®è®¤å‡çº§æŒ‰é’®
+    int currentGold = 1000; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º resource->getGold() è·å–å®é™…é‡‘å¸
     bool canAfford = currentGold >= upgradeCost;
 
     auto upgradeBtn = Button::create();
@@ -1059,7 +1059,7 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
         upgradeBtn->addClickEventListener([this, upgradeCost, upgradeTime](Ref* sender) {
             hidePanel(UIPanelType::BuildingUpgrade, true);
 
-            // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê¿Û³ı×ÊÔ´ºÍ¿ªÊ¼Éı¼¶µÄÂß¼­
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ‰£é™¤èµ„æºå’Œå¼€å§‹å‡çº§çš„é€»è¾‘
             // resource->spendGold(upgradeCost);
             // _selectedBuilding->startUpgrade(upgradeTime);
 
@@ -1078,7 +1078,7 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     return panel;
 }
 
-// ==================== ¾ü¶ÓÑµÁ·Ãæ°å ====================
+// ==================== å†›é˜Ÿè®­ç»ƒé¢æ¿ ====================
 void UIManager::showArmyTraining(Building* building) {
     _selectedBuilding = building;
 
@@ -1092,7 +1092,7 @@ void UIManager::showArmyTraining(Building* building) {
     }
 }
 
-// ==================== ¾ü¶ÓÑµÁ·Ãæ°å£¨Ğø£© ====================
+// ==================== å†›é˜Ÿè®­ç»ƒé¢æ¿ï¼ˆç»­ï¼‰ ====================
 Node* UIManager::createArmyTraining(Building* building) {
     auto panel = Node::create();
 
@@ -1101,56 +1101,56 @@ Node* UIManager::createArmyTraining(Building* building) {
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(40, 40, 60, 240), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
+    // æ ‡é¢˜
     auto title = Label::createWithTTF("Army Training", "fonts/arial.ttf", 24 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
     panel->addChild(title, 1);
 
-    // ¹Ø±Õ°´Å¥
+    // å…³é—­æŒ‰é’®
     auto closeBtn = createCloseButton([this]() {
         hidePanel(UIPanelType::ArmyTraining, true);
         });
     closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
     panel->addChild(closeBtn, 2);
 
-    // ·Ö¸ôÏß
+    // åˆ†éš”çº¿
     auto divider = DrawNode::create();
     divider->drawLine(Vec2(panelSize.width / 2, 60 * _scaleFactor),
         Vec2(panelSize.width / 2, panelSize.height - 60 * _scaleFactor),
         Color4F(1, 1, 1, 0.5f));
     panel->addChild(divider, 1);
 
-    // ×ó²à±êÌâ£ºµ±Ç°²¿¶Ó
+    // å·¦ä¾§æ ‡é¢˜ï¼šå½“å‰éƒ¨é˜Ÿ
     auto leftTitle = Label::createWithTTF("Current Army", "fonts/arial.ttf", 18 * _scaleFactor);
     leftTitle->setPosition(Vec2(panelSize.width / 4, panelSize.height - 70 * _scaleFactor));
     leftTitle->setColor(Color3B(200, 200, 200));
     panel->addChild(leftTitle, 1);
 
-    // ÓÒ²à±êÌâ£º¿ÉÓÃÊ¿±ø
+    // å³ä¾§æ ‡é¢˜ï¼šå¯ç”¨å£«å…µ
     auto rightTitle = Label::createWithTTF("Available Troops", "fonts/arial.ttf", 18 * _scaleFactor);
     rightTitle->setPosition(Vec2(panelSize.width * 3 / 4, panelSize.height - 70 * _scaleFactor));
     rightTitle->setColor(Color3B(200, 200, 200));
     panel->addChild(rightTitle, 1);
 
-    // Ê¿±øÀàĞÍÊı¾İ - ÕâÀïĞèÒªÌæ»»Îª´ÓÅäÖÃ»òSoldierManager»ñÈ¡
+    // å£«å…µç±»å‹æ•°æ® - è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºä»é…ç½®æˆ–SoldierManagerè·å–
     struct SoldierType {
         std::string name;
         std::string icon;
-        int available;  // ¿ÉÓÃÊıÁ¿
-        int assigned;   // ÒÑ·ÖÅäÊıÁ¿
+        int available;  // å¯ç”¨æ•°é‡
+        int assigned;   // å·²åˆ†é…æ•°é‡
     };
 
-    // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»ñÈ¡Ê¿±øÊı¾İµÄÂß¼­
+    // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…è·å–å£«å…µæ•°æ®çš„é€»è¾‘
     std::vector<SoldierType> soldiers = {
         {"Barbarian", "UI/soldier_barbarian.png", 10, 2},
         {"Archer", "UI/soldier_archer.png", 8, 3},
@@ -1158,13 +1158,13 @@ Node* UIManager::createArmyTraining(Building* building) {
         {"Giant", "UI/soldier_giant.png", 2, 1},
     };
 
-    int soldierLimit = 20; // ÕâÀïĞèÒªÌæ»»Îª getSoldierLimit() »ñÈ¡È«¾ÖÈË¿ÚÉÏÏŞ
+    int soldierLimit = 20; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º getSoldierLimit() è·å–å…¨å±€äººå£ä¸Šé™
     int currentTotal = 0;
     for (const auto& s : soldiers) {
         currentTotal += s.assigned;
     }
 
-    // ÈË¿ÚÏÔÊ¾
+    // äººå£æ˜¾ç¤º
     auto popLabel = Label::createWithTTF("Population: " + std::to_string(currentTotal) + "/" + std::to_string(soldierLimit),
         "fonts/arial.ttf", 16 * _scaleFactor);
     popLabel->setPosition(Vec2(panelSize.width / 4, 40 * _scaleFactor));
@@ -1178,21 +1178,21 @@ Node* UIManager::createArmyTraining(Building* building) {
     float leftWidth = panelSize.width / 2 - 20 * _scaleFactor;
     float rightWidth = panelSize.width / 2 - 20 * _scaleFactor;
 
-    // ===== ×ó²à£ºÒÑ·ÖÅäµÄ²¿¶Ó =====
+    // ===== å·¦ä¾§ï¼šå·²åˆ†é…çš„éƒ¨é˜Ÿ =====
     auto leftContainer = Node::create();
     leftContainer->setPosition(Vec2(10 * _scaleFactor, 60 * _scaleFactor));
     leftContainer->setContentSize(Size(leftWidth, leftStartY - 60 * _scaleFactor));
     leftContainer->setName("leftContainer");
     panel->addChild(leftContainer, 1);
 
-    // ===== ÓÒ²à£º¿ÉÓÃÊ¿±ø =====
+    // ===== å³ä¾§ï¼šå¯ç”¨å£«å…µ =====
     auto rightContainer = Node::create();
     rightContainer->setPosition(Vec2(panelSize.width / 2 + 10 * _scaleFactor, 60 * _scaleFactor));
     rightContainer->setContentSize(Size(rightWidth, rightStartY - 60 * _scaleFactor));
     rightContainer->setName("rightContainer");
     panel->addChild(rightContainer, 1);
 
-    // ´´½¨Ê¿±øÏîµÄlambdaº¯Êı
+    // åˆ›å»ºå£«å…µé¡¹çš„lambdaå‡½æ•°
     auto createSoldierItem = [this, itemHeight, panel, soldierLimit](
         Node* container, const std::string& name, const std::string& icon,
         int count, bool isLeft, float yPos, int index) -> Node* {
@@ -1201,12 +1201,12 @@ Node* UIManager::createArmyTraining(Building* building) {
             item->setContentSize(Size(container->getContentSize().width, itemHeight - 5 * _scaleFactor));
             item->setPosition(Vec2(0, yPos));
 
-            // ±³¾°
+            // èƒŒæ™¯
             auto itemBg = LayerColor::create(Color4B(60, 60, 80, 180),
                 item->getContentSize().width, item->getContentSize().height);
             item->addChild(itemBg, 0);
 
-            // Ê¿±øÍ¼±ê
+            // å£«å…µå›¾æ ‡
             auto soldierIcon = Sprite::create(icon);
             if (!soldierIcon) {
                 soldierIcon = Sprite::create();
@@ -1218,14 +1218,14 @@ Node* UIManager::createArmyTraining(Building* building) {
                 soldierIcon->getContentSize().height));
             item->addChild(soldierIcon, 1);
 
-            // Ê¿±øÃû³Æ
+            // å£«å…µåç§°
             auto nameLabel = Label::createWithTTF(name, "fonts/arial.ttf", 14 * _scaleFactor);
             nameLabel->setPosition(Vec2(70 * _scaleFactor, item->getContentSize().height / 2 + 8 * _scaleFactor));
             nameLabel->setAnchorPoint(Vec2(0, 0.5f));
             nameLabel->setColor(Color3B::WHITE);
             item->addChild(nameLabel, 1);
 
-            // ÊıÁ¿
+            // æ•°é‡
             auto countLabel = Label::createWithTTF("x" + std::to_string(count), "fonts/arial.ttf", 14 * _scaleFactor);
             countLabel->setPosition(Vec2(70 * _scaleFactor, item->getContentSize().height / 2 - 8 * _scaleFactor));
             countLabel->setAnchorPoint(Vec2(0, 0.5f));
@@ -1233,9 +1233,9 @@ Node* UIManager::createArmyTraining(Building* building) {
             countLabel->setName("countLabel");
             item->addChild(countLabel, 1);
 
-            // ¸ù¾İÊÇ×ó²à»¹ÊÇÓÒ²àÉèÖÃÑÕÉ«ºÍ½»»¥
+            // æ ¹æ®æ˜¯å·¦ä¾§è¿˜æ˜¯å³ä¾§è®¾ç½®é¢œè‰²å’Œäº¤äº’
             if (isLeft) {
-                // ×ó²à£ºÒÑ·ÖÅä£¬µã»÷¿ÉÒÆ³ı
+                // å·¦ä¾§ï¼šå·²åˆ†é…ï¼Œç‚¹å‡»å¯ç§»é™¤
                 if (count > 0) {
                     itemBg->setColor(Color3B(80, 100, 80));
 
@@ -1247,19 +1247,19 @@ Node* UIManager::createArmyTraining(Building* building) {
                         return rect.containsPoint(locationInNode);
                         };
                     touchListener->onTouchEnded = [this, name, index, panel](Touch* touch, Event* event) {
-                        // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÒÆ³ıÊ¿±øµÄÂß¼­
+                        // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…ç§»é™¤å£«å…µçš„é€»è¾‘
                         // soldierManager->removeSoldierFromArmy(name, 1);
                         CCLOG("Remove soldier: %s", name.c_str());
                         showToast("Removed 1 " + name);
 
-                        // Ë¢ĞÂÃæ°å - ÕâÀï¼ò»¯´¦Àí£¬Êµ¼ÊÓ¦¸Ã¸üĞÂÊı¾İ²¢Ë¢ĞÂUI
+                        // åˆ·æ–°é¢æ¿ - è¿™é‡Œç®€åŒ–å¤„ç†ï¼Œå®é™…åº”è¯¥æ›´æ–°æ•°æ®å¹¶åˆ·æ–°UI
                         triggerUIEvent("OnArmyChanged");
                         };
                     Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, item);
                 }
             }
             else {
-                // ÓÒ²à£º¿ÉÓÃ£¬µã»÷¿ÉÌí¼Ó
+                // å³ä¾§ï¼šå¯ç”¨ï¼Œç‚¹å‡»å¯æ·»åŠ 
                 if (count > 0) {
                     itemBg->setColor(Color3B(80, 80, 100));
 
@@ -1271,15 +1271,15 @@ Node* UIManager::createArmyTraining(Building* building) {
                         return rect.containsPoint(locationInNode);
                         };
                     touchListener->onTouchEnded = [this, name, index, panel, soldierLimit](Touch* touch, Event* event) {
-                        // ¼ì²éÊÇ·ñ³¬¹ıÈË¿ÚÉÏÏŞ
-                        // int currentPop = soldierManager->getCurrentPopulation(); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê»ñÈ¡µ±Ç°ÈË¿Ú
-                        int currentPop = 6; // ÁÙÊ±Öµ
+                        // æ£€æŸ¥æ˜¯å¦è¶…è¿‡äººå£ä¸Šé™
+                        // int currentPop = soldierManager->getCurrentPopulation(); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…è·å–å½“å‰äººå£
+                        int currentPop = 6; // ä¸´æ—¶å€¼
                         if (currentPop >= soldierLimit) {
                             showToast("Population limit reached!");
                             return;
                         }
 
-                        // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÌí¼ÓÊ¿±øµÄÂß¼­
+                        // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ·»åŠ å£«å…µçš„é€»è¾‘
                         // soldierManager->addSoldierToArmy(name, 1);
                         CCLOG("Add soldier: %s", name.c_str());
                         showToast("Added 1 " + name);
@@ -1289,7 +1289,7 @@ Node* UIManager::createArmyTraining(Building* building) {
                     Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, item);
                 }
                 else {
-                    // ²»¿ÉÓÃ - °µµ­ÏÔÊ¾
+                    // ä¸å¯ç”¨ - æš—æ·¡æ˜¾ç¤º
                     itemBg->setColor(Color3B(40, 40, 50));
                     soldierIcon->setColor(Color3B(80, 80, 80));
                     nameLabel->setColor(Color3B(100, 100, 100));
@@ -1301,7 +1301,7 @@ Node* UIManager::createArmyTraining(Building* building) {
             return item;
         };
 
-    // Ìî³ä×ó²à£¨ÒÑ·ÖÅä£©
+    // å¡«å……å·¦ä¾§ï¼ˆå·²åˆ†é…ï¼‰
     float leftY = leftContainer->getContentSize().height - itemHeight;
     for (size_t i = 0; i < soldiers.size(); i++) {
         if (soldiers[i].assigned > 0) {
@@ -1311,7 +1311,7 @@ Node* UIManager::createArmyTraining(Building* building) {
         }
     }
 
-    // Ìî³äÓÒ²à£¨¿ÉÓÃ£©
+    // å¡«å……å³ä¾§ï¼ˆå¯ç”¨ï¼‰
     float rightY = rightContainer->getContentSize().height - itemHeight;
     for (size_t i = 0; i < soldiers.size(); i++) {
         createSoldierItem(rightContainer, soldiers[i].name, soldiers[i].icon,
@@ -1322,29 +1322,29 @@ Node* UIManager::createArmyTraining(Building* building) {
     return panel;
 }
 
-// ==================== Õ½¶·HUD ====================
+// ==================== æˆ˜æ–—HUD ====================
 Node* UIManager::createBattleHUD() {
     auto panel = Node::create();
     panel->setContentSize(_visibleSize);
     panel->setPosition(_visibleOrigin);
 
-    // ¶¥²¿ĞÅÏ¢À¸
+    // é¡¶éƒ¨ä¿¡æ¯æ 
     auto topBar = LayerColor::create(Color4B(0, 0, 0, 150), _visibleSize.width, 60 * _scaleFactor);
     topBar->setPosition(Vec2(0, _visibleSize.height - 60 * _scaleFactor));
     panel->addChild(topBar, 1);
 
-    // µ¹¼ÆÊ±
+    // å€’è®¡æ—¶
     auto timerLabel = Label::createWithTTF("3:00", "fonts/arial.ttf", 28 * _scaleFactor);
     timerLabel->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height - 30 * _scaleFactor));
     timerLabel->setColor(Color3B::WHITE);
     timerLabel->setName("timerLabel");
     panel->addChild(timerLabel, 2);
 
-    // ĞÇ¼¶½ø¶È£¨3¿ÅĞÇ£©
+    // æ˜Ÿçº§è¿›åº¦ï¼ˆ3é¢—æ˜Ÿï¼‰
     float starSize = 30 * _scaleFactor;
     float starStartX = 50 * _scaleFactor;
     for (int i = 0; i < 3; i++) {
-        auto star = Sprite::create("UI/star_empty.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊĞÇĞÇÍ¼Æ¬
+        auto star = Sprite::create("UI/star_empty.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æ˜Ÿæ˜Ÿå›¾ç‰‡
         if (!star) {
             star = Sprite::create();
             auto starDraw = DrawNode::create();
@@ -1358,19 +1358,19 @@ Node* UIManager::createBattleHUD() {
         panel->addChild(star, 2);
     }
 
-    // ´İ»Ù°Ù·Ö±È
+    // æ‘§æ¯ç™¾åˆ†æ¯”
     auto destroyLabel = Label::createWithTTF("0%", "fonts/arial.ttf", 20 * _scaleFactor);
     destroyLabel->setPosition(Vec2(_visibleSize.width - 80 * _scaleFactor, _visibleSize.height - 30 * _scaleFactor));
     destroyLabel->setColor(Color3B(255, 200, 100));
     destroyLabel->setName("destroyLabel");
     panel->addChild(destroyLabel, 2);
 
-    // µ×²¿Ê¿±ø²¿ÊğÀ¸
+    // åº•éƒ¨å£«å…µéƒ¨ç½²æ 
     auto bottomBar = LayerColor::create(Color4B(0, 0, 0, 180), _visibleSize.width, 80 * _scaleFactor);
     bottomBar->setPosition(Vec2(0, 0));
     panel->addChild(bottomBar, 1);
 
-    // Ê¿±ø²¿Êğ°´Å¥ - ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊµÄÊ¿±øÊı¾İ
+    // å£«å…µéƒ¨ç½²æŒ‰é’® - è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…çš„å£«å…µæ•°æ®
     struct DeploySoldier {
         std::string name;
         std::string icon;
@@ -1391,7 +1391,7 @@ Node* UIManager::createBattleHUD() {
     for (size_t i = 0; i < deployTroops.size(); i++) {
         auto& troop = deployTroops[i];
 
-        auto btn = Button::create(troop.icon, troop.icon); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÍ¼Æ¬
+        auto btn = Button::create(troop.icon, troop.icon); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å›¾ç‰‡
         if (!btn->getVirtualRenderer()) {
             btn = Button::create();
             btn->setContentSize(Size(btnSize, btnSize));
@@ -1405,7 +1405,7 @@ Node* UIManager::createBattleHUD() {
         btn->setPosition(Vec2(startX + i * (btnSize + btnMargin), 40 * _scaleFactor));
         btn->setName("deployBtn_" + std::to_string(i));
 
-        // ÊıÁ¿±êÇ©
+        // æ•°é‡æ ‡ç­¾
         auto countLabel = Label::createWithTTF(std::to_string(troop.count), "fonts/arial.ttf", 14 * _scaleFactor);
         countLabel->setPosition(Vec2(btnSize / 2 - 5 * _scaleFactor, -btnSize / 2 + 10 * _scaleFactor));
         countLabel->setColor(Color3B::WHITE);
@@ -1414,7 +1414,7 @@ Node* UIManager::createBattleHUD() {
 
         std::string troopName = troop.name;
         btn->addClickEventListener([this, troopName, i](Ref* sender) {
-            // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÑ¡ÖĞÊ¿±øµÄÂß¼­
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…é€‰ä¸­å£«å…µçš„é€»è¾‘
             // battleManager->selectTroopType(troopName);
             CCLOG("Selected troop: %s", troopName.c_str());
             triggerUIEvent("OnTroopSelected_" + std::to_string(i));
@@ -1423,7 +1423,7 @@ Node* UIManager::createBattleHUD() {
         panel->addChild(btn, 2);
     }
 
-    // ½áÊøÕ½¶·°´Å¥
+    // ç»“æŸæˆ˜æ–—æŒ‰é’®
     auto endBtn = Button::create();
     endBtn->setTitleText("End");
     endBtn->setTitleFontSize(16 * _scaleFactor);
@@ -1432,7 +1432,7 @@ Node* UIManager::createBattleHUD() {
     endBtn->setPosition(Vec2(_visibleSize.width - 50 * _scaleFactor, 40 * _scaleFactor));
     endBtn->addClickEventListener([this](Ref* sender) {
         showConfirmDialog("End Battle", "Are you sure you want to end the battle?", [this]() {
-            // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê½áÊøÕ½¶·µÄÂß¼­
+            // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…ç»“æŸæˆ˜æ–—çš„é€»è¾‘
             triggerUIEvent("OnBattleEnd");
             });
         });
@@ -1441,7 +1441,7 @@ Node* UIManager::createBattleHUD() {
     return panel;
 }
 
-// ==================== Õ½¶·½á¹ûÃæ°å ====================
+// ==================== æˆ˜æ–—ç»“æœé¢æ¿ ====================
 Node* UIManager::createBattleResult() {
     auto panel = Node::create();
 
@@ -1450,17 +1450,17 @@ Node* UIManager::createBattleResult() {
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(30, 30, 50, 240), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ£¨Ê¤Àû/Ê§°Ü£©- ÕâÀïĞèÒªÌæ»»ÎªÊµ¼ÊÕ½¶·½á¹û
-    bool isVictory = true; // ÕâÀïĞèÒªÌæ»»Îª battleManager->isVictory()
+    // æ ‡é¢˜ï¼ˆèƒœåˆ©/å¤±è´¥ï¼‰- è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…æˆ˜æ–—ç»“æœ
+    bool isVictory = true; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º battleManager->isVictory()
     std::string resultText = isVictory ? "Victory!" : "Defeat";
     Color3B resultColor = isVictory ? Color3B(100, 255, 100) : Color3B(255, 100, 100);
 
@@ -1469,8 +1469,8 @@ Node* UIManager::createBattleResult() {
     title->setColor(resultColor);
     panel->addChild(title, 1);
 
-    // ĞÇ¼¶ÏÔÊ¾
-    int stars = 2; // ÕâÀïĞèÒªÌæ»»Îª battleManager->getStars()
+    // æ˜Ÿçº§æ˜¾ç¤º
+    int stars = 2; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º battleManager->getStars()
     float starSize = 40 * _scaleFactor;
     float starY = panelSize.height - 120 * _scaleFactor;
     for (int i = 0; i < 3; i++) {
@@ -1487,13 +1487,13 @@ Node* UIManager::createBattleResult() {
         panel->addChild(star, 1);
     }
 
-    // Í³¼ÆĞÅÏ¢
+    // ç»Ÿè®¡ä¿¡æ¯
     float lineHeight = 35 * _scaleFactor;
     float infoStartY = panelSize.height - 180 * _scaleFactor;
     float leftX = 80 * _scaleFactor;
 
-    // ´İ»Ù°Ù·Ö±È
-    int destroyPercent = 75; // ÕâÀïĞèÒªÌæ»»Îª battleManager->getDestroyPercent()
+    // æ‘§æ¯ç™¾åˆ†æ¯”
+    int destroyPercent = 75; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º battleManager->getDestroyPercent()
     auto destroyLabel = Label::createWithTTF("Destruction: " + std::to_string(destroyPercent) + "%",
         "fonts/arial.ttf", 20 * _scaleFactor);
     destroyLabel->setPosition(Vec2(leftX, infoStartY));
@@ -1501,8 +1501,8 @@ Node* UIManager::createBattleResult() {
     destroyLabel->setColor(Color3B::WHITE);
     panel->addChild(destroyLabel, 1);
 
-    // »ñµÃ½ğ±Ò
-    int goldEarned = 500; // ÕâÀïĞèÒªÌæ»»Îª battleManager->getGoldEarned()
+    // è·å¾—é‡‘å¸
+    int goldEarned = 500; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º battleManager->getGoldEarned()
     auto goldLabel = Label::createWithTTF("Gold: +" + std::to_string(goldEarned),
         "fonts/arial.ttf", 20 * _scaleFactor);
     goldLabel->setPosition(Vec2(leftX, infoStartY - lineHeight));
@@ -1510,8 +1510,8 @@ Node* UIManager::createBattleResult() {
     goldLabel->setColor(Color3B(255, 215, 0));
     panel->addChild(goldLabel, 1);
 
-    // »ñµÃÊ¥Ë®
-    int elixirEarned = 300; // ÕâÀïĞèÒªÌæ»»Îª battleManager->getElixirEarned()
+    // è·å¾—åœ£æ°´
+    int elixirEarned = 300; // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º battleManager->getElixirEarned()
     auto elixirLabel = Label::createWithTTF("Elixir: +" + std::to_string(elixirEarned),
         "fonts/arial.ttf", 20 * _scaleFactor);
     elixirLabel->setPosition(Vec2(leftX, infoStartY - 2 * lineHeight));
@@ -1519,7 +1519,7 @@ Node* UIManager::createBattleResult() {
     elixirLabel->setColor(Color3B(200, 100, 255));
     panel->addChild(elixirLabel, 1);
 
-    // ·µ»ØÖ÷³Ç°´Å¥
+    // è¿”å›ä¸»åŸæŒ‰é’®
     auto returnBtn = Button::create();
     returnBtn->setTitleText("Return to Village");
     returnBtn->setTitleFontSize(20 * _scaleFactor);
@@ -1528,7 +1528,7 @@ Node* UIManager::createBattleResult() {
     returnBtn->setPosition(Vec2(panelSize.width / 2, 60 * _scaleFactor));
     returnBtn->addClickEventListener([this](Ref* sender) {
         hidePanel(UIPanelType::BattleResult, true);
-        // ÕâÀïĞèÒªÌæ»»Îª·µ»ØÖ÷´å×¯µÄÂß¼­
+        // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºè¿”å›ä¸»æ‘åº„çš„é€»è¾‘
         triggerUIEvent("OnReturnToVillage");
         });
     panel->addChild(returnBtn, 1);
@@ -1536,19 +1536,19 @@ Node* UIManager::createBattleResult() {
     return panel;
 }
 
-// ==================== Éı¼¶½ø¶È¸²¸Ç²ã ====================
+// ==================== å‡çº§è¿›åº¦è¦†ç›–å±‚ ====================
 Node* UIManager::createUpgradeProgressOverlay(Building* building, float totalTime, float remainingTime) {
     auto overlay = Node::create();
     overlay->setContentSize(Size(80 * _scaleFactor, 40 * _scaleFactor));
 
-    // ½ø¶ÈÌõ±³¾°
+    // è¿›åº¦æ¡èƒŒæ™¯
     auto progressBg = LayerColor::create(Color4B(30, 30, 30, 200),
         overlay->getContentSize().width,
         15 * _scaleFactor);
     progressBg->setPosition(Vec2(0, 20 * _scaleFactor));
     overlay->addChild(progressBg, 0);
 
-    // ½ø¶ÈÌõÌî³ä
+    // è¿›åº¦æ¡å¡«å……
     float progress = (totalTime - remainingTime) / totalTime;
     auto progressFill = LayerColor::create(Color4B(100, 200, 100, 255),
         overlay->getContentSize().width * progress,
@@ -1557,7 +1557,7 @@ Node* UIManager::createUpgradeProgressOverlay(Building* building, float totalTim
     progressFill->setName("progressFill");
     overlay->addChild(progressFill, 1);
 
-    // Ê£ÓàÊ±¼äÎÄ×Ö
+    // å‰©ä½™æ—¶é—´æ–‡å­—
     int minutes = (int)remainingTime / 60;
     int seconds = (int)remainingTime % 60;
     std::string timeStr = StringUtils::format("%02d:%02d", minutes, seconds);
@@ -1573,25 +1573,25 @@ Node* UIManager::createUpgradeProgressOverlay(Building* building, float totalTim
 void UIManager::showUpgradeProgress(Building* building, float totalTime, float remainingTime) {
     if (!building || !_rootScene) return;
 
-    // ÒÆ³ıÒÑ´æÔÚµÄ½ø¶ÈÌõ
+    // ç§»é™¤å·²å­˜åœ¨çš„è¿›åº¦æ¡
     removeUpgradeProgress(building);
 
     auto overlay = createUpgradeProgressOverlay(building, totalTime, remainingTime);
     if (overlay) {
-        // »ñÈ¡½¨ÖşÔÚÊÀ½ç×ø±êÏµµÄÎ»ÖÃ
+        // è·å–å»ºç­‘åœ¨ä¸–ç•Œåæ ‡ç³»çš„ä½ç½®
         Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
 
-        // ½ø¶ÈÌõÏÔÊ¾ÔÚ½¨ÖşÉÏ·½
+        // è¿›åº¦æ¡æ˜¾ç¤ºåœ¨å»ºç­‘ä¸Šæ–¹
         overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
             buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
 
         _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
         _upgradeProgressNodes[building] = overlay;
 
-        // ´æ´¢totalTimeÓÃÓÚ¸üĞÂ¼ÆËã
+        // å­˜å‚¨totalTimeç”¨äºæ›´æ–°è®¡ç®—
         overlay->setUserData(new float(totalTime));
 
-        // Æô¶¯¸üĞÂ¶¨Ê±Æ÷
+        // å¯åŠ¨æ›´æ–°å®šæ—¶å™¨
         overlay->schedule([this, building, totalTime](float dt) {
             auto it = _upgradeProgressNodes.find(building);
             if (it != _upgradeProgressNodes.end()) {
@@ -1599,7 +1599,7 @@ void UIManager::showUpgradeProgress(Building* building, float totalTime, float r
                 auto progressFill = it->second->getChildByName<LayerColor*>("progressFill");
 
                 if (timeLabel && progressFill) {
-                    // »ñÈ¡µ±Ç°Ê£ÓàÊ±¼ä - ÕâÀïĞèÒªÌæ»»Îª building->getRemainingUpgradeTime()
+                    // è·å–å½“å‰å‰©ä½™æ—¶é—´ - è¿™é‡Œéœ€è¦æ›¿æ¢ä¸º building->getRemainingUpgradeTime()
                     static float remaining = totalTime;
                     remaining -= dt;
 
@@ -1652,7 +1652,7 @@ void UIManager::removeUpgradeProgress(Building* building) {
     auto it = _upgradeProgressNodes.find(building);
     if (it != _upgradeProgressNodes.end()) {
         if (it->second) {
-            // ÇåÀíuserData
+            // æ¸…ç†userData
             float* totalTimePtr = static_cast<float*>(it->second->getUserData());
             if (totalTimePtr) {
                 delete totalTimePtr;
@@ -1664,7 +1664,7 @@ void UIManager::removeUpgradeProgress(Building* building) {
     }
 }
 
-// ==================== ÌáÊ¾Óë¶Ô»°¿ò ====================
+// ==================== æç¤ºä¸å¯¹è¯æ¡† ====================
 void UIManager::showToast(const std::string& message, float duration) {
     if (!_rootScene) return;
 
@@ -1681,7 +1681,7 @@ void UIManager::showToast(const std::string& message, float duration) {
 
     _rootScene->addChild(toast, static_cast<int>(UILayer::Tips));
 
-    // µ­Èëµ­³ö¶¯»­
+    // æ·¡å…¥æ·¡å‡ºåŠ¨ç”»
     toast->setOpacity(0);
     auto fadeIn = FadeIn::create(0.2f);
     auto delay = DelayTime::create(duration);
@@ -1699,22 +1699,22 @@ void UIManager::showConfirmDialog(const std::string& title, const std::string& c
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(40, 40, 60, 245), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
+    // æ ‡é¢˜
     auto titleLabel = Label::createWithTTF(title, "fonts/arial.ttf", 22 * _scaleFactor);
     titleLabel->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     titleLabel->setColor(Color3B::WHITE);
     panel->addChild(titleLabel, 1);
 
-    // ÄÚÈİ
+    // å†…å®¹
     auto contentLabel = Label::createWithTTF(content, "fonts/arial.ttf", 16 * _scaleFactor);
     contentLabel->setPosition(Vec2(panelSize.width / 2, panelSize.height / 2 + 10 * _scaleFactor));
     contentLabel->setColor(Color3B(200, 200, 200));
@@ -1722,7 +1722,7 @@ void UIManager::showConfirmDialog(const std::string& title, const std::string& c
     contentLabel->setAlignment(TextHAlignment::CENTER);
     panel->addChild(contentLabel, 1);
 
-    // È·ÈÏ°´Å¥
+    // ç¡®è®¤æŒ‰é’®
     auto confirmBtn = Button::create();
     confirmBtn->setTitleText("Confirm");
     confirmBtn->setTitleFontSize(16 * _scaleFactor);
@@ -1735,7 +1735,7 @@ void UIManager::showConfirmDialog(const std::string& title, const std::string& c
         });
     panel->addChild(confirmBtn, 1);
 
-    // È¡Ïû°´Å¥
+    // å–æ¶ˆæŒ‰é’®
     auto cancelBtn = Button::create();
     cancelBtn->setTitleText("Cancel");
     cancelBtn->setTitleFontSize(16 * _scaleFactor);
@@ -1748,12 +1748,12 @@ void UIManager::showConfirmDialog(const std::string& title, const std::string& c
         });
     panel->addChild(cancelBtn, 1);
 
-    // Ìí¼ÓÄ£Ì¬²ã
+    // æ·»åŠ æ¨¡æ€å±‚
     auto modalLayer = createModalLayer();
     _rootScene->addChild(modalLayer, static_cast<int>(UILayer::Dialog) - 1);
     _rootScene->addChild(panel, static_cast<int>(UILayer::Dialog));
 
-    // µã»÷Ä£Ì¬²ã¹Ø±Õ¶Ô»°¿ò
+    // ç‚¹å‡»æ¨¡æ€å±‚å…³é—­å¯¹è¯æ¡†
     auto touchListener = EventListenerTouchOneByOne::create();
     touchListener->setSwallowTouches(true);
     touchListener->onTouchBegan = [](Touch* touch, Event* event) -> bool {
@@ -1771,22 +1771,22 @@ void UIManager::showInfoDialog(const std::string& title, const std::string& cont
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
-    // ±³¾°
+    // èƒŒæ™¯
     auto bg = LayerColor::create(Color4B(40, 40, 60, 245), panelSize.width, panelSize.height);
     panel->addChild(bg, 0);
 
-    // ±ß¿ò
+    // è¾¹æ¡†
     auto border = DrawNode::create();
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // ±êÌâ
+    // æ ‡é¢˜
     auto titleLabel = Label::createWithTTF(title, "fonts/arial.ttf", 22 * _scaleFactor);
     titleLabel->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     titleLabel->setColor(Color3B::WHITE);
     panel->addChild(titleLabel, 1);
 
-    // ÄÚÈİ
+    // å†…å®¹
     auto contentLabel = Label::createWithTTF(content, "fonts/arial.ttf", 16 * _scaleFactor);
     contentLabel->setPosition(Vec2(panelSize.width / 2, panelSize.height / 2 + 10 * _scaleFactor));
     contentLabel->setColor(Color3B(200, 200, 200));
@@ -1794,7 +1794,7 @@ void UIManager::showInfoDialog(const std::string& title, const std::string& cont
     contentLabel->setAlignment(TextHAlignment::CENTER);
     panel->addChild(contentLabel, 1);
 
-    // È·¶¨°´Å¥
+    // ç¡®å®šæŒ‰é’®
     auto okBtn = Button::create();
     okBtn->setTitleText("OK");
     okBtn->setTitleFontSize(16 * _scaleFactor);
@@ -1806,7 +1806,7 @@ void UIManager::showInfoDialog(const std::string& title, const std::string& cont
         });
     panel->addChild(okBtn, 1);
 
-    // Ìí¼ÓÄ£Ì¬²ã
+    // æ·»åŠ æ¨¡æ€å±‚
     auto modalLayer = createModalLayer();
     _rootScene->addChild(modalLayer, static_cast<int>(UILayer::Dialog) - 1);
     _rootScene->addChild(panel, static_cast<int>(UILayer::Dialog));
@@ -1814,28 +1814,28 @@ void UIManager::showInfoDialog(const std::string& title, const std::string& cont
     playShowAnimation(panel);
 }
 
-// ==================== Õ½¶·¼ÓÔØ½çÃæ ====================
+// ==================== æˆ˜æ–—åŠ è½½ç•Œé¢ ====================
 void UIManager::showBattleLoading(const std::string& tips) {
     auto panel = Node::create();
     panel->setContentSize(_visibleSize);
     panel->setPosition(_visibleOrigin);
 
-    // È«ÆÁÕÚÕÖ
+    // å…¨å±é®ç½©
     auto bg = LayerColor::create(Color4B(20, 20, 30, 255), _visibleSize.width, _visibleSize.height);
     panel->addChild(bg, 0);
 
-    // ¼ÓÔØ¶¯»­£¨Ğı×ªµÄÔ²È¦£©
+    // åŠ è½½åŠ¨ç”»ï¼ˆæ—‹è½¬çš„åœ†åœˆï¼‰
     auto loadingCircle = DrawNode::create();
     loadingCircle->drawCircle(Vec2::ZERO, 30 * _scaleFactor, 0, 32, false, Color4F::WHITE);
     loadingCircle->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height / 2));
     panel->addChild(loadingCircle, 1);
 
-    // Ğı×ª¶¯»­
+    // æ—‹è½¬åŠ¨ç”»
     auto rotate = RotateBy::create(1.0f, 360);
     auto repeatRotate = RepeatForever::create(rotate);
     loadingCircle->runAction(repeatRotate);
 
-    // ÌáÊ¾ÎÄ×Ö
+    // æç¤ºæ–‡å­—
     auto tipsLabel = Label::createWithTTF(tips, "fonts/arial.ttf", 20 * _scaleFactor);
     tipsLabel->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height / 2 - 60 * _scaleFactor));
     tipsLabel->setColor(Color3B::WHITE);
@@ -1849,9 +1849,9 @@ void UIManager::hideBattleLoading() {
     hidePanel(UIPanelType::LoadingBattleField, true);
 }
 
-// ==================== Í¨ÓÃ¹Ø±Õ°´Å¥ ====================
+// ==================== é€šç”¨å…³é—­æŒ‰é’® ====================
 Button* UIManager::createCloseButton(const std::function<void()>& onClose) {
-    auto closeBtn = Button::create("UI/btn_close.png", "UI/btn_close_pressed.png"); // ÕâÀïĞèÒªÌæ»»ÎªÊµ¼Ê¹Ø±Õ°´Å¥Í¼Æ¬
+    auto closeBtn = Button::create("UI/btn_close.png", "UI/btn_close_pressed.png"); // è¿™é‡Œéœ€è¦æ›¿æ¢ä¸ºå®é™…å…³é—­æŒ‰é’®å›¾ç‰‡
     if (!closeBtn->getVirtualRenderer()) {
         closeBtn = Button::create();
         closeBtn->setTitleText("X");
@@ -1865,7 +1865,7 @@ Button* UIManager::createCloseButton(const std::function<void()>& onClose) {
     return closeBtn;
 }
 
-// ==================== ¸¨Öú·½·¨ ====================
+// ==================== è¾…åŠ©æ–¹æ³• ====================
 void UIManager::addPanelToScene(Node* panel, UILayer layer, bool modal) {
     if (!_rootScene || !panel) return;
 
@@ -1873,7 +1873,7 @@ void UIManager::addPanelToScene(Node* panel, UILayer layer, bool modal) {
         auto modalLayer = createModalLayer();
         _rootScene->addChild(modalLayer, static_cast<int>(layer) - 1);
 
-        // ²éÕÒ¶ÔÓ¦µÄÃæ°åÀàĞÍ²¢±£´æÄ£Ì¬²ã
+        // æŸ¥æ‰¾å¯¹åº”çš„é¢æ¿ç±»å‹å¹¶ä¿å­˜æ¨¡æ€å±‚
         for (auto& pair : _panels) {
             if (pair.second == panel) {
                 _modalLayers[pair.first] = modalLayer;
@@ -1889,7 +1889,7 @@ LayerColor* UIManager::createModalLayer() {
     auto layer = LayerColor::create(Color4B(0, 0, 0, 128), _visibleSize.width, _visibleSize.height);
     layer->setPosition(_visibleOrigin);
 
-    // ×èµ²´¥ÃşÊÂ¼ş
+    // é˜»æŒ¡è§¦æ‘¸äº‹ä»¶
     auto touchListener = EventListenerTouchOneByOne::create();
     touchListener->setSwallowTouches(true);
     touchListener->onTouchBegan = [](Touch* touch, Event* event) -> bool {
@@ -1928,7 +1928,7 @@ void UIManager::playHideAnimation(Node* panel, const std::function<void()>& call
     panel->runAction(Sequence::create(Spawn::create(scaleAction, fadeAction, nullptr), callFunc, nullptr));
 }
 
-// ==================== UIÊÂ¼şÏµÍ³ ====================
+// ==================== UIäº‹ä»¶ç³»ç»Ÿ ====================
 void UIManager::setUICallback(const std::string& eventName, const std::function<void()>& callback) {
     _callbacks[eventName] = callback;
 }
@@ -1940,7 +1940,7 @@ void UIManager::triggerUIEvent(const std::string& eventName) {
     }
 }
 
-// ==================== ÆÁÄ»ÊÊÅä¹¤¾ß ====================
+// ==================== å±å¹•é€‚é…å·¥å…· ====================
 Size UIManager::getVisibleSize() const {
     return _visibleSize;
 }
