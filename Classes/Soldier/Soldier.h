@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by duby0 on 2025/12/5.
 //
 
@@ -18,33 +18,74 @@ enum class SoldierType {
 class Soldier {
 public:
     // 构造函数
-    Soldier();
-
-    // 获取生命值
-    int GetHealth() const {return health_;}
-    // 设置生命值
-    void SetHealth(int health){health_ = health;};
-
-    // 获取攻击力
-    int GetDamage() const;
-    // 设置攻击力
-    void SetDamage(int damage);
-
-    // 获取攻击距离
-    float GetAttackRange() const;
-    // 设置攻击距离
-    void SetAttackRange(double range);
-    // 获取攻击距离
-    float GetAttackDelay() const;
-    // 设置攻击距离
-    void SetAttackDelay(double delay);
-    // 获取移动速度
-    float GetMoveSpeed() const;
-    // 设置移动速度
-    void SetMoveSpeed(double speed);
-
-    std::string GetName() const;
-    void SetName(std::string name);
+    Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, double attack_delay);
+    
+    // 获取士兵类型
+    SoldierType GetSoldierType() const;
+    
+    // 获取士兵生命值
+    virtual int GetHealth() const;
+    
+    // 设置士兵生命值
+    virtual void SetHealth(int health);
+    
+    // 获取士兵伤害值
+    virtual int GetDamage() const;
+    
+    // 设置士兵伤害值
+    virtual void SetDamage(int damage);
+    
+    // 获取士兵移动速度
+    virtual float GetMoveSpeed() const;
+    
+    // 设置士兵移动速度
+    virtual void SetMoveSpeed(double move_speed);
+    
+    // 获取士兵攻击范围
+    virtual float GetAttackRange() const;
+    
+    // 设置士兵攻击范围
+    virtual void SetAttackRange(double attack_range);
+    
+    // 获取士兵攻击延迟
+    virtual float GetAttackDelay() const;
+    
+    // 设置士兵攻击延迟
+    virtual void SetAttackDelay(double attack_delay);
+    
+    // 获取士兵名称
+    virtual std::string GetName() const;
+    
+    // 设置士兵名称
+    virtual void SetName(std::string name);
+    
+    // TODO: Village类尚未实现，暂时注释掉相关方法
+    // void SetVillage(Village* village);
+    // Village* GetVillage() const;
+    
+    // 士兵是否存活
+    bool IsAlive() const;
+    
+    // 士兵是否正在移动
+    bool IsMoving() const;
+    
+    // 士兵是否正在攻击
+    bool IsAttacking() const;
+    
+    // 士兵是否已经死亡
+    bool IsDead() const;
+    
+    // 士兵死亡
+    void Die();
+    
+    // 士兵攻击
+    void Attack(Soldier* target);
+    
+    // 士兵移动
+    void Move(std::pair<int, int> destination);
+    
+    // 士兵受到伤害
+    void TakeDamage(int damage);
 
 
 protected:

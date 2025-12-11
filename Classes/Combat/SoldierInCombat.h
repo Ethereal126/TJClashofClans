@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by duby0 on 2025/12/7.
 //
 
@@ -12,10 +12,12 @@
 
 class BuildingInCombat;
 
+
 class SoldierInCombat : public cocos2d::Sprite{
 public:
     ~SoldierInCombat();
     cocos2d::Vec2 location_;
+    Map* map_;
     bool is_alive_;
 
     static SoldierInCombat* Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos);
@@ -24,11 +26,12 @@ public:
     // 被攻击函数
     void TakeDamage(int damage);
 
-private:
+    cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos);
+
+protected:
     Soldier* soldier_template_;
     int current_health_;
     BuildingInCombat* current_target_;
-    Map* map_;
 
     void SetTarget(BuildingInCombat* target);
     void Die();
@@ -37,7 +40,7 @@ private:
     void DealDamageToTarget();
     void CheckTargetAlive();
     BuildingInCombat* GetNextTarget() const;
-    cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos);
+
     void RedirectPath(std::vector<cocos2d::Vec2>& path);
     static void SimplifyPath(std::vector<cocos2d::Vec2>& path);
     // -------------------------- 动画资源（静态共享） --------------------------

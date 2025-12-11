@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by duby0 on 2025/12/7.
 //
 
@@ -22,13 +22,13 @@ public:
     virtual bool Init(const std::string& filename);
 
     // 被攻击函数
-    void TakeDamage(int damage);
+    virtual void TakeDamage(int damage);
 
     //使用时应确保建筑类型为防御类建筑，函数参数有待确定，暂时考虑通过轮询方式搜索攻击目标，如果有更好的想法再做优化
     void Attack();
 
     // 判断是否存活
-    bool IsAlive() const;
+    virtual bool IsAlive() const;
 
     void Destroyed();
 

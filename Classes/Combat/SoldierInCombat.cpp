@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by duby0 on 2025/12/7.
 //
 #include "SoldierInCombat.h"
@@ -51,7 +51,10 @@ bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn
 
     // 4. 设置初始状态
     this->setPosition(spawn_pos);
-    map_->addChild(this);
+    // 只有在map_不为nullptr时才调用addChild
+    if (map_ != nullptr) {
+        map_->addChild(this);
+    }
     this->setScale(0.5f);  // 调整大小（根据实际资源修改）
 
     return true;
