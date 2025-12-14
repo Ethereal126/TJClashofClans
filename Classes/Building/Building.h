@@ -22,6 +22,8 @@ protected:
     int defense_;                     // 防御值
     int build_time_;                   // 建造时间（秒）
     int build_cost_;                   // 建造成本
+    int width_;
+    int length_;
     cocos2d::Vec2 position_;    // 建筑的位置信息 (x, y)
 
 public:
@@ -117,8 +119,12 @@ public:
      * @return 以 std::pair<int,int> 形式返回的建筑坐标。
      */
     std::pair<int, int> GetPosition() const;
-	int GetWidth() const;
-	int GetLength() const;
+	int GetWidth() const{
+        return width_;
+    }
+	int GetLength() const {
+        return length_;
+    }
 };
 
 /**

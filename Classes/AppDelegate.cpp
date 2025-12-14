@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
@@ -51,6 +51,14 @@ AppDelegate::~AppDelegate()
 #endif
 }
 
+int Add(int a, int b) {
+    return a + b;
+}
+
+TEST(AddTest, Add) {
+    EXPECT_EQ(2, Add(1,2)); // 断言场景非空
+}
+
 // if you want a different context, modify the value of glContextAttrs
 // it will affect all platforms
 void AppDelegate::initGLContextAttrs()
@@ -69,6 +77,7 @@ static int register_all_packages()
 }
 
 bool AppDelegate::applicationDidFinishLaunching() {
+    CCLOG("Hello");
     // initialize director
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
@@ -108,11 +117,17 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     register_all_packages();
 
+    int argc = 0;
+    char* argv[] = { nullptr };
+    testing::InitGoogleTest(&argc, argv);
+    int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
+
+   
     // create a scene. it's an autorelease object
     auto scene = MainScene::createScene(/*mapWidth*/40, /*mapLength*/40, /*gridSize*/64);
-
-    // run
     director->runWithScene(scene);
+
+
 
     return true;
 }
