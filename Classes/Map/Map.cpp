@@ -106,7 +106,7 @@ bool Map::isValidGrid(int gridX, int gridY) const {
     return gridX >= 0 && gridY >= 0 && gridX < _width && gridY < _length;
 }
 
-bool Map::isValidGrid(const cocos2d::Vec2& grid_pos){
+bool Map::isValidGrid(const cocos2d::Vec2& grid_pos) const{
     return isValidGrid(std::floor(grid_pos.x),std::floor(grid_pos.y));
 }
 
