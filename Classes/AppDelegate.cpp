@@ -25,6 +25,7 @@
 #include "AppDelegate.h"
 #include "HelloWorldScene.h"
 #include "MainScene.h"
+#include "Combat/CombatTest.h"
 
 // #define USE_AUDIO_ENGINE 1
 
@@ -51,13 +52,6 @@ AppDelegate::~AppDelegate()
 #endif
 }
 
-int Add(int a, int b) {
-    return a + b;
-}
-
-TEST(AddTest, Add) {
-    EXPECT_EQ(2, Add(1,2)); // 断言场景非空
-}
 
 // if you want a different context, modify the value of glContextAttrs
 // it will affect all platforms
@@ -121,13 +115,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     char* argv[] = { nullptr };
     testing::InitGoogleTest(&argc, argv);
     int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
-
-   
-    // create a scene. it's an autorelease object
-    auto scene = MainScene::createScene(/*mapWidth*/40, /*mapLength*/40, /*gridSize*/64);
-    director->runWithScene(scene);
-
-
+    CCLOG("testResult:%d", testResult);
 
     return true;
 }

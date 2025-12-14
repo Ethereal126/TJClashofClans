@@ -57,7 +57,6 @@ include_directories(external/gtest/include)
 link_directories(external/gtest/lib)
 
 
-
 if(XCODE)
     if(NOT DEFINED CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET)
         SET (CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET 8.0)
@@ -89,6 +88,10 @@ list(APPEND GAME_SOURCE
     Classes/HelloWorldScene.cpp
     Classes/Map/Map.cpp
     Classes/Building/Building.cpp
+    Classes/Combat/SoldierInCombat.cpp
+    Classes/Combat/BuildingInCombat.cpp
+    Classes/Combat/Combat.cpp
+    Classes/Soldier/Soldier.cpp
 )
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
@@ -96,6 +99,9 @@ list(APPEND GAME_HEADER
    Classes/Map/Map.h
    Classes/Building/Building.h
    Classes/MainScene.h
+   Classes/Combat/CombatTest.h
+   Classes/Combat/CombatAll.h
+   Classes/Soldier/Soldier.h
 )
 
 if(ANDROID)
@@ -163,8 +169,10 @@ else()
     target_link_libraries(${APP_NAME} -Wl,--whole-archive cpp_android_spec -Wl,--no-whole-archive)
 endif()
 
-target_link_libraries(${APP_NAME} PRIVATE cocos2d
-D:/download/vcpkg/vcpkg/installed/x86-windows/debug/lib/gtest.lib
+target_link_libraries(${APP_NAME} PRIVATE
+gmock
+gtest
+cocos2d
 )
 target_include_directories(${APP_NAME}
         PRIVATE Classes

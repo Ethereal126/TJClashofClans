@@ -106,9 +106,10 @@ public:
     // 保存地图数据到配置文件
     bool saveMapData(const std::string& filePath) const;
 
+    virtual ~Map();
+
 protected:
     Map();
-    virtual ~Map();
 
     // 初始化地图格子状态
     void initGrids();

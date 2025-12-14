@@ -65,7 +65,7 @@ void Map::initGrids() {
         _groundBatch = nullptr;
     }
 
-    const std::string groundTilePath = "....Resources/tiles/ground_iso.png"; 
+    const std::string groundTilePath = "tile/ground_iso.png";
     if (cocos2d::FileUtils::getInstance()->isFileExist(groundTilePath)) {
         auto tempSprite = cocos2d::Sprite::create(groundTilePath);
         if (tempSprite) {

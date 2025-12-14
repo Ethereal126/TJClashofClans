@@ -26,8 +26,6 @@
 #define  _APP_DELEGATE_H_
 
 #include "cocos2d.h"
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
 
 /**
 @brief    The cocos2d Application.

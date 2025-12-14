@@ -63,31 +63,6 @@ public:
     // void SetVillage(Village* village);
     // Village* GetVillage() const;
     
-    // 士兵是否存活
-    bool IsAlive() const;
-    
-    // 士兵是否正在移动
-    bool IsMoving() const;
-    
-    // 士兵是否正在攻击
-    bool IsAttacking() const;
-    
-    // 士兵是否已经死亡
-    bool IsDead() const;
-    
-    // 士兵死亡
-    void Die();
-    
-    // 士兵攻击
-    void Attack(Soldier* target);
-    
-    // 士兵移动
-    void Move(std::pair<int, int> destination);
-    
-    // 士兵受到伤害
-    void TakeDamage(int damage);
-
-
 protected:
     SoldierType type_;
     int health_;
