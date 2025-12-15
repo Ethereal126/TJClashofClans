@@ -1,5 +1,12 @@
 #include "UIManager/UIManager.h"
 #include "Building/Building.h"
+#include "TownHall/TownHall.h"
+#include "AudioManager/AudioManager.h"
+#include <sstream>
+#include "MapManager/MapManager.h"      
+#include "Combat/Combat.h"       
+#include "Scene/BattleScene.h"   
+#include "MainScene.h"          
 
 USING_NS_CC;
 using namespace cocos2d::ui;
@@ -29,9 +36,7 @@ UIManager::UIManager()
     , _selectedBuilding(nullptr)
     , _goldLabel(nullptr)
     , _elixirLabel(nullptr)
-    , _loadingProgressBar(nullptr)
-{
-}
+    , _loadingProgressBar(nullptr){ }
 
 UIManager::~UIManager() {
     closeAllPanels();
@@ -241,7 +246,7 @@ Node* UIManager::createGameHUD() {
     float startY = _visibleSize.height * 0.6f;
 
     // 设置按钮
-    auto settingsBtn = Button::create("UI/btn_settings.png", "UI/btn_settings_pressed.png"); // 这里需要替换为实际按钮图片
+    auto settingsBtn = Button::create("..../Resource/UI/btn_settings.png", "..../Resource/UI/btn_settings_pressed.png"); 
     if (!settingsBtn->getVirtualRenderer()) {
         settingsBtn = Button::create();
         settingsBtn->setTitleText("Settings");
@@ -250,13 +255,11 @@ Node* UIManager::createGameHUD() {
         settingsBtn->setScale9Enabled(true);
     }
     settingsBtn->setPosition(Vec2(rightX, startY));
-    settingsBtn->addClickEventListener([this](Ref* sender) {
-        showPanel(UIPanelType::Settings, UILayer::Dialog, true);
-        });
+    settingsBtn->addClickEventListener([this](Ref* sender) {showPanel(UIPanelType::Settings, UILayer::Dialog, true);});
     panel->addChild(settingsBtn, 1);
 
     // 商店按钮
-    auto shopBtn = Button::create("UI/btn_shop.png", "UI/btn_shop_pressed.png"); // 这里需要替换为实际按钮图片
+    auto shopBtn = Button::create("..../Resource/UI/btn_shop.png", "..../Resource/UI/btn_shop_pressed.png"); 
     if (!shopBtn->getVirtualRenderer()) {
         shopBtn = Button::create();
         shopBtn->setTitleText("Shop");
@@ -265,13 +268,11 @@ Node* UIManager::createGameHUD() {
         shopBtn->setScale9Enabled(true);
     }
     shopBtn->setPosition(Vec2(rightX, startY - buttonSize - buttonMargin));
-    shopBtn->addClickEventListener([this](Ref* sender) {
-        showShop();
-        });
+    shopBtn->addClickEventListener([this](Ref* sender) {showShop();});
     panel->addChild(shopBtn, 1);
 
     // 进攻按钮
-    auto attackBtn = Button::create("UI/btn_attack.png", "UI/btn_attack_pressed.png"); // 这里需要替换为实际按钮图片
+    auto attackBtn = Button::create("..../Resource/UI/btn_attack.png", "..../Resource/UI/btn_attack_pressed.png"); 
     if (!attackBtn->getVirtualRenderer()) {
         attackBtn = Button::create();
         attackBtn->setTitleText("Attack");
@@ -280,9 +281,7 @@ Node* UIManager::createGameHUD() {
         attackBtn->setScale9Enabled(true);
     }
     attackBtn->setPosition(Vec2(rightX, startY - 2 * (buttonSize + buttonMargin)));
-    attackBtn->addClickEventListener([this](Ref* sender) {
-        showMapSelection();
-        });
+    attackBtn->addClickEventListener([this](Ref* sender) {showMapSelection();});
     panel->addChild(attackBtn, 1);
 
     return panel;
@@ -291,52 +290,95 @@ Node* UIManager::createGameHUD() {
 // ==================== 资源栏 ====================
 Node* UIManager::createResourceBar() {
     auto bar = Node::create();
-    float barHeight = 50 * _scaleFactor;
-    bar->setContentSize(Size(_visibleSize.width, barHeight));
-    bar->setPosition(Vec2(0, _visibleSize.height - barHeight));
 
-    // 半透明背景
-    auto bg = LayerColor::create(Color4B(0, 0, 0, 150), _visibleSize.width * 0.4f, barHeight);
-    bg->setPosition(Vec2(10 * _scaleFactor, 0));
-    bar->addChild(bg, 0);
+    // 尺寸定义
+    float barWidth = 200 * _scaleFactor;      // 资源条固定宽度
+    float barHeight = 28 * _scaleFactor;      // 资源条高度
+    float iconSize = 40 * _scaleFactor;       // 图标大小
+    float margin = 10 * _scaleFactor;         // 边距
+    float rowSpacing = 8 * _scaleFactor;      // 行间距
 
-    float iconSize = 32 * _scaleFactor;
-    float startX = 30 * _scaleFactor;
-    float centerY = barHeight / 2;
+    // 整体容器大小
+    float totalWidth = barWidth + iconSize + margin;
+    float totalHeight = barHeight * 2 + rowSpacing;
+    bar->setContentSize(Size(totalWidth, totalHeight));
 
-    // 金币图标
-    auto goldIcon = Sprite::create("UI/icon_gold.png"); // 这里需要替换为实际金币图标
+    // 位置：右上角
+    bar->setPosition(Vec2(_visibleSize.width - totalWidth - margin,
+        _visibleSize.height - totalHeight - margin));
+
+    
+    TownHall* townHall = GetTownHall(); // 需要实现获取方式
+    int goldCapacity = townHall->GetMaxGoldCapacity();
+    int currentGold = townHall->GetGold();
+    int elixirCapacity = townHall->GetMaxElixirCapacity();
+    int currentElixir = townHall->GetElixir();
+
+    // ==================== 金币行（上方）====================
+    float goldRowY = barHeight + rowSpacing;
+
+    // 金币条背景（半透明黑色，固定长度）
+    auto goldBg = LayerColor::create(Color4B(0, 0, 0, 180), barWidth, barHeight);
+    goldBg->setPosition(Vec2(0, goldRowY));
+    bar->addChild(goldBg, 0);
+
+    // 金币实际资源填充（右对齐）
+    float goldRatio = (goldCapacity > 0) ? std::min(1.0f, (float)currentGold / goldCapacity) : 0;
+    float goldFillWidth = barWidth * goldRatio;
+    auto goldFill = LayerColor::create(Color4B(255, 215, 0, 200), goldFillWidth, barHeight - 4 * _scaleFactor);
+    // 右对齐：从右侧开始填充
+    goldFill->setPosition(Vec2(barWidth - goldFillWidth, goldRowY + 2 * _scaleFactor));
+    bar->addChild(goldFill, 1);
+    goldFill->setName("goldFill");
+
+    // 金币数量文字（覆盖在资源条上，右对齐）
+    _goldLabel = Label::createWithTTF(std::to_string(currentGold), "fonts/arial.ttf", 18 * _scaleFactor);
+    _goldLabel->setPosition(Vec2(barWidth - 10 * _scaleFactor, goldRowY + barHeight / 2));
+    _goldLabel->setAnchorPoint(Vec2(1.0f, 0.5f)); // 右对齐
+    _goldLabel->setColor(Color3B::WHITE);
+    _goldLabel->enableOutline(Color4B::BLACK, 2);
+    bar->addChild(_goldLabel, 2);
+
+    // 金币图标（在资源条右侧外部）
+    auto goldIcon = Sprite::create("..../Resource/UI/icon_gold.png");
     if (goldIcon) {
         goldIcon->setScale(iconSize / goldIcon->getContentSize().width);
-        goldIcon->setPosition(Vec2(startX, centerY));
-        bar->addChild(goldIcon, 1);
     }
+    goldIcon->setPosition(Vec2(barWidth + margin + iconSize / 2, goldRowY + barHeight / 2));
+    bar->addChild(goldIcon, 1);
 
-    // 金币数量
-    int currentGold = 1000; // 这里需要替换为 resource->getGold() 获取实际金币数量
-    _goldLabel = Label::createWithTTF(std::to_string(currentGold), "fonts/arial.ttf", 20 * _scaleFactor);
-    _goldLabel->setPosition(Vec2(startX + iconSize + 10 * _scaleFactor, centerY));
-    _goldLabel->setAnchorPoint(Vec2(0, 0.5f));
-    _goldLabel->setColor(Color3B(255, 215, 0)); // 金色
-    bar->addChild(_goldLabel, 1);
+    // ==================== 圣水行（下方）====================
+    float elixirRowY = 0;
 
-    float secondX = startX + 150 * _scaleFactor;
+    // 圣水条背景（半透明黑色，固定长度）
+    auto elixirBg = LayerColor::create(Color4B(0, 0, 0, 180), barWidth, barHeight);
+    elixirBg->setPosition(Vec2(0, elixirRowY));
+    bar->addChild(elixirBg, 0);
 
-    // 圣水图标
-    auto elixirIcon = Sprite::create("UI/icon_elixir.png"); // 这里需要替换为实际圣水图标
+    // 圣水实际资源填充（右对齐）
+    float elixirRatio = (elixirCapacity > 0) ? std::min(1.0f, (float)currentElixir / elixirCapacity) : 0;
+    float elixirFillWidth = barWidth * elixirRatio;
+    auto elixirFill = LayerColor::create(Color4B(200, 100, 255, 200), elixirFillWidth, barHeight - 4 * _scaleFactor);
+    // 右对齐：从右侧开始填充
+    elixirFill->setPosition(Vec2(barWidth - elixirFillWidth, elixirRowY + 2 * _scaleFactor));
+    bar->addChild(elixirFill, 1);
+    elixirFill->setName("elixirFill");
+
+    // 圣水数量文字（覆盖在资源条上，右对齐）
+    _elixirLabel = Label::createWithTTF(std::to_string(currentElixir), "fonts/arial.ttf", 18 * _scaleFactor);
+    _elixirLabel->setPosition(Vec2(barWidth - 10 * _scaleFactor, elixirRowY + barHeight / 2));
+    _elixirLabel->setAnchorPoint(Vec2(1.0f, 0.5f)); // 右对齐
+    _elixirLabel->setColor(Color3B::WHITE);
+    _elixirLabel->enableOutline(Color4B::BLACK, 2);
+    bar->addChild(_elixirLabel, 2);
+
+    // 圣水图标（在资源条右侧外部）
+    auto elixirIcon = Sprite::create("..../Resource/UI/icon_elixir.png");
     if (elixirIcon) {
         elixirIcon->setScale(iconSize / elixirIcon->getContentSize().width);
-        elixirIcon->setPosition(Vec2(secondX, centerY));
-        bar->addChild(elixirIcon, 1);
     }
-
-    // 圣水数量
-    int currentElixir = 500; // 这里需要替换为 resource->getElixir() 获取实际圣水数量
-    _elixirLabel = Label::createWithTTF(std::to_string(currentElixir), "fonts/arial.ttf", 20 * _scaleFactor);
-    _elixirLabel->setPosition(Vec2(secondX + iconSize + 10 * _scaleFactor, centerY));
-    _elixirLabel->setAnchorPoint(Vec2(0, 0.5f));
-    _elixirLabel->setColor(Color3B(200, 100, 255)); // 紫色
-    bar->addChild(_elixirLabel, 1);
+    elixirIcon->setPosition(Vec2(barWidth + margin + iconSize / 2, elixirRowY + barHeight / 2));
+    bar->addChild(elixirIcon, 1);
 
     return bar;
 }
@@ -388,6 +430,8 @@ Node* UIManager::createSettings() {
     closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
     panel->addChild(closeBtn, 2);
 
+	AudioManager* audioManager = AudioManager::getInstance();
+
     // 音乐音量滑块
     float sliderY = panelSize.height - 100 * _scaleFactor;
     auto musicLabel = Label::createWithTTF("Music Volume", "fonts/arial.ttf", 18 * _scaleFactor);
@@ -397,16 +441,16 @@ Node* UIManager::createSettings() {
     panel->addChild(musicLabel, 1);
 
     auto musicSlider = Slider::create();
-    musicSlider->loadBarTexture("UI/slider_bg.png"); // 这里需要替换为实际滑块背景图片
-    musicSlider->loadProgressBarTexture("UI/slider_progress.png"); // 这里需要替换为实际滑块进度图片
-    musicSlider->loadSlidBallTextures("UI/slider_ball.png"); // 这里需要替换为实际滑块按钮图片
+    musicSlider->loadBarTexture("..../Resource/UI/slider_bg.png"); // 这里需要替换为实际滑块背景图片
+    musicSlider->loadProgressBarTexture("..../Resource/UI/slider_progress.png"); // 这里需要替换为实际滑块进度图片
+    musicSlider->loadSlidBallTextures("..../Resource/UI/slider_ball.png"); // 这里需要替换为实际滑块按钮图片
     musicSlider->setPosition(Vec2(panelSize.width - 120 * _scaleFactor, sliderY));
-    musicSlider->setPercent(80); // 这里需要替换为 audioManager->getMusicVolume() * 100
+    musicSlider->setPercent(audioManager->getMusicVolume() * 100);
     musicSlider->addEventListener([](Ref* sender, Slider::EventType type) {
         if (type == Slider::EventType::ON_PERCENTAGE_CHANGED) {
             auto slider = dynamic_cast<Slider*>(sender);
             float volume = slider->getPercent() / 100.0f;
-            // 这里需要替换为 audioManager->setMusicVolume(volume);
+            AudioManager::getInstance()->setMusicVolume(volume);
             CCLOG("Music volume: %.2f", volume);
         }
         });
@@ -421,16 +465,16 @@ Node* UIManager::createSettings() {
     panel->addChild(sfxLabel, 1);
 
     auto sfxSlider = Slider::create();
-    sfxSlider->loadBarTexture("UI/slider_bg.png"); // 这里需要替换为实际滑块背景图片
-    sfxSlider->loadProgressBarTexture("UI/slider_progress.png"); // 这里需要替换为实际滑块进度图片
-    sfxSlider->loadSlidBallTextures("UI/slider_ball.png"); // 这里需要替换为实际滑块按钮图片
+    sfxSlider->loadBarTexture("..../Resource/UI/slider_bg.png"); // 这里需要替换为实际滑块背景图片
+    sfxSlider->loadProgressBarTexture("..../Resource/UI/slider_progress.png"); // 这里需要替换为实际滑块进度图片
+    sfxSlider->loadSlidBallTextures("..../Resource/UI/slider_ball.png"); // 这里需要替换为实际滑块按钮图片
     sfxSlider->setPosition(Vec2(panelSize.width - 120 * _scaleFactor, sfxSliderY));
-    sfxSlider->setPercent(80); // 这里需要替换为 audioManager->getSFXVolume() * 100
+    sfxSlider->setPercent(audioManager->getSoundEffectVolume() * 100);
     sfxSlider->addEventListener([](Ref* sender, Slider::EventType type) {
         if (type == Slider::EventType::ON_PERCENTAGE_CHANGED) {
             auto slider = dynamic_cast<Slider*>(sender);
             float volume = slider->getPercent() / 100.0f;
-            // 这里需要替换为 audioManager->setSFXVolume(volume);
+            AudioManager::getInstance()->setSoundEffectVolume(volume);
             CCLOG("SFX volume: %.2f", volume);
         }
         });
@@ -479,35 +523,20 @@ Node* UIManager::createShop() {
     scrollView->setPosition(Vec2(20 * _scaleFactor, 20 * _scaleFactor));
     panel->addChild(scrollView, 1);
 
-    // 建筑列表数据 - 这里需要替换为从配置文件或BuildingManager获取
-    struct BuildingData {
-        std::string name;
-        std::string icon;
-        int cost;
-    };
-    std::vector<BuildingData> buildings = {
-        {"Town Hall", "UI/building_townhall.png", 500},
-        {"Gold Mine", "UI/building_goldmine.png", 200},
-        {"Elixir Collector", "UI/building_elixir.png", 200},
-        {"Barracks", "UI/building_barracks.png", 300},
-        {"Cannon", "UI/building_cannon.png", 400},
-        {"Archer Tower", "UI/building_archer.png", 450},
-        {"Wall", "UI/building_wall.png", 50},
-        {"Gold Storage", "UI/building_goldstorage.png", 250},
-        {"Elixir Storage", "UI/building_elixirstorage.png", 250},
-    };
+    // 从 Building 获取所有建筑模板
+    auto buildingTemplates = Building::GetAllBuildingTemplates();
 
     float itemHeight = 80 * _scaleFactor;
     float itemWidth = scrollView->getContentSize().width;
-    float totalHeight = buildings.size() * itemHeight;
+    float totalHeight = buildingTemplates.size() * itemHeight;
 
     auto container = Node::create();
     container->setContentSize(Size(itemWidth, std::max(totalHeight, scrollView->getContentSize().height)));
     scrollView->setInnerContainerSize(container->getContentSize());
     scrollView->addChild(container);
 
-    for (size_t i = 0; i < buildings.size(); i++) {
-        auto& data = buildings[i];
+    for (size_t i = 0; i < buildingTemplates.size(); i++) {
+        const auto& tmpl = buildingTemplates[i];
         float itemY = container->getContentSize().height - (i + 1) * itemHeight + itemHeight / 2;
 
         // 建筑项背景
@@ -516,7 +545,7 @@ Node* UIManager::createShop() {
         container->addChild(itemBg, 0);
 
         // 建筑图标
-        auto icon = Sprite::create(data.icon);
+        auto icon = Sprite::create(tmpl.iconPath);
         if (!icon) {
             icon = Sprite::create();
             icon->setTextureRect(Rect(0, 0, 50 * _scaleFactor, 50 * _scaleFactor));
@@ -527,14 +556,14 @@ Node* UIManager::createShop() {
         container->addChild(icon, 1);
 
         // 建筑名称
-        auto nameLabel = Label::createWithTTF(data.name, "fonts/arial.ttf", 18 * _scaleFactor);
+        auto nameLabel = Label::createWithTTF(tmpl.name, "fonts/arial.ttf", 18 * _scaleFactor);
         nameLabel->setPosition(Vec2(100 * _scaleFactor, itemY + 10 * _scaleFactor));
         nameLabel->setAnchorPoint(Vec2(0, 0.5f));
         nameLabel->setColor(Color3B::WHITE);
         container->addChild(nameLabel, 1);
 
         // 建造成本
-        auto costLabel = Label::createWithTTF("Cost: " + std::to_string(data.cost), "fonts/arial.ttf", 14 * _scaleFactor);
+        auto costLabel = Label::createWithTTF("Cost: " + std::to_string(tmpl.cost), "fonts/arial.ttf", 14 * _scaleFactor);
         costLabel->setPosition(Vec2(100 * _scaleFactor, itemY - 10 * _scaleFactor));
         costLabel->setAnchorPoint(Vec2(0, 0.5f));
         costLabel->setColor(Color3B(255, 215, 0));
@@ -548,41 +577,39 @@ Node* UIManager::createShop() {
         buyBtn->setScale9Enabled(true);
         buyBtn->setPosition(Vec2(itemWidth - 60 * _scaleFactor, itemY));
 
-        std::string buildingName = data.name;
-        int buildingCost = data.cost;
-        buyBtn->addClickEventListener([this, buildingName, buildingCost](Ref* sender) {
-            showPurchaseConfirm(buildingName, buildingCost, [this, buildingName]() {
+        // 捕获模板信息（使用值拷贝）
+        BuildingTemplate templateCopy = tmpl;
+        buyBtn->addClickEventListener([this, templateCopy](Ref* sender) {
+            // 检查金币是否足够
+            TownHall* townHall = GetTownHall();
+            int currentGold = townHall->GetGold();
+
+            if (currentGold >= templateCopy.cost) {
                 hidePanel(UIPanelType::Shop, true);
-                // 这里需要替换为进入建筑放置模式的逻辑
-                // map->enterPlacementMode(buildingName);
-                showToast("Select a location to place " + buildingName);
-                triggerUIEvent("OnEnterPlacementMode");
-                });
+
+                // 使用工厂函数创建建筑实例
+                Building* newBuilding = templateCopy.createFunc();
+                if (newBuilding) {
+                    // 保存待放置信息
+                    _pendingPlacementBuilding = newBuilding;
+                    _pendingPlacementCost = templateCopy.cost;
+
+                    showToast("Drag to place " + templateCopy.name);
+                    triggerUIEvent("OnEnterPlacementMode");
+                }
+            }
+            else {
+                showInfoDialog("Insufficient Gold",
+                    "You need " + std::to_string(templateCopy.cost) + " gold to build " + templateCopy.name);
+            }
             });
         container->addChild(buyBtn, 1);
     }
-
     return panel;
 }
 
 void UIManager::showShop() {
     showPanel(UIPanelType::Shop, UILayer::Dialog, true);
-}
-
-void UIManager::showPurchaseConfirm(const std::string& buildingName, int cost, const std::function<void()>& onConfirm) {
-    std::string content = "Purchase " + buildingName + " for " + std::to_string(cost) + " gold?";
-
-    int currentGold = 1000; // 这里需要替换为 resource->getGold() 获取实际金币
-
-    if (currentGold >= cost) {
-        showConfirmDialog("Confirm Purchase", content, [this, cost, onConfirm]() {
-            // 这里需要替换为 resource->spendGold(cost);
-            if (onConfirm) onConfirm();
-            });
-    }
-    else {
-        showInfoDialog("Insufficient Gold", "You don't have enough gold to purchase this building.");
-    }
 }
 
 // ==================== 地图选择面板 ====================
@@ -596,7 +623,7 @@ Node* UIManager::createMapSelection() {
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
     // 背景（地图图片）
-    auto bg = Sprite::create("UI/map_selection_bg.png"); // 这里需要替换为实际的地图选择背景图
+    auto bg = Sprite::create("..../Resource/UI/map_selection_bg.png"); // 这里需要替换为实际的地图选择背景图
     if (bg) {
         bg->setPosition(Vec2(panelSize.width / 2, panelSize.height / 2));
         float scaleX = panelSize.width / bg->getContentSize().width;
@@ -636,7 +663,7 @@ Node* UIManager::createMapSelection() {
     panel->addChild(pathLine, 1);
 
     // 地图节点1
-    auto node1 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); // 这里需要替换为实际节点图片
+    auto node1 = Button::create("..../Resource/UI/map_node.png", "..../Resource/UI/map_node_pressed.png"); // 这里需要替换为实际节点图片
     if (!node1->getVirtualRenderer()) {
         node1 = Button::create();
         auto circle1 = DrawNode::create();
@@ -662,7 +689,7 @@ Node* UIManager::createMapSelection() {
     panel->addChild(node1Label, 1);
 
     // 地图节点2
-    auto node2 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); // 这里需要替换为实际节点图片
+    auto node2 = Button::create("..../Resource/UI/map_node.png", "..../Resource/UI/map_node_pressed.png"); // 这里需要替换为实际节点图片
     if (!node2->getVirtualRenderer()) {
         node2 = Button::create();
         auto circle2 = DrawNode::create();
@@ -766,7 +793,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     float centerY = panelHeight / 2;
 
     // 信息按钮
-    auto infoBtn = Button::create("UI/btn_info.png", "UI/btn_info_pressed.png"); // 这里需要替换为实际按钮图片
+    auto infoBtn = Button::create("..../Resource/UI/btn_info.png", "..../Resource/UI/btn_info_pressed.png"); // 这里需要替换为实际按钮图片
     if (!infoBtn->getVirtualRenderer()) {
         infoBtn = Button::create();
         infoBtn->setTitleText("Info");
@@ -784,7 +811,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     currentX += buttonSize + buttonMargin;
 
     // 升级按钮
-    auto upgradeBtn = Button::create("UI/btn_upgrade.png", "UI/btn_upgrade_pressed.png"); // 这里需要替换为实际按钮图片
+    auto upgradeBtn = Button::create("..../Resource/UI/btn_upgrade.png", "..../Resource/UI/btn_upgrade_pressed.png");
     if (!upgradeBtn->getVirtualRenderer()) {
         upgradeBtn = Button::create();
         upgradeBtn->setTitleText("Up");
@@ -793,17 +820,30 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
         upgradeBtn->setScale9Enabled(true);
     }
     upgradeBtn->setPosition(Vec2(currentX, centerY));
-    upgradeBtn->addClickEventListener([this](Ref* sender) {
-        hidePanel(UIPanelType::BuildingOptions, true);
-        showBuildingUpgrade(_selectedBuilding);
-        });
+
+    // 检查是否允许升级
+    bool canUpgrade = _selectedBuilding && _selectedBuilding->IsAllowedUpgrade();
+    if (canUpgrade) {
+        upgradeBtn->setEnabled(true);
+        upgradeBtn->setColor(Color3B::WHITE);
+        upgradeBtn->addClickEventListener([this](Ref* sender) {
+            hidePanel(UIPanelType::BuildingOptions, true);
+            showBuildingUpgrade(_selectedBuilding);
+            });
+    }
+    else {
+        // 已达最大等级，按钮变灰且不可点击
+        upgradeBtn->setEnabled(false);
+        upgradeBtn->setColor(Color3B(100, 100, 100));
+        upgradeBtn->setTitleColor(Color3B::GRAY);
+    }
     panel->addChild(upgradeBtn, 1);
 
     currentX += buttonSize + buttonMargin;
 
     // 训练按钮（仅军营）
     if (category == BuildingCategory::Military) {
-        auto trainBtn = Button::create("UI/btn_train.png", "UI/btn_train_pressed.png"); // 这里需要替换为实际按钮图片
+        auto trainBtn = Button::create("..../Resource/UI/btn_train.png", "..../Resource/UI/btn_train_pressed.png"); // 这里需要替换为实际按钮图片
         if (!trainBtn->getVirtualRenderer()) {
             trainBtn = Button::create();
             trainBtn->setTitleText("Train");
@@ -868,10 +908,7 @@ Node* UIManager::createBuildingInfo(Building* building) {
     panel->addChild(border, 1);
 
     // 标题
-    std::string buildingName = building ? "Building" : "Unknown"; // 这里需要替换为 building->getName()
-    if (building) {
-        // buildingName = building->getName(); // 这里需要替换为实际获取建筑名称的方法
-    }
+    std::string buildingName = building->getName();
     auto title = Label::createWithTTF(buildingName + " Info", "fonts/arial.ttf", 24 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
@@ -886,7 +923,7 @@ Node* UIManager::createBuildingInfo(Building* building) {
 
     // 左侧：建筑图像
     float leftWidth = panelSize.width * 0.4f;
-    auto buildingSprite = Sprite::create("UI/building_placeholder.png"); // 这里需要替换为实际建筑图片
+    auto buildingSprite = Sprite::create(building->GetPicture()); 
     if (!buildingSprite) {
         buildingSprite = Sprite::create();
         buildingSprite->setTextureRect(Rect(0, 0, 100 * _scaleFactor, 100 * _scaleFactor));
@@ -903,10 +940,10 @@ Node* UIManager::createBuildingInfo(Building* building) {
     float startY = panelSize.height - 80 * _scaleFactor;
 
     // 获取建筑属性 - 这里需要替换为实际的building方法调用
-    int level = building ? building->GetLevel() : 1;
-    int health = building ? building->GetHealth() : 100;
-    int maxHealth = building ? building->GetMaxHealth() : 100;
-    int defense = building ? building->GetDefense() : 10;
+    int level = building->GetLevel();
+    int health = building->GetHealth();
+    int maxHealth = building->GetMaxHealth();
+    int defense = building->GetDefense();
 
     auto levelLabel = Label::createWithTTF("Level: " + std::to_string(level), "fonts/arial.ttf", 18 * _scaleFactor);
     levelLabel->setPosition(Vec2(rightX, startY));
@@ -966,7 +1003,7 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     panel->addChild(border, 1);
 
     // 标题
-    std::string buildingName = "Building"; // 这里需要替换为 building->getName()
+    std::string buildingName = building->getName();
     auto title = Label::createWithTTF(buildingName + " Upgrade", "fonts/arial.ttf", 24 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
@@ -981,7 +1018,7 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
 
     // 左侧：建筑图像
     float leftWidth = panelSize.width * 0.4f;
-    auto buildingSprite = Sprite::create("UI/building_placeholder.png"); // 这里需要替换为实际建筑图片
+    auto buildingSprite = Sprite::create(building->GetPicture()); 
     if (!buildingSprite) {
         buildingSprite = Sprite::create();
         buildingSprite->setTextureRect(Rect(0, 0, 100 * _scaleFactor, 100 * _scaleFactor));
@@ -998,14 +1035,14 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     float startY = panelSize.height - 80 * _scaleFactor;
 
     // 获取当前和升级后属性 - 这里需要替换为实际的building方法调用
-    int currentLevel = building ? building->GetLevel() : 1;
+    int currentLevel = building->GetLevel();
     int nextLevel = currentLevel + 1;
-    int currentHealth = building ? building->GetMaxHealth() : 100;
-    int nextHealth = currentHealth + 50; // 这里需要替换为实际升级后的生命值
-    int currentDefense = building ? building->GetDefense() : 10;
-    int nextDefense = currentDefense + 5; // 这里需要替换为实际升级后的防御值
-    int upgradeCost = building ? building->GetBuildCost() * currentLevel : 500; // 这里需要替换为实际升级成本
-    int upgradeTime = building ? building->GetBuildTime() : 60; // 这里需要替换为实际升级时间
+    int currentHealth = building->GetMaxHealth();
+    int nextHealth = building->GetNextMaxHealth();
+    int currentDefense = building->GetDefense();
+    int nextDefense = building->GetNextDefence();
+    int upgradeCost = building->GetBuildCost();
+    int upgradeTime = building->GetBuildTime();
 
     auto levelLabel = Label::createWithTTF("Level: " + std::to_string(currentLevel) + " -> " + std::to_string(nextLevel), "fonts/arial.ttf", 18 * _scaleFactor);
     levelLabel->setPosition(Vec2(rightX, startY));
@@ -1026,10 +1063,10 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     panel->addChild(defenseLabel, 1);
 
     // 升级成本
-    auto costLabel = Label::createWithTTF("Cost: " + std::to_string(upgradeCost) + " Gold", "fonts/arial.ttf", 18 * _scaleFactor);
+    auto costLabel = Label::createWithTTF("Cost: " + std::to_string(upgradeCost) + " Elixir", "fonts/arial.ttf", 18 * _scaleFactor);
     costLabel->setPosition(Vec2(rightX, startY - 4 * lineHeight));
     costLabel->setAnchorPoint(Vec2(0, 0.5f));
-    costLabel->setColor(Color3B(255, 215, 0));
+    costLabel->setColor(Color3B(200, 100, 255)); 
     panel->addChild(costLabel, 1);
 
     // 升级时间
@@ -1043,8 +1080,9 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     panel->addChild(timeLabel, 1);
 
     // 确认升级按钮
-    int currentGold = 1000; // 这里需要替换为 resource->getGold() 获取实际金币
-    bool canAfford = currentGold >= upgradeCost;
+    TownHall* townHall = GetTownHall();
+    int currentElixir = townHall->GetElixir();
+    bool canAfford = currentElixir >= upgradeCost;
 
     auto upgradeBtn = Button::create();
     upgradeBtn->setTitleText("Confirm Upgrade");
@@ -1059,9 +1097,10 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
         upgradeBtn->addClickEventListener([this, upgradeCost, upgradeTime](Ref* sender) {
             hidePanel(UIPanelType::BuildingUpgrade, true);
 
-            // 这里需要替换为实际扣除资源和开始升级的逻辑
-            // resource->spendGold(upgradeCost);
-            // _selectedBuilding->startUpgrade(upgradeTime);
+            TownHall* townHall = GetTownHall();
+            townHall->SpendElixir(upgradeCost);
+            updateResourceDisplay(ResourceType::Elixir, townHall->GetElixir());
+            _selectedBuilding->startUpgrade(upgradeTime);
 
             showUpgradeProgress(_selectedBuilding, (float)upgradeTime, (float)upgradeTime);
             showToast("Upgrade started!");
@@ -1092,11 +1131,10 @@ void UIManager::showArmyTraining(Building* building) {
     }
 }
 
-// ==================== 军队训练面板（续） ====================
 Node* UIManager::createArmyTraining(Building* building) {
     auto panel = Node::create();
 
-    Size panelSize(600 * _scaleFactor, 400 * _scaleFactor);
+    Size panelSize(550 * _scaleFactor, 450 * _scaleFactor);
     panel->setContentSize(panelSize);
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
@@ -1125,201 +1163,270 @@ Node* UIManager::createArmyTraining(Building* building) {
 
     // 分隔线
     auto divider = DrawNode::create();
-    divider->drawLine(Vec2(panelSize.width / 2, 60 * _scaleFactor),
+    divider->drawLine(Vec2(panelSize.width / 2, 70 * _scaleFactor),
         Vec2(panelSize.width / 2, panelSize.height - 60 * _scaleFactor),
         Color4F(1, 1, 1, 0.5f));
     panel->addChild(divider, 1);
 
     // 左侧标题：当前部队
     auto leftTitle = Label::createWithTTF("Current Army", "fonts/arial.ttf", 18 * _scaleFactor);
-    leftTitle->setPosition(Vec2(panelSize.width / 4, panelSize.height - 70 * _scaleFactor));
+    leftTitle->setPosition(Vec2(panelSize.width / 4, panelSize.height - 65 * _scaleFactor));
     leftTitle->setColor(Color3B(200, 200, 200));
     panel->addChild(leftTitle, 1);
 
-    // 右侧标题：可用士兵
+    // 右侧标题：可选士兵
     auto rightTitle = Label::createWithTTF("Available Troops", "fonts/arial.ttf", 18 * _scaleFactor);
-    rightTitle->setPosition(Vec2(panelSize.width * 3 / 4, panelSize.height - 70 * _scaleFactor));
+    rightTitle->setPosition(Vec2(panelSize.width * 3 / 4, panelSize.height - 65 * _scaleFactor));
     rightTitle->setColor(Color3B(200, 200, 200));
     panel->addChild(rightTitle, 1);
 
-    // 士兵类型数据 - 这里需要替换为从配置或SoldierManager获取
-    struct SoldierType {
-        std::string name;
-        std::string icon;
-        int available;  // 可用数量
-        int assigned;   // 已分配数量
-    };
+    // 获取士兵模板和人口上限
+    TownHall* townHall = GetTownHall();
+    auto soldierTemplates = townHall->GetSoldierCategory();
+    int maxCapacity = townHall->GetArmyCapacity();
 
-    // 这里需要替换为实际获取士兵数据的逻辑
-    std::vector<SoldierType> soldiers = {
-        {"Barbarian", "UI/soldier_barbarian.png", 10, 2},
-        {"Archer", "UI/soldier_archer.png", 8, 3},
-        {"Bomber", "UI/soldier_bomber.png", 4, 0},
-        {"Giant", "UI/soldier_giant.png", 2, 1},
-    };
+    // 加载保存的配置或初始化
+    _tempArmyConfig = loadArmyConfig();
+    _tempCurrentPopulation = 0;
 
-    int soldierLimit = 20; // 这里需要替换为 getSoldierLimit() 获取全局人口上限
-    int currentTotal = 0;
-    for (const auto& s : soldiers) {
-        currentTotal += s.assigned;
+    // 计算当前人口
+    for (const auto& tmpl : soldierTemplates) {
+        auto it = _tempArmyConfig.find(tmpl.name);
+        if (it != _tempArmyConfig.end()) {
+            _tempCurrentPopulation += it->second * tmpl.populationCost;
+        }
+        else {
+            _tempArmyConfig[tmpl.name] = 0;
+        }
     }
 
     // 人口显示
-    auto popLabel = Label::createWithTTF("Population: " + std::to_string(currentTotal) + "/" + std::to_string(soldierLimit),
+    auto popLabel = Label::createWithTTF(
+        StringUtils::format("Population: %d/%d", _tempCurrentPopulation, maxCapacity),
         "fonts/arial.ttf", 16 * _scaleFactor);
-    popLabel->setPosition(Vec2(panelSize.width / 4, 40 * _scaleFactor));
+    popLabel->setPosition(Vec2(panelSize.width / 4, panelSize.height - 90 * _scaleFactor));
     popLabel->setColor(Color3B(255, 200, 100));
     popLabel->setName("popLabel");
     panel->addChild(popLabel, 1);
 
-    float itemHeight = 60 * _scaleFactor;
-    float leftStartY = panelSize.height - 110 * _scaleFactor;
-    float rightStartY = panelSize.height - 110 * _scaleFactor;
-    float leftWidth = panelSize.width / 2 - 20 * _scaleFactor;
-    float rightWidth = panelSize.width / 2 - 20 * _scaleFactor;
+    // 左右容器
+    float containerTop = panelSize.height - 110 * _scaleFactor;
+    float containerBottom = 70 * _scaleFactor;
+    float containerHeight = containerTop - containerBottom;
+    float halfWidth = panelSize.width / 2 - 20 * _scaleFactor;
 
-    // ===== 左侧：已分配的部队 =====
     auto leftContainer = Node::create();
-    leftContainer->setPosition(Vec2(10 * _scaleFactor, 60 * _scaleFactor));
-    leftContainer->setContentSize(Size(leftWidth, leftStartY - 60 * _scaleFactor));
+    leftContainer->setPosition(Vec2(10 * _scaleFactor, containerBottom));
+    leftContainer->setContentSize(Size(halfWidth, containerHeight));
     leftContainer->setName("leftContainer");
     panel->addChild(leftContainer, 1);
 
-    // ===== 右侧：可用士兵 =====
     auto rightContainer = Node::create();
-    rightContainer->setPosition(Vec2(panelSize.width / 2 + 10 * _scaleFactor, 60 * _scaleFactor));
-    rightContainer->setContentSize(Size(rightWidth, rightStartY - 60 * _scaleFactor));
+    rightContainer->setPosition(Vec2(panelSize.width / 2 + 10 * _scaleFactor, containerBottom));
+    rightContainer->setContentSize(Size(halfWidth, containerHeight));
     rightContainer->setName("rightContainer");
     panel->addChild(rightContainer, 1);
 
-    // 创建士兵项的lambda函数
-    auto createSoldierItem = [this, itemHeight, panel, soldierLimit](
-        Node* container, const std::string& name, const std::string& icon,
-        int count, bool isLeft, float yPos, int index) -> Node* {
+    // 创建士兵项
+    float iconSize = 60 * _scaleFactor;
+    float itemSpacing = 10 * _scaleFactor;
+    int columns = 3;
 
-            auto item = Node::create();
-            item->setContentSize(Size(container->getContentSize().width, itemHeight - 5 * _scaleFactor));
-            item->setPosition(Vec2(0, yPos));
+    for (size_t i = 0; i < soldierTemplates.size(); i++) {
+        const auto& tmpl = soldierTemplates[i];
+        int row = (int)i / columns;
+        int col = (int)i % columns;
+        float xPos = col * (iconSize + itemSpacing) + iconSize / 2 + 10 * _scaleFactor;
+        float yPos = containerHeight - row * (iconSize + itemSpacing + 20 * _scaleFactor) - iconSize / 2 - 10 * _scaleFactor;
 
-            // 背景
-            auto itemBg = LayerColor::create(Color4B(60, 60, 80, 180),
-                item->getContentSize().width, item->getContentSize().height);
-            item->addChild(itemBg, 0);
+        // ===== 左侧：当前部队 =====
+        auto leftItem = Node::create();
+        leftItem->setContentSize(Size(iconSize, iconSize + 20 * _scaleFactor));
+        leftItem->setPosition(Vec2(xPos, yPos));
+        leftItem->setName("left_" + tmpl.name);
 
-            // 士兵图标
-            auto soldierIcon = Sprite::create(icon);
-            if (!soldierIcon) {
-                soldierIcon = Sprite::create();
-                soldierIcon->setTextureRect(Rect(0, 0, 40 * _scaleFactor, 40 * _scaleFactor));
-                soldierIcon->setColor(Color3B(100, 150, 100));
-            }
-            soldierIcon->setPosition(Vec2(30 * _scaleFactor, item->getContentSize().height / 2));
-            soldierIcon->setScale(40 * _scaleFactor / std::max(soldierIcon->getContentSize().width,
-                soldierIcon->getContentSize().height));
-            item->addChild(soldierIcon, 1);
-
-            // 士兵名称
-            auto nameLabel = Label::createWithTTF(name, "fonts/arial.ttf", 14 * _scaleFactor);
-            nameLabel->setPosition(Vec2(70 * _scaleFactor, item->getContentSize().height / 2 + 8 * _scaleFactor));
-            nameLabel->setAnchorPoint(Vec2(0, 0.5f));
-            nameLabel->setColor(Color3B::WHITE);
-            item->addChild(nameLabel, 1);
-
-            // 数量
-            auto countLabel = Label::createWithTTF("x" + std::to_string(count), "fonts/arial.ttf", 14 * _scaleFactor);
-            countLabel->setPosition(Vec2(70 * _scaleFactor, item->getContentSize().height / 2 - 8 * _scaleFactor));
-            countLabel->setAnchorPoint(Vec2(0, 0.5f));
-            countLabel->setColor(Color3B(200, 200, 200));
-            countLabel->setName("countLabel");
-            item->addChild(countLabel, 1);
-
-            // 根据是左侧还是右侧设置颜色和交互
-            if (isLeft) {
-                // 左侧：已分配，点击可移除
-                if (count > 0) {
-                    itemBg->setColor(Color3B(80, 100, 80));
-
-                    auto touchListener = EventListenerTouchOneByOne::create();
-                    touchListener->setSwallowTouches(true);
-                    touchListener->onTouchBegan = [item](Touch* touch, Event* event) -> bool {
-                        Vec2 locationInNode = item->convertToNodeSpace(touch->getLocation());
-                        Rect rect(Vec2::ZERO, item->getContentSize());
-                        return rect.containsPoint(locationInNode);
-                        };
-                    touchListener->onTouchEnded = [this, name, index, panel](Touch* touch, Event* event) {
-                        // 这里需要替换为实际移除士兵的逻辑
-                        // soldierManager->removeSoldierFromArmy(name, 1);
-                        CCLOG("Remove soldier: %s", name.c_str());
-                        showToast("Removed 1 " + name);
-
-                        // 刷新面板 - 这里简化处理，实际应该更新数据并刷新UI
-                        triggerUIEvent("OnArmyChanged");
-                        };
-                    Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, item);
-                }
-            }
-            else {
-                // 右侧：可用，点击可添加
-                if (count > 0) {
-                    itemBg->setColor(Color3B(80, 80, 100));
-
-                    auto touchListener = EventListenerTouchOneByOne::create();
-                    touchListener->setSwallowTouches(true);
-                    touchListener->onTouchBegan = [item](Touch* touch, Event* event) -> bool {
-                        Vec2 locationInNode = item->convertToNodeSpace(touch->getLocation());
-                        Rect rect(Vec2::ZERO, item->getContentSize());
-                        return rect.containsPoint(locationInNode);
-                        };
-                    touchListener->onTouchEnded = [this, name, index, panel, soldierLimit](Touch* touch, Event* event) {
-                        // 检查是否超过人口上限
-                        // int currentPop = soldierManager->getCurrentPopulation(); // 这里需要替换为实际获取当前人口
-                        int currentPop = 6; // 临时值
-                        if (currentPop >= soldierLimit) {
-                            showToast("Population limit reached!");
-                            return;
-                        }
-
-                        // 这里需要替换为实际添加士兵的逻辑
-                        // soldierManager->addSoldierToArmy(name, 1);
-                        CCLOG("Add soldier: %s", name.c_str());
-                        showToast("Added 1 " + name);
-
-                        triggerUIEvent("OnArmyChanged");
-                        };
-                    Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, item);
-                }
-                else {
-                    // 不可用 - 暗淡显示
-                    itemBg->setColor(Color3B(40, 40, 50));
-                    soldierIcon->setColor(Color3B(80, 80, 80));
-                    nameLabel->setColor(Color3B(100, 100, 100));
-                    countLabel->setColor(Color3B(80, 80, 80));
-                }
-            }
-
-            container->addChild(item, 1);
-            return item;
-        };
-
-    // 填充左侧（已分配）
-    float leftY = leftContainer->getContentSize().height - itemHeight;
-    for (size_t i = 0; i < soldiers.size(); i++) {
-        if (soldiers[i].assigned > 0) {
-            createSoldierItem(leftContainer, soldiers[i].name, soldiers[i].icon,
-                soldiers[i].assigned, true, leftY, (int)i);
-            leftY -= itemHeight;
+        // 左侧图标
+        auto leftIcon = Sprite::create(tmpl.iconPath);
+        if (!leftIcon) {
+            leftIcon = Sprite::create();
+            leftIcon->setTextureRect(Rect(0, 0, iconSize, iconSize));
+            leftIcon->setColor(Color3B(100, 150, 100));
         }
+        leftIcon->setScale(iconSize / std::max(leftIcon->getContentSize().width, leftIcon->getContentSize().height));
+        leftIcon->setPosition(Vec2(iconSize / 2, iconSize / 2 + 15 * _scaleFactor));
+        leftIcon->setName("icon");
+        leftItem->addChild(leftIcon, 1);
+
+        // 左侧数量标签
+        int count = _tempArmyConfig[tmpl.name];
+        auto leftCountLabel = Label::createWithTTF("x" + std::to_string(count), "fonts/arial.ttf", 14 * _scaleFactor);
+        leftCountLabel->setPosition(Vec2(iconSize / 2, 5 * _scaleFactor));
+        leftCountLabel->setColor(count > 0 ? Color3B::WHITE : Color3B(100, 100, 100));
+        leftCountLabel->setName("countLabel");
+        leftItem->addChild(leftCountLabel, 1);
+
+        // 左侧点击事件（移除士兵）
+        auto leftTouchListener = EventListenerTouchOneByOne::create();
+        leftTouchListener->setSwallowTouches(true);
+        leftTouchListener->onTouchBegan = [leftItem](Touch* touch, Event* event) -> bool {
+            Vec2 locationInNode = leftItem->convertToNodeSpace(touch->getLocation());
+            Rect rect(Vec2::ZERO, leftItem->getContentSize());
+            return rect.containsPoint(locationInNode);
+            };
+
+        std::string soldierName = tmpl.name;
+        int populationCost = tmpl.populationCost;
+        leftTouchListener->onTouchEnded = [this, panel, soldierName, populationCost](Touch* touch, Event* event) {
+            if (_tempArmyConfig[soldierName] > 0) {
+                _tempArmyConfig[soldierName]--;
+                _tempCurrentPopulation -= populationCost;
+                refreshArmyTrainingUI(panel);
+            }
+            };
+        Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(leftTouchListener, leftItem);
+
+        leftContainer->addChild(leftItem, 1);
+
+        // ===== 右侧：可选士兵 =====
+        auto rightItem = Node::create();
+        rightItem->setContentSize(Size(iconSize, iconSize));
+        rightItem->setPosition(Vec2(xPos, yPos + 10 * _scaleFactor));
+        rightItem->setName("right_" + tmpl.name);
+
+        // 右侧图标
+        auto rightIcon = Sprite::create(tmpl.iconPath);
+        if (!rightIcon) {
+            rightIcon = Sprite::create();
+            rightIcon->setTextureRect(Rect(0, 0, iconSize, iconSize));
+            rightIcon->setColor(Color3B(100, 100, 150));
+        }
+        rightIcon->setScale(iconSize / std::max(rightIcon->getContentSize().width, rightIcon->getContentSize().height));
+        rightIcon->setPosition(Vec2(iconSize / 2, iconSize / 2));
+        rightIcon->setName("icon");
+        rightItem->addChild(rightIcon, 1);
+
+        // 右侧点击事件（添加士兵）
+        auto rightTouchListener = EventListenerTouchOneByOne::create();
+        rightTouchListener->setSwallowTouches(true);
+        rightTouchListener->onTouchBegan = [rightItem](Touch* touch, Event* event) -> bool {
+            Vec2 locationInNode = rightItem->convertToNodeSpace(touch->getLocation());
+            Rect rect(Vec2::ZERO, rightItem->getContentSize());
+            return rect.containsPoint(locationInNode);
+            };
+
+        rightTouchListener->onTouchEnded = [this, panel, soldierName, populationCost, maxCapacity](Touch* touch, Event* event) {
+            if (_tempCurrentPopulation + populationCost <= maxCapacity) {
+                _tempArmyConfig[soldierName]++;
+                _tempCurrentPopulation += populationCost;
+                refreshArmyTrainingUI(panel);
+            }
+            };
+        Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(rightTouchListener, rightItem);
+
+        rightContainer->addChild(rightItem, 1);
     }
 
-    // 填充右侧（可用）
-    float rightY = rightContainer->getContentSize().height - itemHeight;
-    for (size_t i = 0; i < soldiers.size(); i++) {
-        createSoldierItem(rightContainer, soldiers[i].name, soldiers[i].icon,
-            soldiers[i].available, false, rightY, (int)i);
-        rightY -= itemHeight;
-    }
+    // 刷新右侧可选状态
+    refreshArmyTrainingUI(panel);
+
+    // 训练部队按钮
+    auto trainBtn = Button::create();
+    trainBtn->setTitleText("Confirm Training");
+    trainBtn->setTitleFontSize(18 * _scaleFactor);
+    trainBtn->setContentSize(Size(180 * _scaleFactor, 45 * _scaleFactor));
+    trainBtn->setScale9Enabled(true);
+    trainBtn->setPosition(Vec2(panelSize.width / 2, 35 * _scaleFactor));
+    trainBtn->addClickEventListener([this](Ref* sender) {
+        saveArmyConfig();
+        hidePanel(UIPanelType::ArmyTraining, true);
+        showToast("Army configuration saved!");
+        triggerUIEvent("OnArmyConfigSaved");
+        });
+    panel->addChild(trainBtn, 1);
 
     return panel;
+}
+
+void UIManager::refreshArmyTrainingUI(Node* panel) {
+    if (!panel) return;
+
+    TownHall* townHall = GetTownHall();
+    auto soldierTemplates = townHall->GetSoldierCategory();
+    int maxCapacity = townHall->GetArmyCapacity();
+
+    // 更新人口显示
+    auto popLabel = panel->getChildByName<Label*>("popLabel");
+    if (popLabel) {
+        popLabel->setString(StringUtils::format("Population: %d/%d", _tempCurrentPopulation, maxCapacity));
+        popLabel->setColor(_tempCurrentPopulation >= maxCapacity ? Color3B(255, 100, 100) : Color3B(255, 200, 100));
+    }
+
+    auto leftContainer = panel->getChildByName("leftContainer");
+    auto rightContainer = panel->getChildByName("rightContainer");
+
+    for (const auto& tmpl : soldierTemplates) {
+        int count = _tempArmyConfig[tmpl.name];
+        bool canAdd = (_tempCurrentPopulation + tmpl.populationCost <= maxCapacity);
+
+        // 更新左侧数量
+        if (leftContainer) {
+            auto leftItem = leftContainer->getChildByName("left_" + tmpl.name);
+            if (leftItem) {
+                auto countLabel = leftItem->getChildByName<Label*>("countLabel");
+                if (countLabel) {
+                    countLabel->setString("x" + std::to_string(count));
+                    countLabel->setColor(count > 0 ? Color3B::WHITE : Color3B(100, 100, 100));
+                }
+                auto icon = leftItem->getChildByName<Sprite*>("icon");
+                if (icon) {
+                    icon->setColor(count > 0 ? Color3B::WHITE : Color3B(80, 80, 80));
+                }
+            }
+        }
+
+        // 更新右侧可选状态
+        if (rightContainer) {
+            auto rightItem = rightContainer->getChildByName("right_" + tmpl.name);
+            if (rightItem) {
+                auto icon = rightItem->getChildByName<Sprite*>("icon");
+                if (icon) {
+                    icon->setColor(canAdd ? Color3B::WHITE : Color3B(80, 80, 80));
+                }
+            }
+        }
+    }
+}
+
+// ==================== 军队配置存储 ====================
+void UIManager::saveArmyConfig() {
+    std::string configStr;
+    for (const auto& pair : _tempArmyConfig) {
+        if (pair.second > 0) {
+            if (!configStr.empty()) configStr += ",";
+            configStr += pair.first + ":" + std::to_string(pair.second);
+        }
+    }
+    UserDefault::getInstance()->setStringForKey("army_config", configStr);
+    UserDefault::getInstance()->flush();
+}
+
+std::map<std::string, int> UIManager::loadArmyConfig() {
+    std::map<std::string, int> result;
+    std::string configStr = UserDefault::getInstance()->getStringForKey("army_config", "");
+
+    if (!configStr.empty()) {
+        std::stringstream ss(configStr);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            size_t pos = item.find(':');
+            if (pos != std::string::npos) {
+                std::string name = item.substr(0, pos);
+                int count = std::stoi(item.substr(pos + 1));
+                result[name] = count;
+            }
+        }
+    }
+    return result;
 }
 
 // ==================== 战斗HUD ====================
@@ -1328,124 +1435,437 @@ Node* UIManager::createBattleHUD() {
     panel->setContentSize(_visibleSize);
     panel->setPosition(_visibleOrigin);
 
-    // 顶部信息栏
-    auto topBar = LayerColor::create(Color4B(0, 0, 0, 150), _visibleSize.width, 60 * _scaleFactor);
-    topBar->setPosition(Vec2(0, _visibleSize.height - 60 * _scaleFactor));
-    panel->addChild(topBar, 1);
-
-    // 倒计时
-    auto timerLabel = Label::createWithTTF("3:00", "fonts/arial.ttf", 28 * _scaleFactor);
-    timerLabel->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height - 30 * _scaleFactor));
-    timerLabel->setColor(Color3B::WHITE);
-    timerLabel->setName("timerLabel");
-    panel->addChild(timerLabel, 2);
-
-    // 星级进度（3颗星）
-    float starSize = 30 * _scaleFactor;
-    float starStartX = 50 * _scaleFactor;
-    for (int i = 0; i < 3; i++) {
-        auto star = Sprite::create("UI/star_empty.png"); // 这里需要替换为实际星星图片
-        if (!star) {
-            star = Sprite::create();
-            auto starDraw = DrawNode::create();
-            starDraw->drawSolidCircle(Vec2::ZERO, starSize / 2, 0, 5, Color4F(0.3f, 0.3f, 0.3f, 1));
-            star->addChild(starDraw);
-            star->setContentSize(Size(starSize, starSize));
-        }
-        star->setPosition(Vec2(starStartX + i * (starSize + 10 * _scaleFactor),
-            _visibleSize.height - 30 * _scaleFactor));
-        star->setName("star_" + std::to_string(i));
-        panel->addChild(star, 2);
-    }
-
-    // 摧毁百分比
-    auto destroyLabel = Label::createWithTTF("0%", "fonts/arial.ttf", 20 * _scaleFactor);
-    destroyLabel->setPosition(Vec2(_visibleSize.width - 80 * _scaleFactor, _visibleSize.height - 30 * _scaleFactor));
-    destroyLabel->setColor(Color3B(255, 200, 100));
-    destroyLabel->setName("destroyLabel");
-    panel->addChild(destroyLabel, 2);
-
-    // 底部士兵部署栏
-    auto bottomBar = LayerColor::create(Color4B(0, 0, 0, 180), _visibleSize.width, 80 * _scaleFactor);
+    // ==================== 底部士兵部署栏 ====================
+    float bottomBarHeight = 80 * _scaleFactor;
+    auto bottomBar = LayerColor::create(Color4B(0, 0, 0, 180), _visibleSize.width, bottomBarHeight);
     bottomBar->setPosition(Vec2(0, 0));
     panel->addChild(bottomBar, 1);
 
-    // 士兵部署按钮 - 这里需要替换为实际的士兵数据
-    struct DeploySoldier {
+    // 从保存的配置读取士兵数据
+    TownHall* townHall = GetTownHall();
+    auto soldierTemplates = townHall->GetSoldierCategory();
+    auto armyConfig = loadArmyConfig();
+
+    // 构建部署数据（只显示数量 > 0 的士兵）
+    struct DeployTroop {
         std::string name;
-        std::string icon;
+        std::string iconPath;
         int count;
     };
-    std::vector<DeploySoldier> deployTroops = {
-        {"Barbarian", "UI/soldier_barbarian.png", 5},
-        {"Archer", "UI/soldier_archer.png", 3},
-        {"Bomber", "UI/soldier_bomber.png", 2},
-        {"Giant", "UI/soldier_giant.png", 1},
-    };
+    std::vector<DeployTroop> deployTroops;
+    for (const auto& tmpl : soldierTemplates) {
+        auto it = armyConfig.find(tmpl.name);
+        if (it != armyConfig.end() && it->second > 0) {
+            deployTroops.push_back({ tmpl.name, tmpl.iconPath, it->second });
+        }
+    }
 
+    // 存储当前战斗中的士兵数量
+    _battleTroopCounts.clear();
+    _battleTroopNames.clear();
+    for (const auto& troop : deployTroops) {
+        _battleTroopCounts[troop.name] = troop.count;
+        _battleTroopNames.push_back(troop.name);
+    }
+    _selectedTroopIndex = -1;
+    _selectedTroopName = "";
+
+    // 士兵按钮布局
     float btnSize = 60 * _scaleFactor;
     float btnMargin = 15 * _scaleFactor;
     float totalWidth = deployTroops.size() * btnSize + (deployTroops.size() - 1) * btnMargin;
     float startX = (_visibleSize.width - totalWidth) / 2 + btnSize / 2;
 
     for (size_t i = 0; i < deployTroops.size(); i++) {
-        auto& troop = deployTroops[i];
+        const auto& troop = deployTroops[i];
 
-        auto btn = Button::create(troop.icon, troop.icon); // 这里需要替换为实际图片
-        if (!btn->getVirtualRenderer()) {
-            btn = Button::create();
-            btn->setContentSize(Size(btnSize, btnSize));
-            btn->setScale9Enabled(true);
+        // 士兵按钮容器
+        auto btnContainer = Node::create();
+        btnContainer->setContentSize(Size(btnSize + 6 * _scaleFactor, btnSize + 6 * _scaleFactor));
+        btnContainer->setPosition(Vec2(startX + i * (btnSize + btnMargin), bottomBarHeight / 2));
+        btnContainer->setName("troopBtn_" + std::to_string(i));
 
-            auto placeholder = DrawNode::create();
-            placeholder->drawSolidRect(Vec2(-btnSize / 2, -btnSize / 2), Vec2(btnSize / 2, btnSize / 2),
-                Color4F(0.3f, 0.4f, 0.3f, 1));
-            btn->addChild(placeholder, -1);
+        // 选中边框（默认隐藏）
+        auto selectBorder = DrawNode::create();
+        selectBorder->drawRect(
+            Vec2(-btnSize / 2 - 3 * _scaleFactor, -btnSize / 2 - 3 * _scaleFactor),
+            Vec2(btnSize / 2 + 3 * _scaleFactor, btnSize / 2 + 3 * _scaleFactor),
+            Color4F::WHITE);
+        selectBorder->setPosition(Vec2(btnContainer->getContentSize().width / 2,
+            btnContainer->getContentSize().height / 2));
+        selectBorder->setName("selectBorder");
+        selectBorder->setVisible(false);
+        btnContainer->addChild(selectBorder, 0);
+
+        // 士兵图标
+        auto icon = Sprite::create(troop.iconPath);
+        if (!icon) {
+            icon = Sprite::create();
+            icon->setTextureRect(Rect(0, 0, btnSize, btnSize));
+            icon->setColor(Color3B(100, 150, 100));
         }
-        btn->setPosition(Vec2(startX + i * (btnSize + btnMargin), 40 * _scaleFactor));
-        btn->setName("deployBtn_" + std::to_string(i));
+        icon->setScale(btnSize / std::max(icon->getContentSize().width, icon->getContentSize().height));
+        icon->setPosition(Vec2(btnContainer->getContentSize().width / 2,
+            btnContainer->getContentSize().height / 2));
+        icon->setName("icon");
+        btnContainer->addChild(icon, 1);
 
         // 数量标签
         auto countLabel = Label::createWithTTF(std::to_string(troop.count), "fonts/arial.ttf", 14 * _scaleFactor);
-        countLabel->setPosition(Vec2(btnSize / 2 - 5 * _scaleFactor, -btnSize / 2 + 10 * _scaleFactor));
+        countLabel->setPosition(Vec2(btnContainer->getContentSize().width - 5 * _scaleFactor,
+            8 * _scaleFactor));
+        countLabel->setAnchorPoint(Vec2(1, 0.5f));
         countLabel->setColor(Color3B::WHITE);
-        countLabel->setName("count");
-        btn->addChild(countLabel, 1);
+        countLabel->enableOutline(Color4B::BLACK, 1);
+        countLabel->setName("countLabel");
+        btnContainer->addChild(countLabel, 2);
+
+        // 点击事件（只负责选中士兵，不负责放置）
+        auto touchListener = EventListenerTouchOneByOne::create();
+        touchListener->setSwallowTouches(true);
+        touchListener->onTouchBegan = [btnContainer](Touch* touch, Event* event) -> bool {
+            Vec2 locationInNode = btnContainer->convertToNodeSpace(touch->getLocation());
+            Rect rect(Vec2::ZERO, btnContainer->getContentSize());
+            return rect.containsPoint(locationInNode);
+            };
 
         std::string troopName = troop.name;
-        btn->addClickEventListener([this, troopName, i](Ref* sender) {
-            // 这里需要替换为实际选中士兵的逻辑
-            // battleManager->selectTroopType(troopName);
-            CCLOG("Selected troop: %s", troopName.c_str());
-            triggerUIEvent("OnTroopSelected_" + std::to_string(i));
-            });
+        int index = (int)i;
+        touchListener->onTouchEnded = [this, troopName, index](Touch* touch, Event* event) {
+            // 检查是否还有剩余
+            if (_battleTroopCounts[troopName] <= 0) return;
+            selectBattleTroop(index, troopName);
+            };
+        Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(
+            touchListener, btnContainer);
 
-        panel->addChild(btn, 2);
+        panel->addChild(btnContainer, 2);
     }
 
-    // 结束战斗按钮
+    // ==================== 士兵栏上方控制区 ====================
+    float controlBarY = bottomBarHeight + 10 * _scaleFactor;
+    float controlBarHeight = 40 * _scaleFactor;
+
+    // 左侧：结束战斗按钮
     auto endBtn = Button::create();
-    endBtn->setTitleText("End");
-    endBtn->setTitleFontSize(16 * _scaleFactor);
-    endBtn->setContentSize(Size(60 * _scaleFactor, 40 * _scaleFactor));
+    endBtn->setTitleText("End Battle");
+    endBtn->setTitleFontSize(14 * _scaleFactor);
+    endBtn->setContentSize(Size(100 * _scaleFactor, controlBarHeight));
     endBtn->setScale9Enabled(true);
-    endBtn->setPosition(Vec2(_visibleSize.width - 50 * _scaleFactor, 40 * _scaleFactor));
+    endBtn->setPosition(Vec2(70 * _scaleFactor, controlBarY + controlBarHeight / 2));
     endBtn->addClickEventListener([this](Ref* sender) {
-        showConfirmDialog("End Battle", "Are you sure you want to end the battle?", [this]() {
-            // 这里需要替换为实际结束战斗的逻辑
-            triggerUIEvent("OnBattleEnd");
+        showConfirmDialog("End Battle", "Return to village?", [this]() {
+            // 获取当前摧毁率计算星级
+            int destroyPercent = Combat::GetInstance().GetDestroyPercent();
+            int stars = 0;
+            if (destroyPercent >= 50) stars = 1;
+            if (destroyPercent >= 75) stars = 2;
+            if (destroyPercent >= 100) stars = 3;
+            endBattle(stars, destroyPercent);
             });
         });
     panel->addChild(endBtn, 2);
 
+    // 右侧：摧毁率状态栏（半透明黑色背景）
+    float statusBarWidth = 180 * _scaleFactor;
+    float statusBarHeight = controlBarHeight;
+    auto statusBar = LayerColor::create(Color4B(0, 0, 0, 150), statusBarWidth, statusBarHeight);
+    statusBar->setPosition(Vec2(_visibleSize.width - statusBarWidth - 20 * _scaleFactor, controlBarY));
+    statusBar->setName("statusBar");
+    panel->addChild(statusBar, 1);
+
+    // 星级显示（左侧）
+    float starSize = 20 * _scaleFactor;
+    float starStartX = 15 * _scaleFactor;
+    for (int i = 0; i < 3; i++) {
+        auto star = DrawNode::create();
+        star->drawSolidCircle(Vec2::ZERO, starSize / 2, 0, 5, Color4F(0.3f, 0.3f, 0.3f, 1));
+        star->setPosition(Vec2(starStartX + i * (starSize + 5 * _scaleFactor), statusBarHeight / 2));
+        star->setName("star_" + std::to_string(i));
+        statusBar->addChild(star, 1);
+    }
+
+    // 摧毁百分比（右侧）
+    auto destroyLabel = Label::createWithTTF("0%", "fonts/arial.ttf", 18 * _scaleFactor);
+    destroyLabel->setPosition(Vec2(statusBarWidth - 15 * _scaleFactor, statusBarHeight / 2));
+    destroyLabel->setAnchorPoint(Vec2(1, 0.5f));
+    destroyLabel->setColor(Color3B(255, 200, 100));
+    destroyLabel->setName("destroyLabel");
+    statusBar->addChild(destroyLabel, 1);
+
     return panel;
 }
 
-// ==================== 战斗结果面板 ====================
-Node* UIManager::createBattleResult() {
+// 选中战斗士兵
+void UIManager::selectBattleTroop(int index, const std::string& troopName) {
+    auto panel = getPanel(UIPanelType::BattleHUD);
+    if (!panel) return;
+
+    // 取消之前的选中状态
+    if (_selectedTroopIndex >= 0 && _selectedTroopIndex != index) {
+        auto prevContainer = panel->getChildByName("troopBtn_" + std::to_string(_selectedTroopIndex));
+        if (prevContainer) {
+            auto prevBorder = prevContainer->getChildByName("selectBorder");
+            if (prevBorder) prevBorder->setVisible(false);
+        }
+    }
+
+    // 设置新的选中状态
+    _selectedTroopIndex = index;
+    _selectedTroopName = troopName;
+
+    auto container = panel->getChildByName("troopBtn_" + std::to_string(index));
+    if (container) {
+        auto border = container->getChildByName("selectBorder");
+        if (border) border->setVisible(true);
+    }
+
+    CCLOG("Selected troop: %s", troopName.c_str());
+}
+
+// 取消选中士兵
+void UIManager::deselectBattleTroop() {
+    if (_selectedTroopIndex >= 0) {
+        auto panel = getPanel(UIPanelType::BattleHUD);
+        if (panel) {
+            auto container = panel->getChildByName("troopBtn_" + std::to_string(_selectedTroopIndex));
+            if (container) {
+                auto border = container->getChildByName("selectBorder");
+                if (border) border->setVisible(false);
+            }
+        }
+    }
+    _selectedTroopIndex = -1;
+    _selectedTroopName = "";
+}
+
+// 更新战斗中士兵数量
+void UIManager::updateBattleTroopCount(const std::string& troopName, int newCount) {
+    _battleTroopCounts[troopName] = newCount;
+    refreshBattleHUDTroops();
+}
+
+// 获取指定士兵的剩余数量
+int UIManager::getBattleTroopCount(const std::string& troopName) const {
+    auto it = _battleTroopCounts.find(troopName);
+    return (it != _battleTroopCounts.end()) ? it->second : 0;
+}
+
+// 刷新战斗HUD士兵显示
+void UIManager::refreshBattleHUDTroops() {
+    auto panel = getPanel(UIPanelType::BattleHUD);
+    if (!panel) return;
+
+    for (size_t i = 0; i < _battleTroopNames.size(); i++) {
+        const std::string& troopName = _battleTroopNames[i];
+        int count = _battleTroopCounts[troopName];
+
+        auto container = panel->getChildByName("troopBtn_" + std::to_string(i));
+        if (!container) continue;
+
+        auto countLabel = container->getChildByName<Label*>("countLabel");
+        auto icon = container->getChildByName<Sprite*>("icon");
+        auto selectBorder = container->getChildByName("selectBorder");
+
+        if (countLabel) {
+            countLabel->setString(std::to_string(count));
+        }
+
+        // 数量为0时变灰并取消选中
+        if (count <= 0) {
+            if (icon) icon->setColor(Color3B(80, 80, 80));
+            if (selectBorder) selectBorder->setVisible(false);
+            if (_selectedTroopIndex == (int)i) {
+                _selectedTroopIndex = -1;
+                _selectedTroopName = "";
+            }
+        }
+    }
+}
+
+// 更新摧毁百分比和星级
+void UIManager::updateDestructionPercent(int percent) {
+    auto panel = getPanel(UIPanelType::BattleHUD);
+    if (!panel) return;
+
+    auto statusBar = panel->getChildByName("statusBar");
+    if (!statusBar) return;
+
+    // 更新百分比
+    auto destroyLabel = statusBar->getChildByName<Label*>("destroyLabel");
+    if (destroyLabel) {
+        destroyLabel->setString(std::to_string(percent) + "%");
+    }
+
+    // 计算星级（50%=1星，75%=2星，100%=3星）
+    int stars = 0;
+    if (percent >= 50) stars = 1;
+    if (percent >= 75) stars = 2;
+    if (percent >= 100) stars = 3;
+
+    // 更新星级显示
+    float starSize = 20 * _scaleFactor;
+    for (int i = 0; i < 3; i++) {
+        auto star = statusBar->getChildByName<DrawNode*>("star_" + std::to_string(i));
+        if (star) {
+            star->clear();
+            Color4F starColor = (i < stars) ? Color4F(1, 0.8f, 0, 1) : Color4F(0.3f, 0.3f, 0.3f, 1);
+            star->drawSolidCircle(Vec2::ZERO, starSize / 2, 0, 5, starColor);
+        }
+    }
+}
+
+// ==================== 战斗模式 ====================
+
+void UIManager::enterBattleMode(MapManager* battleMap) {
+    if (_isBattleMode) return;
+    if (!battleMap) {
+        CCLOG("UIManager::enterBattleMode - battleMap is null");
+        return;
+    }
+
+    _isBattleMode = true;
+    _currentBattleMap = battleMap;
+    _selectedTroopIndex = -1;
+    _selectedTroopName = "";
+
+    // 显示战斗 HUD
+    showPanel(UIPanelType::BattleHUD, UILayer::HUD, false);
+
+    // 设置触摸监听（用于在地图上放置士兵）
+    setupBattleTouchListener();
+
+    CCLOG("UIManager: Entered battle mode");
+}
+
+void UIManager::exitBattleMode() {
+    if (!_isBattleMode) return;
+
+    _isBattleMode = false;
+    _currentBattleMap = nullptr;
+    _selectedTroopIndex = -1;
+    _selectedTroopName = "";
+
+    // 隐藏战斗 HUD
+    hidePanel(UIPanelType::BattleHUD, true);
+
+    // 移除触摸监听
+    removeBattleTouchListener();
+
+    // 清空士兵数量
+    _battleTroopCounts.clear();
+    _battleTroopNames.clear();
+
+    CCLOG("UIManager: Exited battle mode");
+}
+
+void UIManager::setupBattleTouchListener() {
+    if (_battleTouchListener) return;
+    if (!_rootScene) return;
+
+    _battleTouchListener = EventListenerTouchOneByOne::create();
+    _battleTouchListener->setSwallowTouches(false);  // 不吞噬，让底部UI也能响应
+
+    _battleTouchListener->onTouchBegan = [this](Touch* touch, Event* event) -> bool {
+        // 战斗模式下，如果有选中士兵，就响应触摸
+        return _isBattleMode && !_selectedTroopName.empty();
+        };
+
+    _battleTouchListener->onTouchEnded = [this](Touch* touch, Event* event) {
+        if (!_isBattleMode || _selectedTroopName.empty()) return;
+
+        Vec2 touchPos = touch->getLocation();
+
+        // 检查是否点击在底部 UI 区域
+        float uiHeight = 130.0f * _scaleFactor;
+        if (touchPos.y < uiHeight) {
+            return;  // 点击在 UI 区域，不处理
+        }
+
+        // 尝试放置士兵
+        deploySoldierAt(touchPos);
+        };
+
+    Director::getInstance()->getEventDispatcher()
+        ->addEventListenerWithSceneGraphPriority(_battleTouchListener, _rootScene);
+}
+
+void UIManager::removeBattleTouchListener() {
+    if (_battleTouchListener) {
+        Director::getInstance()->getEventDispatcher()
+            ->removeEventListener(_battleTouchListener);
+        _battleTouchListener = nullptr;
+    }
+}
+
+bool UIManager::deploySoldierAt(const cocos2d::Vec2& screenPos) {
+    if (!_isBattleMode || !_currentBattleMap || _selectedTroopName.empty()) {
+        return false;
+    }
+
+    // 检查剩余数量
+    int remaining = getBattleTroopCount(_selectedTroopName);
+    if (remaining <= 0) {
+        CCLOG("No remaining troops of type: %s", _selectedTroopName.c_str());
+        return false;
+    }
+
+    // 屏幕坐标 → 地图本地坐标 → Vec 坐标
+    Vec2 localPos = _currentBattleMap->convertToNodeSpace(screenPos);
+    Vec2 vecPos = _currentBattleMap->worldToVec(localPos);
+
+    // 转为格子坐标检查
+    int gridX = static_cast<int>(std::floor(vecPos.x));
+    int gridY = static_cast<int>(std::floor(vecPos.y));
+
+    // 检查是否可放置
+    if (!_currentBattleMap->isDeployAllowedGrid(gridX, gridY)) {
+        CCLOG("Invalid deploy position: (%d, %d)", gridX, gridY);
+        return false;
+    }
+
+    // 调用 Combat 创建士兵（无返回值）
+    Combat::GetInstance().DeploySoldier(_selectedTroopName, vecPos);
+
+    // 更新 UI 数量
+    updateBattleTroopCount(_selectedTroopName, remaining - 1);
+
+    CCLOG("Deployed soldier '%s' at vec (%.2f, %.2f), remaining: %d",
+        _selectedTroopName.c_str(), vecPos.x, vecPos.y, remaining - 1);
+
+    return true;
+}
+
+// ==================== 结束战斗 ====================
+
+void UIManager::endBattle(int stars, int destroyPercent) {
+    if (!_isBattleMode) return;
+
+    // 隐藏战斗 HUD
+    hidePanel(UIPanelType::BattleHUD, true);
+
+    // 移除触摸监听
+    removeBattleTouchListener();
+    _isBattleMode = false;
+
+    // 等待 1 秒后显示结算面板
+    if (_rootScene) {
+        _rootScene->scheduleOnce([this, stars, destroyPercent](float dt) {
+            // 创建并显示结算面板
+            auto panel = createBattleResult(stars, destroyPercent);
+            if (panel) {
+                _panels[UIPanelType::BattleResult] = panel;
+                addPanelToScene(panel, UILayer::Dialog, true);
+                playShowAnimation(panel);
+            }
+            }, 1.0f, "showBattleResult");
+    }
+}
+
+Node* UIManager::createBattleResult(int stars, int destroyPercent) {
     auto panel = Node::create();
 
-    Size panelSize(500 * _scaleFactor, 400 * _scaleFactor);
+    Size panelSize(400 * _scaleFactor, 300 * _scaleFactor);
     panel->setContentSize(panelSize);
     panel->setPosition(Vec2((_visibleSize.width - panelSize.width) / 2 + _visibleOrigin.x,
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
@@ -1459,81 +1879,81 @@ Node* UIManager::createBattleResult() {
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
-    // 标题（胜利/失败）- 这里需要替换为实际战斗结果
-    bool isVictory = true; // 这里需要替换为 battleManager->isVictory()
-    std::string resultText = isVictory ? "Victory!" : "Defeat";
-    Color3B resultColor = isVictory ? Color3B(100, 255, 100) : Color3B(255, 100, 100);
+    // 标题
+    std::string resultText = (stars > 0) ? "Victory!" : "Defeat";
+    Color3B resultColor = (stars > 0) ? Color3B(100, 255, 100) : Color3B(255, 100, 100);
 
-    auto title = Label::createWithTTF(resultText, "fonts/arial.ttf", 36 * _scaleFactor);
+    auto title = Label::createWithTTF(resultText, "fonts/arial.ttf", 32 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 50 * _scaleFactor));
     title->setColor(resultColor);
     panel->addChild(title, 1);
 
     // 星级显示
-    int stars = 2; // 这里需要替换为 battleManager->getStars()
-    float starSize = 40 * _scaleFactor;
-    float starY = panelSize.height - 120 * _scaleFactor;
+    float starSize = 35 * _scaleFactor;
+    float starY = panelSize.height - 110 * _scaleFactor;
     for (int i = 0; i < 3; i++) {
-        auto star = Sprite::create(i < stars ? "UI/star_full.png" : "UI/star_empty.png");
-        if (!star) {
-            star = Sprite::create();
-            auto starDraw = DrawNode::create();
-            Color4F starColor = (i < stars) ? Color4F(1, 0.8f, 0, 1) : Color4F(0.3f, 0.3f, 0.3f, 1);
-            starDraw->drawSolidCircle(Vec2::ZERO, starSize / 2, 0, 5, starColor);
-            star->addChild(starDraw);
-            star->setContentSize(Size(starSize, starSize));
-        }
-        star->setPosition(Vec2(panelSize.width / 2 + (i - 1) * (starSize + 10 * _scaleFactor), starY));
+        auto star = DrawNode::create();
+        Color4F starColor = (i < stars) ? Color4F(1, 0.8f, 0, 1) : Color4F(0.3f, 0.3f, 0.3f, 1);
+        star->drawSolidCircle(Vec2::ZERO, starSize / 2, 0, 5, starColor);
+        star->setPosition(Vec2(panelSize.width / 2 + (i - 1) * (starSize + 15 * _scaleFactor), starY));
         panel->addChild(star, 1);
     }
 
-    // 统计信息
-    float lineHeight = 35 * _scaleFactor;
-    float infoStartY = panelSize.height - 180 * _scaleFactor;
-    float leftX = 80 * _scaleFactor;
-
-    // 摧毁百分比
-    int destroyPercent = 75; // 这里需要替换为 battleManager->getDestroyPercent()
+    // 摧毁率
     auto destroyLabel = Label::createWithTTF("Destruction: " + std::to_string(destroyPercent) + "%",
-        "fonts/arial.ttf", 20 * _scaleFactor);
-    destroyLabel->setPosition(Vec2(leftX, infoStartY));
-    destroyLabel->setAnchorPoint(Vec2(0, 0.5f));
-    destroyLabel->setColor(Color3B::WHITE);
+        "fonts/arial.ttf", 22 * _scaleFactor);
+    destroyLabel->setPosition(Vec2(panelSize.width / 2, panelSize.height - 170 * _scaleFactor));
+    destroyLabel->setColor(Color3B(255, 200, 100));
     panel->addChild(destroyLabel, 1);
 
-    // 获得金币
-    int goldEarned = 500; // 这里需要替换为 battleManager->getGoldEarned()
-    auto goldLabel = Label::createWithTTF("Gold: +" + std::to_string(goldEarned),
-        "fonts/arial.ttf", 20 * _scaleFactor);
-    goldLabel->setPosition(Vec2(leftX, infoStartY - lineHeight));
-    goldLabel->setAnchorPoint(Vec2(0, 0.5f));
-    goldLabel->setColor(Color3B(255, 215, 0));
-    panel->addChild(goldLabel, 1);
-
-    // 获得圣水
-    int elixirEarned = 300; // 这里需要替换为 battleManager->getElixirEarned()
-    auto elixirLabel = Label::createWithTTF("Elixir: +" + std::to_string(elixirEarned),
-        "fonts/arial.ttf", 20 * _scaleFactor);
-    elixirLabel->setPosition(Vec2(leftX, infoStartY - 2 * lineHeight));
-    elixirLabel->setAnchorPoint(Vec2(0, 0.5f));
-    elixirLabel->setColor(Color3B(200, 100, 255));
-    panel->addChild(elixirLabel, 1);
-
-    // 返回主城按钮
-    auto returnBtn = Button::create();
-    returnBtn->setTitleText("Return to Village");
-    returnBtn->setTitleFontSize(20 * _scaleFactor);
-    returnBtn->setContentSize(Size(200 * _scaleFactor, 50 * _scaleFactor));
-    returnBtn->setScale9Enabled(true);
-    returnBtn->setPosition(Vec2(panelSize.width / 2, 60 * _scaleFactor));
-    returnBtn->addClickEventListener([this](Ref* sender) {
+    // 确认按钮
+    auto confirmBtn = Button::create();
+    confirmBtn->setTitleText("Confirm");
+    confirmBtn->setTitleFontSize(20 * _scaleFactor);
+    confirmBtn->setContentSize(Size(150 * _scaleFactor, 50 * _scaleFactor));
+    confirmBtn->setScale9Enabled(true);
+    confirmBtn->setPosition(Vec2(panelSize.width / 2, 60 * _scaleFactor));
+    confirmBtn->addClickEventListener([this](Ref* sender) {
+        // 隐藏结算面板
         hidePanel(UIPanelType::BattleResult, true);
-        // 这里需要替换为返回主村庄的逻辑
-        triggerUIEvent("OnReturnToVillage");
+
+        // 播放白色过渡动画，然后返回主场景
+        playWhiteTransition([this]() {
+            // 清理状态
+            _currentBattleMap = nullptr;
+            _battleTroopCounts.clear();
+            _battleTroopNames.clear();
+
+            // 返回主场景
+            auto mainScene = MainScene::create();
+            Director::getInstance()->replaceScene(mainScene);
+            });
         });
-    panel->addChild(returnBtn, 1);
+    panel->addChild(confirmBtn, 1);
 
     return panel;
+}
+
+void UIManager::playWhiteTransition(const std::function<void()>& onComplete) {
+    if (!_rootScene) {
+        if (onComplete) onComplete();
+        return;
+    }
+
+    // 创建全屏白色遮罩
+    auto flash = LayerColor::create(Color4B(255, 255, 255, 0), _visibleSize.width, _visibleSize.height);
+    flash->setPosition(_visibleOrigin);
+    _rootScene->addChild(flash, static_cast<int>(UILayer::Loading));
+
+    // 动画：淡入 → 回调 → 淡出 → 移除
+    auto fadeIn = FadeTo::create(0.3f, 255);
+    auto callFunc = CallFunc::create([onComplete]() {
+        if (onComplete) onComplete();
+        });
+    auto fadeOut = FadeTo::create(0.3f, 0);
+    auto removeSelf = RemoveSelf::create();
+
+    flash->runAction(Sequence::create(fadeIn, callFunc, fadeOut, removeSelf, nullptr));
 }
 
 // ==================== 升级进度覆盖层 ====================

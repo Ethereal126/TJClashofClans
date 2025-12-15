@@ -10,6 +10,7 @@
 
 // 前向声明
 class Building;
+class MapManager;
 
 // UI层级枚举（用于控制显示顺序）
 enum class UILayer {
@@ -168,12 +169,12 @@ public:
     // 显示商店面板
     void showShop();
 
-    // 显示购买确认对话框
-    // buildingName: 建筑名称
-    // cost: 建造成本
-    // onConfirm: 确认购买回调（进入放置模式）
-    void showPurchaseConfirm(const std::string& buildingName, int cost,
-        const std::function<void()>& onConfirm);
+    // 获取待放置建筑信息
+    Building* getPendingPlacementBuilding() const { return _pendingPlacementBuilding; }
+    int getPendingPlacementCost() const { return _pendingPlacementCost; }
+    void clearPendingPlacement() {
+        _pendingPlacementBuilding = nullptr; _pendingPlacementCost = 0;
+    }
 
     // ========== 地图选择相关 ==========
     // 显示地图选择界面
@@ -192,6 +193,29 @@ public:
     cocos2d::Vec2 getVisibleOrigin() const;
     float getScaleFactor() const;
     cocos2d::Vec2 getUIPosition(float percentX, float percentY) const;
+
+    // ========== 战斗模式（新增/修改）==========
+    // 进入战斗模式，传入当前战斗地图
+    void enterBattleMode(MapManager* battleMap);
+    // 退出战斗模式
+    void exitBattleMode();
+    // 是否处于战斗模式
+    bool isInBattleMode() const { return _isBattleMode; }
+
+    // 结束战斗（由 Combat 调用，显示结算界面）
+    void endBattle(int stars, int destroyPercent);
+
+    // ========== 战斗 HUD 相关接口 ==========
+    // 更新战斗中士兵数量（MapManager 放置士兵后调用）
+    void updateBattleTroopCount(const std::string& troopName, int newCount);
+    // 更新摧毁百分比（自动计算星级）
+    void updateDestructionPercent(int percent);
+    // 获取当前选中的士兵类型名称
+    std::string getSelectedTroopName() const { return _selectedTroopName; }
+    // 获取指定士兵的剩余数量
+    int getBattleTroopCount(const std::string& troopName) const;
+    // 取消选中士兵
+    void deselectBattleTroop();
 
 protected:
     UIManager();
@@ -212,7 +236,7 @@ protected:
     cocos2d::Node* createBuildingUpgrade(Building* building);
     cocos2d::Node* createArmyTraining(Building* building);
     cocos2d::Node* createBattleHUD();
-    cocos2d::Node* createBattleResult();
+    cocos2d::Node* createBattleResult(int stars, int destroyPercent);
     cocos2d::Node* createUpgradeProgressOverlay(Building* building, float totalTime, float remainingTime);
 
     // 创建通用关闭按钮（右上角❌）
@@ -257,6 +281,43 @@ private:
 
     // 加载界面进度条引用
     cocos2d::ui::LoadingBar* _loadingProgressBar;
+
+    // 待放置建筑信息（用于传递给MapManager）
+    Building* _pendingPlacementBuilding = nullptr;
+    int _pendingPlacementCost = 0;
+
+    // 军队配置临时存储（士兵名称 -> 选中数量）
+    std::map<std::string, int> _tempArmyConfig;
+    int _tempCurrentPopulation = 0;
+    // 军队配置存储
+    void saveArmyConfig();
+    std::map<std::string, int> loadArmyConfig();
+    void refreshArmyTrainingUI(cocos2d::Node* panel);
+
+    // ========== 战斗模式相关（新增）==========
+    bool _isBattleMode = false;
+    MapManager* _currentBattleMap = nullptr;  // 当前战斗地图指针
+    cocos2d::EventListenerTouchOneByOne* _battleTouchListener = nullptr;
+
+    // 战斗模式内部方法
+    void setupBattleTouchListener();
+    void removeBattleTouchListener();
+    bool deploySoldierAt(const cocos2d::Vec2& screenPos);
+
+    // ========== 战斗 HUD 相关 ==========
+    // 战斗中的士兵数量（士兵名称 -> 剩余数量）
+    std::map<std::string, int> _battleTroopCounts;
+    std::vector<std::string> _battleTroopNames;
+    // 当前选中的士兵按钮索引，-1 表示未选中
+    int _selectedTroopIndex = -1;
+    // 当前选中的士兵类型名称
+    std::string _selectedTroopName;
+
+    // 战斗 HUD 内部方法
+    void selectBattleTroop(int index, const std::string& troopName);
+    void refreshBattleHUDTroops();
+
+    void playWhiteTransition(const std::function<void()>& onComplete);
 };
 
 #endif // __UI_MANAGER_H__
