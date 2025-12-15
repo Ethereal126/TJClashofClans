@@ -27,8 +27,8 @@ void Building::Upgrade() {
     level_ += 1;
     build_time_ = static_cast<int>(build_time_ * (1.2 + 0.3 * level_)); // 升级时间增加
     build_cost_ = static_cast<int>(build_cost_ * (1.2 + 0.3 * level_)); // 升级成本增加
-    health_ = GetMaxHealth(); // 血量回满
     defense_ = static_cast<int>(defense_ * (1.1 + 0.2 * level_)); // 防御提升
+    health_ = GetMaxHealth(); // 血量回满
 }
 
 /**
@@ -73,6 +73,8 @@ void Building::ShowInfo() const {
     cocos2d::log("位置: (%.1f, %.1f)", position_.x, position_.y);
 }
 
+//各类Get函数
+
 /**
  * @brief 获取最大生命值
  * 最大生命值按“防御值的八倍”进行计算。
@@ -80,8 +82,6 @@ void Building::ShowInfo() const {
 int Building::GetMaxHealth() const {
     return static_cast<int>(defense_ * 8);//最大血量设定为为八倍的防御值
 }
-
-//各类Get函数
 
 /**
  * @brief 获取建筑名称
@@ -191,4 +191,140 @@ AttackBuilding::AttackBuilding(std::string name, int base, std::pair<int, int> p
 void AttackBuilding::ShowInfo() const {
     Building::ShowInfo();
     cocos2d::log("攻击范围: %d 格", Range_);
+}
+
+// ==================== TrainingBuilding 成员函数的实现 ====================
+
+/**
+ * @brief TrainingBuilding 构造函数
+ * 初始化训练营的生命、防御、建造时间和成本，并设置训练属性与纹理。
+ */
+TrainingBuilding::TrainingBuilding(std::string name, int base, std::pair<int, int> position,
+    std::string texture, int capacity, int speed)
+    : Building(name, 1, 8 * base, 2 * base,
+        base * 3, base * 400, position),
+    training_capacity_(capacity),
+    training_speed_(speed) {
+
+    // 初始化可训练单位列表（根据等级解锁不同单位）
+    available_units_ = { "Barbarian", "Archer" };
+
+    // 设置训练营的纹理
+    this->setTexture(texture);
+}
+
+/**
+ * @brief 开始训练士兵
+ */
+bool TrainingBuilding::StartTraining(const std::string& unit_type, int count) {
+    // 检查单位类型是否可训练
+    if (std::find(available_units_.begin(), available_units_.end(), unit_type) == available_units_.end()) {
+        cocos2d::log("错误: 无法训练单位类型 %s", unit_type.c_str());
+        return false;
+    }
+
+    // 检查训练容量
+    int current_training = 0;
+    for (const auto& unit : available_units_) {
+        // 这里需要访问训练队列，假设有一个私有成员 training_queue_
+        // current_training += training_queue_[unit];
+    }
+
+    if (current_training + count > training_capacity_) {
+        cocos2d::log("错误: 训练容量不足 (当前: %d, 需要: %d, 容量: %d)",
+            current_training, count, training_capacity_);
+        return false;
+    }
+
+    // 开始训练逻辑
+    cocos2d::log("开始训练 %d 个 %s", count, unit_type.c_str());
+    return true;
+}
+
+/**
+ * @brief 取消训练
+ */
+void TrainingBuilding::CancelTraining(const std::string& unit_type, int count) {
+    cocos2d::log("取消训练 %d 个 %s", count, unit_type.c_str());
+    // 实际实现需要更新训练队列
+}
+
+/**
+ * @brief 获取当前训练队列信息
+ */
+std::map<std::string, int> TrainingBuilding::GetTrainingQueue() const {
+    std::map<std::string, int> queue;
+    // 返回训练队列的拷贝
+    // 实际实现需要返回 training_queue_ 的拷贝
+    return queue;
+}
+
+/**
+ * @brief 检查是否有训练完成
+ */
+std::pair<std::string, int> TrainingBuilding::CheckCompletedTraining() {
+    // 检查训练计时器，返回完成的单位
+    // 实际实现需要检查训练时间是否达到
+    return std::make_pair("", 0);
+}
+
+/**
+ * @brief 升级训练营
+ * 重写基类升级方法，提升训练容量和速度
+ */
+void TrainingBuilding::Upgrade() {
+    // 先调用基类的升级
+    Building::Upgrade();
+
+    // 训练营特有的升级逻辑
+    training_capacity_ += 5;  // 每级增加5个训练容量
+    training_speed_ = static_cast<int>(training_speed_ * 0.9);  // 训练速度提升10%
+
+    // 根据等级解锁新单位
+    if (level_ >= 3 && std::find(available_units_.begin(), available_units_.end(), "Giant") == available_units_.end()) {
+        available_units_.push_back("Giant");
+        cocos2d::log("解锁新单位: Giant");
+    }
+    if (level_ >= 5 && std::find(available_units_.begin(), available_units_.end(), "Wizard") == available_units_.end()) {
+        available_units_.push_back("Wizard");
+        cocos2d::log("解锁新单位: Wizard");
+    }
+
+    cocos2d::log("训练营升级到 %d 级", level_);
+    cocos2d::log("训练容量: %d, 训练速度: %d 秒/每兵", training_capacity_, training_speed_);
+}
+
+/**
+ * @brief 输出 TrainingBuilding 详细信息
+ * 调用基类 ShowInfo 再额外输出训练相关属性。
+ */
+void TrainingBuilding::ShowInfo() const {
+    Building::ShowInfo();
+    cocos2d::log("训练容量: %d 个单位", training_capacity_);
+    cocos2d::log("训练速度: %d 秒/每兵", training_speed_);
+    cocos2d::log("可训练单位: ");
+    for (const auto& unit : available_units_) {
+        cocos2d::log("  - %s", unit.c_str());
+    }
+}
+
+/**
+ * @brief 获取训练容量
+ */
+int TrainingBuilding::GetTrainingCapacity() const {
+    return training_capacity_;
+}
+
+/**
+ * @brief 获取训练速度
+ */
+int TrainingBuilding::GetTrainingSpeed() const {
+    return training_speed_;
+}
+
+/**
+ * @brief 获取可训练单位列表
+ */
+const std::vector<std::string>& TrainingBuilding::GetAvailableUnits() const {
+    return available_units_;
 }
