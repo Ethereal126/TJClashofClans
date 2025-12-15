@@ -1,6 +1,6 @@
 #include "MapManager.h"
-#include "TownHall/TownHall.h"
-#include "UIManager/UIManager.h"
+//#include "TownHall/TownHall.h"
+//#include "UIManager/UIManager.h"
 #include <algorithm>
 #include <cmath>
 
@@ -47,6 +47,23 @@ bool MapManager::init(int width, int length, int gridSize, TerrainType terrainTy
 
     // 地图以左下角为原点
     this->setAnchorPoint(cocos2d::Vec2::ANCHOR_BOTTOM_LEFT);
+
+    cocos2d::Director* director = cocos2d::Director::getInstance();
+    cocos2d::Size visibleSize = director->getVisibleSize(); // 窗口宽高（如1280x720）
+    cocos2d::Vec2 origin = director->getVisibleOrigin();     // 窗口原点（通常为(0,0)）
+
+    // 4. 计算等距地图的总宽度（关键：等距地图宽度公式）
+    // 等距地图总宽 = (横向格子数 + 纵向格子数) * (单个格子大小 / 2)
+    float mapTotalWidth = (_width + _length) * (_gridSize / 2.0f);
+
+    // 5. 计算地图的最终位置（核心：让地图底边中心对齐窗口底边中心）
+    float windowBottomCenterX = origin.x + visibleSize.width / 2.0f; // 窗口底边中心x坐标
+    float mapPositionX = windowBottomCenterX - (mapTotalWidth / 2.0f); // 地图左下角x（整体居中）
+    float mapPositionY = origin.y; // 地图y坐标（贴窗口底边）
+
+    // 6. 应用位置设置
+    this->setPosition(mapPositionX, mapPositionY);
+
 
     initGrids();
     return true;
@@ -107,7 +124,7 @@ bool MapManager::isValidGrid(int gridX, int gridY) const {
     return gridX >= 0 && gridY >= 0 && gridX < _width && gridY < _length;
 }
 
-bool MapManager::isValidGrid(const cocos2d::Vec2& grid_pos){
+bool MapManager::isValidGrid(const cocos2d::Vec2& grid_pos) const {
     return isValidGrid(std::floor(grid_pos.x),std::floor(grid_pos.y));
 }
 
@@ -414,8 +431,8 @@ bool MapManager::confirmPlacement() {
         _buildings_except_for_wall.push_back(_pendingBuilding);
     }
 
-    TownHall* townHall = GetTownHall();
-    townHall->SpendGold(_pendingBuildingCost);
+    /*TownHall* townHall = GetTownHall();
+    townHall->SpendGold(_pendingBuildingCost);*/
     CCLOG("Building placed! Cost: %d gold (TODO: deduct from resources)", _pendingBuildingCost);
 
     // 清理放置模式状态（不删除建筑，因为已放置成功）
@@ -535,6 +552,85 @@ void MapManager::updateConfirmButtonState() {
 
     _confirmBtn->setPosition(cocos2d::Vec2(buildingPos.x - btnSpacing, buttonY));
     _cancelBtn->setPosition(cocos2d::Vec2(buildingPos.x + btnSpacing, buttonY));
+}
+
+void MapManager::createPlacementUI() {
+    removePlacementUI();
+    if (!_isPlacementMode || !_pendingBuilding) return;
+
+    _placementUINode = cocos2d::Node::create();
+    this->addChild(_placementUINode, 1200);
+
+    // 确认按钮
+    _confirmBtn = cocos2d::ui::Button::create("UI/btn_confirm.png", "UI/btn_confirm_pressed.png");
+    if (!_confirmBtn || !_confirmBtn->getVirtualRenderer()) {
+        _confirmBtn = cocos2d::ui::Button::create();
+        _confirmBtn->setScale9Enabled(true);
+        _confirmBtn->setContentSize(cocos2d::Size(140, 54));
+        _confirmBtn->setTitleText("Confirm");
+        _confirmBtn->setTitleFontSize(20);
+    }
+    _confirmBtn->addClickEventListener([this](cocos2d::Ref*) {
+        confirmPlacement();
+        });
+    _placementUINode->addChild(_confirmBtn);
+
+    // 取消按钮
+    _cancelBtn = cocos2d::ui::Button::create("UI/btn_cancel.png", "UI/btn_cancel_pressed.png");
+    if (!_cancelBtn || !_cancelBtn->getVirtualRenderer()) {
+        _cancelBtn = cocos2d::ui::Button::create();
+        _cancelBtn->setScale9Enabled(true);
+        _cancelBtn->setContentSize(cocos2d::Size(140, 54));
+        _cancelBtn->setTitleText("Cancel");
+        _cancelBtn->setTitleFontSize(20);
+    }
+    _cancelBtn->addClickEventListener([this](cocos2d::Ref*) {
+        exitPlacementMode();
+        });
+    _placementUINode->addChild(_cancelBtn);
+
+    updateConfirmButtonState();
+}
+
+void MapManager::removePlacementUI() {
+    if (_placementUINode) {
+        _placementUINode->removeFromParent();
+        _placementUINode = nullptr;
+    }
+    _confirmBtn = nullptr;
+    _cancelBtn = nullptr;
+}
+
+void MapManager::setupPlacementTouchListener() {
+    if (_placementTouchListener || !_isPlacementMode) return;
+
+    _placementTouchListener = cocos2d::EventListenerTouchOneByOne::create();
+    _placementTouchListener->setSwallowTouches(true);
+
+    _placementTouchListener->onTouchBegan = [this](cocos2d::Touch* touch, cocos2d::Event*) -> bool {
+        if (!_isPlacementMode || !_pendingBuilding) return false;
+        updatePlacementPreview(touch->getLocation());
+        return true;
+        };
+    _placementTouchListener->onTouchMoved = [this](cocos2d::Touch* touch, cocos2d::Event*) {
+        if (!_isPlacementMode || !_pendingBuilding) return;
+        updatePlacementPreview(touch->getLocation());
+        };
+    _placementTouchListener->onTouchEnded = [this](cocos2d::Touch* touch, cocos2d::Event*) {
+        if (!_isPlacementMode || !_pendingBuilding) return;
+        updatePlacementPreview(touch->getLocation());
+        };
+
+    cocos2d::Director::getInstance()->getEventDispatcher()
+        ->addEventListenerWithSceneGraphPriority(_placementTouchListener, this);
+}
+
+void MapManager::removePlacementTouchListener() {
+    if (_placementTouchListener) {
+        cocos2d::Director::getInstance()->getEventDispatcher()
+            ->removeEventListener(_placementTouchListener);
+        _placementTouchListener = nullptr;
+    }
 }
 
 

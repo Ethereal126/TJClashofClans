@@ -3,9 +3,8 @@
 #include "TownHall/TownHall.h"
 #include "AudioManager/AudioManager.h"
 #include <sstream>
-#include "MapManager/MapManager.h"      
-#include "Combat/Combat.h"       
-#include "Scene/BattleScene.h"   
+#include "Map/MapManager.h"      
+#include "Combat/Combat.h"        
 #include "MainScene.h"          
 
 USING_NS_CC;

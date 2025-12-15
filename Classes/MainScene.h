@@ -3,7 +3,7 @@
 #define __HOME_SCENE_H__
 
 #include "cocos2d.h"
-#include "MapManager/MapManager.h"
+#include "Map/MapManager.h"
 
 class MainScene : public cocos2d::Scene {
 public:
