@@ -40,16 +40,16 @@ public:
 
     // ========== 格子验证功能 ==========
     // 检查指定格子坐标是否在地图范围内
-    bool isValidGrid(int gridX, int gridY) const;
-    bool isValidGrid(const cocos2d::Vec2& grid_pos);
+    virtual bool isValidGrid(int gridX, int gridY) const;
+    virtual bool isValidGrid(const cocos2d::Vec2& grid_pos) const;
 
     // 检查指定格子位置是否可放置建筑
     // building参数用于获取建筑占用的格子大小，如果为nullptr则默认检查1x1
     bool isPositionAvailable(int gridX, int gridY, const Building* building = nullptr) const;
 
 	// 检查建筑是否可以放置在指定范围（从gridX开始，到gridX+width；从gridY开始，到gridY+length）
-    bool isRangeAvailable(int gridX, int gridY, int width, int length) const;
-    bool IsGridAvailable(const cocos2d::Vec2& pos) const;
+    virtual bool isRangeAvailable(int gridX, int gridY, int width, int length) const;
+    virtual bool IsGridAvailable(const cocos2d::Vec2& pos) const;
 
     // ========== 建筑管理功能 ==========
     // 将建筑放置到指定格子位置  返回是否成功
@@ -68,8 +68,10 @@ public:
     // 如果传入的是世界坐标，外部请先调用 convertToNodeSpace；此处保持接口不做转换
     std::pair<int, int> worldToGrid(const cocos2d::Vec2& worldPos) const;
 
-    cocos2d::Vec2 vecToWorld(cocos2d::Vec2 vecPos) const;
-    cocos2d::Vec2 worldToVec(cocos2d::Vec2 worldPos) const;
+    // 用于Mock的方法需要声明为virtual
+    virtual cocos2d::Vec2 vecToWorld(cocos2d::Vec2 vecPos) const;
+    virtual cocos2d::Vec2 worldToVec(cocos2d::Vec2 worldPos) const;
+
     // 获取指定位置的建筑
     Building* getBuildingAt(int gridX, int gridY) const;
 
@@ -104,9 +106,10 @@ public:
     // 保存地图数据到配置文件
     bool saveMapData(const std::string& filePath) const;
 
+    virtual ~Map();
+
 protected:
     Map();
-    virtual ~Map();
 
     // 初始化地图格子状态
     void initGrids();

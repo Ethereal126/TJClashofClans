@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
@@ -25,6 +25,7 @@
 #include "AppDelegate.h"
 #include "HelloWorldScene.h"
 #include "MainScene.h"
+#include "Combat/CombatTest.h"
 
 // #define USE_AUDIO_ENGINE 1
 
@@ -51,6 +52,7 @@ AppDelegate::~AppDelegate()
 #endif
 }
 
+
 // if you want a different context, modify the value of glContextAttrs
 // it will affect all platforms
 void AppDelegate::initGLContextAttrs()
@@ -69,6 +71,7 @@ static int register_all_packages()
 }
 
 bool AppDelegate::applicationDidFinishLaunching() {
+    CCLOG("Hello");
     // initialize director
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
@@ -108,11 +111,11 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     register_all_packages();
 
-    // create a scene. it's an autorelease object
-    auto scene = MainScene::createScene(/*mapWidth*/40, /*mapLength*/40, /*gridSize*/64);
-
-    // run
-    director->runWithScene(scene);
+    int argc = 0;
+    char* argv[] = { nullptr };
+    testing::InitGoogleTest(&argc, argv);
+    int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
+    CCLOG("testResult:%d", testResult);
 
     return true;
 }

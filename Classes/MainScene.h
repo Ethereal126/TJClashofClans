@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #ifndef __HOME_SCENE_H__
 #define __HOME_SCENE_H__
 
@@ -11,13 +11,13 @@ public:
         auto scene = MainScene::create();
         if (!scene) return nullptr;
 
-        // ´´½¨µØÍ¼£¨Ö÷´å×¯£©
+        // åˆ›å»ºåœ°å›¾ï¼ˆä¸»æ‘åº„ï¼‰
         auto map = ::Map::create(mapWidth, mapLength, gridSize, TerrainType::Home);
-        // ½«µØÍ¼°Ú·Åµ½ÆÁÄ»ÖĞĞÄÆ«ÏÂ£¨¸ù¾İÄãµÄĞèÇóµ÷Õû£©
+        // å°†åœ°å›¾æ‘†æ”¾åˆ°å±å¹•ä¸­å¿ƒåä¸‹ï¼ˆæ ¹æ®ä½ çš„éœ€æ±‚è°ƒæ•´ï¼‰
         map->setPosition(cocos2d::Vec2(0.f, 0.f));
         scene->addChild(map, 0);
 
-        // TODO: Èç¹ûÓĞ HUD/UIManager£¬ÕâÀï¿Éµ÷ÓÃ UIManager ÏÔÊ¾ HUD ºÍ ResourceBar
+        // TODO: å¦‚æœæœ‰ HUD/UIManagerï¼Œè¿™é‡Œå¯è°ƒç”¨ UIManager æ˜¾ç¤º HUD å’Œ ResourceBar
 
         return scene;
     }

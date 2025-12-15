@@ -6,7 +6,7 @@
 Map::Map():_width(0),_length(0),_gridSize(0),_terrainType(TerrainType::Home){}
 
 Map::~Map() {
-    // ÏÈÒÆ³ıÅú´¦ÀíµØÃæ½Úµã
+    // å…ˆç§»é™¤æ‰¹å¤„ç†åœ°é¢èŠ‚ç‚¹
     if (_groundBatch) {
         _groundBatch->removeFromParent();
         _groundBatch = nullptr;
@@ -44,7 +44,7 @@ bool Map::init(int width, int length, int gridSize, TerrainType terrainType) {
     _gridSize = gridSize;
     _terrainType = terrainType;
 
-    // µØÍ¼ÒÔ×óÏÂ½ÇÎªÔ­µã
+    // åœ°å›¾ä»¥å·¦ä¸‹è§’ä¸ºåŸç‚¹
     this->setAnchorPoint(cocos2d::Vec2::ANCHOR_BOTTOM_LEFT);
 
     initGrids();
@@ -52,26 +52,26 @@ bool Map::init(int width, int length, int gridSize, TerrainType terrainType) {
 }
 
 void Map::initGrids() {
-	// ³õÊ¼»¯¸ñ×Ó×´Ì¬Îª Empty¡¢½¨ÖşÖ¸ÕëÎª nullptr
+	// åˆå§‹åŒ–æ ¼å­çŠ¶æ€ä¸º Emptyã€å»ºç­‘æŒ‡é’ˆä¸º nullptr
     _gridStates.assign(_width, std::vector<GridState>(_length, GridState::Empty));
     _gridBuildings.assign(_width, std::vector<Building*>(_length, nullptr));
     _gridObstacles.assign(_width, std::vector<cocos2d::Sprite*>(_length, nullptr));
     _noDeploy.assign(_width, std::vector<bool>(_length, false));
     _buildings.clear();
 
-    // ´´½¨/ÖØ½¨µØÃæÅú´¦Àí½Úµã
+    // åˆ›å»º/é‡å»ºåœ°é¢æ‰¹å¤„ç†èŠ‚ç‚¹
     if (_groundBatch) {
         _groundBatch->removeFromParent();
         _groundBatch = nullptr;
     }
 
-    const std::string groundTilePath = "....Resources/tiles/ground_iso.png"; 
+    const std::string groundTilePath = "tile/ground_iso.png";
     if (cocos2d::FileUtils::getInstance()->isFileExist(groundTilePath)) {
         auto tempSprite = cocos2d::Sprite::create(groundTilePath);
         if (tempSprite) {
             auto texture = tempSprite->getTexture();
             _groundBatch = cocos2d::SpriteBatchNode::createWithTexture(texture);
-            // µØÃæ²ãÖÃÓÚ×îµ×²ã
+            // åœ°é¢å±‚ç½®äºæœ€åº•å±‚
             this->addChild(_groundBatch, -10);
 
             for (int x = 0; x < _width; ++x) {
@@ -79,7 +79,7 @@ void Map::initGrids() {
                     auto tile = cocos2d::Sprite::createWithTexture(texture);
                     tile->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
                     tile->setPosition(gridToWorld(x, y));
-                    // ÈçĞèÓë¸ñ×Ó¿í¶È¶ÔÆë£¬¿É°´ĞèËõ·Å£¨¸ù¾İ×ÊÔ´¾ö¶¨ÊÇ·ñÆôÓÃ£©
+                    // å¦‚éœ€ä¸æ ¼å­å®½åº¦å¯¹é½ï¼Œå¯æŒ‰éœ€ç¼©æ”¾ï¼ˆæ ¹æ®èµ„æºå†³å®šæ˜¯å¦å¯ç”¨ï¼‰
                     // float targetWidth = static_cast<float>(_gridSize);
                     // float scaleX = targetWidth / tile->getContentSize().width;
                     // tile->setScale(scaleX);
@@ -106,7 +106,7 @@ bool Map::isValidGrid(int gridX, int gridY) const {
     return gridX >= 0 && gridY >= 0 && gridX < _width && gridY < _length;
 }
 
-bool Map::isValidGrid(const cocos2d::Vec2& grid_pos){
+bool Map::isValidGrid(const cocos2d::Vec2& grid_pos) const{
     return isValidGrid(std::floor(grid_pos.x),std::floor(grid_pos.y));
 }
 
@@ -124,7 +124,7 @@ void Map::setGridState(int gridX, int gridY, GridState state) {
 
 
 bool Map::isRangeAvailable(int gridX, int gridY, int width, int length) const {
-    // ±ß½ç¼ì²é
+    // è¾¹ç•Œæ£€æŸ¥
     if (gridX < 0 || gridY < 0 || gridX + width > _width || gridY + length > _length) return false;
     for (int x = gridX; x < gridX + width; ++x) {
         for (int y = gridY; y < gridY + length; ++y) {
@@ -137,7 +137,7 @@ bool Map::isRangeAvailable(int gridX, int gridY, int width, int length) const {
     return true;
 }
 
-//¶ÔÓÚÊ¿±øÀàĞÍµÄÌØ±ğÖØÔØ
+//å¯¹äºå£«å…µç±»å‹çš„ç‰¹åˆ«é‡è½½
 bool Map::IsGridAvailable(const cocos2d::Vec2& pos) const{
     return isRangeAvailable(std::floor(pos.x),std::floor(pos.y),1,1);
 }
@@ -324,15 +324,15 @@ bool Map::isDeployAllowedPixel(const cocos2d::Vec2& worldPos) const {
 
 
 bool Map::saveMapData(const std::string& filePath) const {
-    // Õ¼Î»ÊµÏÖ£ººóĞøÈ·¶¨ JSON/¶ş½øÖÆĞ­ÒéºóÌî³ä
+    // å ä½å®ç°ï¼šåç»­ç¡®å®š JSON/äºŒè¿›åˆ¶åè®®åå¡«å……
     cocos2d::log("Map::saveMapData(%s) - stub", filePath.c_str());
     return true;
 }
 
 bool Map::loadMapData(const std::string& filePath) {
-    // Õ¼Î»ÊµÏÖ£ºÇå¿Õ²¢ÖØÖÃ
+    // å ä½å®ç°ï¼šæ¸…ç©ºå¹¶é‡ç½®
     cocos2d::log("Map::loadMapData(%s) - stub", filePath.c_str());
     initGrids();
-    // TODO: ½âÎöÎÄ¼ş²¢ÖØ½¨×´Ì¬Óë½¨Öş
+    // TODO: è§£ææ–‡ä»¶å¹¶é‡å»ºçŠ¶æ€ä¸å»ºç­‘
     return true;
 }
