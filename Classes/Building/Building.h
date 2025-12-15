@@ -179,4 +179,86 @@ public:
 class WallBuilding : public Building {
 
 };
+
+/**
+ * @brief TrainingBuilding类
+ * 继承自Building类，表示训练营建筑，用于训练士兵。
+ */
+class TrainingBuilding : public Building {
+private:
+    int training_capacity_;     // 同时训练的最大士兵数量
+    int training_speed_;        // 训练速度（单位：秒/每兵）
+    std::vector<std::string> available_units_;  // 可训练的单位类型列表
+
+public:
+    /**
+     * @brief 构造函数
+     * 初始化训练营的名称、基准数值、位置、纹理以及训练属性。
+     * @param name 建筑名称
+     * @param base 基准数值（用于计算生命值、防御等）
+     * @param position 建筑位置坐标
+     * @param texture 建筑纹理路径
+     * @param capacity 训练容量
+     * @param speed 训练速度（秒/每兵）
+     */
+    TrainingBuilding(std::string name, int base, std::pair<int, int> position,
+        std::string texture, int capacity, int speed);
+
+    /**
+     * @brief 开始训练士兵
+     * @param unit_type 要训练的士兵类型
+     * @param count 训练数量
+     * @return 是否成功开始训练
+     */
+    bool StartTraining(const std::string& unit_type, int count);
+
+    /**
+     * @brief 取消训练
+     * @param unit_type 要取消的士兵类型
+     * @param count 取消数量
+     */
+    void CancelTraining(const std::string& unit_type, int count);
+
+    /**
+     * @brief 获取当前训练队列信息
+     * @return 训练队列中各类士兵的数量映射
+     */
+    std::map<std::string, int> GetTrainingQueue() const;
+
+    /**
+     * @brief 检查是否有训练完成
+     * @return 完成训练的士兵类型和数量
+     */
+    std::pair<std::string, int> CheckCompletedTraining();
+
+    /**
+     * @brief 升级训练营
+     * 重写基类升级方法，提升训练容量和速度
+     */
+    virtual void Upgrade() override;
+
+    /**
+     * @brief 显示训练营信息
+     * 在基类显示信息基础上，附加训练相关属性。
+     */
+    virtual void ShowInfo() const override;
+
+    /**
+     * @brief 获取训练容量
+     * @return 同时训练的最大士兵数量
+     */
+    int GetTrainingCapacity() const;
+
+    /**
+     * @brief 获取训练速度
+     * @return 训练速度（秒/每兵）
+     */
+    int GetTrainingSpeed() const;
+
+    /**
+     * @brief 获取可训练单位列表
+     * @return 可训练单位类型的常量引用
+     */
+    const std::vector<std::string>& GetAvailableUnits() const;
+};
 #endif // __BUILDING_H__
