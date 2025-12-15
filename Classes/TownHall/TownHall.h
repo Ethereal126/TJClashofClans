@@ -49,6 +49,12 @@ public:
     TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture);
 
     /**
+     * @brief 析构函数
+     * 清理UI组件
+     */
+    ~TownHall();
+
+    /**
      * @brief 重写升级接口
      * 在基类 Building::Upgrade 的基础上，额外提升资源容量、军队容量等属性，
      * 并根据等级更新大本营的贴图与 UI 显示效果。
