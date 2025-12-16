@@ -12,9 +12,10 @@
  * 初始化建筑名称、等级、生命、防御、建造时间与建造成本，并设置在场景中的坐标。
  */
 Building::Building(std::string name, int level, int health, int defense,
-    int buildtime, int build_cost, std::pair<int, int> position)
+    int buildtime, int build_cost, int width, int length, std::pair<int, int> position)
     : name_(std::move(name)), level_(level), health_(health), defense_(defense),
-    build_time_(buildtime), build_cost_(build_cost),
+    build_time_(buildtime), build_cost_(build_cost), width_(width), length_(length),
+    is_upgrading_(false), upgrade_remaining_time_(0.0f),
     position_(cocos2d::Vec2(static_cast<float>(position.first), static_cast<float>(position.second))) {
     this->setPosition(position_);
 }
@@ -24,11 +25,68 @@ Building::Building(std::string name, int level, int health, int defense,
  * 提升建筑等级，同时调整建造时间、建造成本、防御并将生命值回满。
  */
 void Building::Upgrade() {
+    if (is_upgrading_) {
+        cocos2d::log("建筑 %s 正在升级中，请等待升级完成", name_.c_str());
+        return;
+    }
     level_ = GetNextLevel();
     build_time_ = GetNextBuildTime(); // 升级时间增加
     build_cost_ = GetNextBuildCost(); // 升级成本增加
     health_ = GetNextHealth(); // 血量回满
     defense_ = GetNextDefense(); // 防御提升
+}
+
+/**
+ * @brief 开始升级
+ * 启动升级过程，在指定时间内无法再次升级
+ */
+void Building::StartUpgrade(float upgrade_time) {
+    if (is_upgrading_) {
+        cocos2d::log("建筑 %s 正在升级中，无法再次升级", name_.c_str());
+        return;
+    }
+
+    is_upgrading_ = true;
+    upgrade_remaining_time_ = upgrade_time;
+
+    cocos2d::log("建筑 %s 开始升级，需要 %.1f 秒", name_.c_str(), upgrade_time);
+
+    // 启动升级计时器
+    // 注意：这里假设 Building 继承自 cocos2d::Sprite，可以使用 schedule
+    this->schedule([this](float dt) {
+        upgrade_remaining_time_ -= dt;
+        if (upgrade_remaining_time_ <= 0.0f) {
+            upgrade_remaining_time_ = 0.0f;
+            is_upgrading_ = false;
+
+            // 升级完成，执行真正的升级逻辑
+            this->Upgrade();
+
+            // 停止计时器
+            this->unschedule("upgrade_timer");
+
+            cocos2d::log("建筑 %s 升级完成！当前等级：%d",
+                this->GetName().c_str(), this->GetLevel());
+        }
+        }, "upgrade_timer");
+}
+
+/**
+ * @brief 检查是否允许升级
+ * @return true 表示允许升级，false 表示正在升级中
+ */
+bool Building::IsAllowedUpgrade() const {
+    return !is_upgrading_;
+}
+
+/**
+ * @brief 获取建筑图片路径
+ * @return 建筑图片路径字符串
+ */
+std::string Building::GetBuildingImagePath() const {
+    // 可以根据等级或其他条件返回不同的图片路径
+    // 例如：return "textures/" + name_ + "_level" + std::to_string(level_) + ".png";
+    return "textures/" + name_ + ".png";
 }
 
 /**
@@ -147,17 +205,58 @@ std::pair<int, int> Building::GetPosition() const {
  */
 SourceBuilding::SourceBuilding(std::string name, int base, std::pair<int, int> position, std::string texture)
     : Building(name, 1, 16 * base, 2 * base,
-        base, base * 500, position),
+        base, base * 500, 3, 3, position),
     production_rate_(base * 50) {
     // 设置资源建筑的纹理
     this->setTexture(texture);
 }
 
 /**
+ * @brief 静态创建函数
+ * 用于创建资源建筑实例的静态工厂方法。
+ */
+SourceBuilding* SourceBuilding::Create(const std::string& name, int base,
+    std::pair<int, int> position,
+    const std::string& texture,
+    const std::string& resourceType) {
+    // 使用nothrow避免分配失败时抛出异常
+    auto building = new (std::nothrow) SourceBuilding(name, base, position, texture);
+
+    if (building) {
+        // 设置资源类型（如果构造函数没有设置的话）
+        // 注意：这里假设SourceBuilding类有一个SetResourceType方法
+        // 如果没有，可以在构造函数中直接设置
+        if (building->initWithFile(texture)) {
+            // 标记为自动释放（Cocos2d-x的内存管理机制）
+            building->autorelease();
+
+            // 设置一些默认属性
+            if (resourceType == "Gold") {
+                building->setColor(cocos2d::Color3B::YELLOW);
+            }
+            else if (resourceType == "Elixir") {
+                building->setColor(cocos2d::Color3B(200, 100, 255)); // 紫色
+            }
+
+            cocos2d::log("创建资源建筑: %s (类型: %s, 位置: %d,%d)",
+                name.c_str(), resourceType.c_str(),
+                position.first, position.second);
+            return building;
+        }
+
+        // 初始化失败，删除对象
+        delete building;
+    }
+
+    cocos2d::log("创建资源建筑失败: %s", name.c_str());
+    return nullptr;
+}
+
+/**
  * @brief 生产资源
  * @return 本次生产的资源数量（与 production_rate_ 相同）。
  */
-int SourceBuilding::ProduceResource() {
+int SourceBuilding::ProduceResource() const {
     int resource = production_rate_;
     return resource;
 }
@@ -179,9 +278,69 @@ void SourceBuilding::ShowInfo() const {
  */
 AttackBuilding::AttackBuilding(std::string name, int base, std::pair<int, int> position, std::string texture, int range)
     : Building(name, 1, 6 * base, base,
-        base * 2, base * 500, position),
-    Range_(range) {
+        base * 2, base * 500, 2, 2, position),
+    Range_(range) { 
     this->setTexture(texture);
+}
+
+/**
+ * @brief 静态创建函数
+ * 用于创建攻击建筑实例的静态工厂方法。
+ */
+AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
+    std::pair<int, int> position,
+    const std::string& texture, int range) {
+    // 使用nothrow避免分配失败时抛出异常
+    auto building = new (std::nothrow) AttackBuilding(name, base, position, texture, range);
+
+    if (building) {
+        if (building->initWithFile(texture)) {
+            // 标记为自动释放
+            building->autorelease();
+
+            // 设置防御建筑特有属性
+            building->setScale(0.9f); // 稍微缩小一点，看起来更像防御建筑
+
+            // 根据建筑类型设置不同颜色
+            if (name.find("Cannon") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(180, 180, 180)); // 灰色
+            }
+            else if (name.find("Archer Tower") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(200, 150, 100)); // 棕色
+            }
+            else if (name.find("Mortar") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(150, 150, 150)); // 深灰色
+            }
+            else if (name.find("Wizard Tower") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(100, 100, 200)); // 蓝色
+            }
+            else if (name.find("Air Defense") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(100, 200, 200)); // 青色
+            }
+            else if (name.find("Tesla") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(200, 200, 100)); // 淡黄色
+            }
+            else if (name.find("X-Bow") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(150, 100, 200)); // 紫色
+            }
+            else if (name.find("Inferno Tower") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(200, 100, 100)); // 红色
+            }
+            else if (name.find("Eagle Artillery") != std::string::npos) {
+                building->setColor(cocos2d::Color3B(150, 150, 200)); // 淡蓝色
+            }
+
+            cocos2d::log("创建攻击建筑: %s (范围: %d, 位置: %d,%d)",
+                name.c_str(), range, position.first, position.second);
+            return building;
+        }
+
+        // 初始化失败，删除对象
+        delete building;
+    }
+
+    cocos2d::log("创建攻击建筑失败: %s", name.c_str());
+    return nullptr;
 }
 
 /**
@@ -202,7 +361,7 @@ void AttackBuilding::ShowInfo() const {
 TrainingBuilding::TrainingBuilding(std::string name, int base, std::pair<int, int> position,
     std::string texture, int capacity, int speed)
     : Building(name, 1, 8 * base, 2 * base,
-        base * 3, base * 400, position),
+        base * 3, base * 400, 3, 3, position),
     training_capacity_(capacity),
     training_speed_(speed) {
 
@@ -211,6 +370,72 @@ TrainingBuilding::TrainingBuilding(std::string name, int base, std::pair<int, in
 
     // 设置训练营的纹理
     this->setTexture(texture);
+}
+
+/**
+ * @brief 初始化
+ * @return 是否成功初始化
+ */
+bool TrainingBuilding::Init() {
+    // 基类初始化
+    if (!Building::initWithFile("textures/" + name_ + ".png")) {
+        return false;
+    }
+
+    // 设置建筑尺寸和位置
+    setContentSize(cocos2d::Size(width_ * 32, length_ * 32));
+    setAnchorPoint(cocos2d::Vec2(0.5f, 0.5f));
+
+    return true;
+}
+
+/**
+ * @brief 构造函数
+ * 初始化训练营的名称、基准数值、位置、纹理以及训练属性。
+ * @param name 建筑名称
+ * @param base 基准数值（用于计算生命值、防御等）
+ * @param position 建筑位置坐标
+ * @param texture 建筑纹理路径
+ * @param capacity 训练容量
+ * @param speed 训练速度（秒/每兵）
+ */
+TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
+    std::pair<int, int> position,
+    const std::string& texture, int capacity, int speed) {
+    auto building = new (std::nothrow) TrainingBuilding(name, base, position, texture, capacity, speed);
+
+    if (building) {
+        if (building->Init()) {
+            // 标记为自动释放
+            building->autorelease();
+
+            cocos2d::log("创建训练营: %s (容量: %d, 速度: %d, 位置: %d,%d)",
+                name.c_str(), capacity, speed, position.first, position.second);
+            return building;
+        }
+
+        // 初始化失败，删除对象
+        delete building;
+    }
+
+    cocos2d::log("创建训练营失败: %s", name.c_str());
+    return nullptr;
+}
+
+/**
+ * @brief 添加可训练单位
+ * @param unit_type 要添加的士兵类型
+ */
+void TrainingBuilding::AddAvailableUnit(const std::string& unit_type) {
+    available_units_.push_back(unit_type);
+}
+
+/**
+ * @brief 获取可训练单位列表
+ * @return 可训练单位列表
+ */
+std::vector<std::string>& TrainingBuilding::GetAvailableUnits() {
+    return available_units_;
 }
 
 /**
