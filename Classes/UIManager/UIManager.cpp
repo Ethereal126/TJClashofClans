@@ -154,8 +154,6 @@ Node* UIManager::createPanel(UIPanelType panelType) {
             return createMapSelection();
         case UIPanelType::BattleHUD:
             return createBattleHUD();
-        case UIPanelType::BattleResult:
-            return createBattleResult();
         default:
             return nullptr;
     }
@@ -307,7 +305,7 @@ Node* UIManager::createResourceBar() {
         _visibleSize.height - totalHeight - margin));
 
     
-    TownHall* townHall = GetTownHall(); // 需要实现获取方式
+    TownHall* townHall = TownHall::GetInstance();
     int goldCapacity = townHall->GetMaxGoldCapacity();
     int currentGold = townHall->GetGold();
     int elixirCapacity = townHall->GetMaxElixirCapacity();
@@ -523,7 +521,7 @@ Node* UIManager::createShop() {
     panel->addChild(scrollView, 1);
 
     // 从 Building 获取所有建筑模板
-    auto buildingTemplates = Building::GetAllBuildingTemplates();
+    auto buildingTemplates = TownHall::GetAllBuildingTemplates();
 
     float itemHeight = 80 * _scaleFactor;
     float itemWidth = scrollView->getContentSize().width;
@@ -577,10 +575,10 @@ Node* UIManager::createShop() {
         buyBtn->setPosition(Vec2(itemWidth - 60 * _scaleFactor, itemY));
 
         // 捕获模板信息（使用值拷贝）
-        BuildingTemplate templateCopy = tmpl;
+        auto templateCopy = tmpl;
         buyBtn->addClickEventListener([this, templateCopy](Ref* sender) {
             // 检查金币是否足够
-            TownHall* townHall = GetTownHall();
+            TownHall* townHall = TownHall::GetInstance();
             int currentGold = townHall->GetGold();
 
             if (currentGold >= templateCopy.cost) {
@@ -922,7 +920,7 @@ Node* UIManager::createBuildingInfo(Building* building) {
 
     // 左侧：建筑图像
     float leftWidth = panelSize.width * 0.4f;
-    auto buildingSprite = Sprite::create(building->GetPicture()); 
+    auto buildingSprite = Sprite::create(building->GetBuildingImagePath());
     if (!buildingSprite) {
         buildingSprite = Sprite::create();
         buildingSprite->setTextureRect(Rect(0, 0, 100 * _scaleFactor, 100 * _scaleFactor));
@@ -1017,7 +1015,7 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
 
     // 左侧：建筑图像
     float leftWidth = panelSize.width * 0.4f;
-    auto buildingSprite = Sprite::create(building->GetPicture()); 
+    auto buildingSprite = Sprite::create(building->GetBuildingImagePath());
     if (!buildingSprite) {
         buildingSprite = Sprite::create();
         buildingSprite->setTextureRect(Rect(0, 0, 100 * _scaleFactor, 100 * _scaleFactor));
@@ -1037,9 +1035,9 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     int currentLevel = building->GetLevel();
     int nextLevel = currentLevel + 1;
     int currentHealth = building->GetMaxHealth();
-    int nextHealth = building->GetNextMaxHealth();
+    int nextHealth = building->GetNextHealth();
     int currentDefense = building->GetDefense();
-    int nextDefense = building->GetNextDefence();
+    int nextDefense = building->GetNextDefense();
     int upgradeCost = building->GetBuildCost();
     int upgradeTime = building->GetBuildTime();
 
@@ -1079,7 +1077,7 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     panel->addChild(timeLabel, 1);
 
     // 确认升级按钮
-    TownHall* townHall = GetTownHall();
+    TownHall* townHall = TownHall::GetInstance();
     int currentElixir = townHall->GetElixir();
     bool canAfford = currentElixir >= upgradeCost;
 
@@ -1096,10 +1094,10 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
         upgradeBtn->addClickEventListener([this, upgradeCost, upgradeTime](Ref* sender) {
             hidePanel(UIPanelType::BuildingUpgrade, true);
 
-            TownHall* townHall = GetTownHall();
+            TownHall* townHall = TownHall::GetInstance();
             townHall->SpendElixir(upgradeCost);
             updateResourceDisplay(ResourceType::Elixir, townHall->GetElixir());
-            _selectedBuilding->startUpgrade(upgradeTime);
+            _selectedBuilding->StartUpgrade(upgradeTime);
 
             showUpgradeProgress(_selectedBuilding, (float)upgradeTime, (float)upgradeTime);
             showToast("Upgrade started!");
@@ -1180,7 +1178,7 @@ Node* UIManager::createArmyTraining(Building* building) {
     panel->addChild(rightTitle, 1);
 
     // 获取士兵模板和人口上限
-    TownHall* townHall = GetTownHall();
+    TownHall* townHall = TownHall::GetInstance();
     auto soldierTemplates = townHall->GetSoldierCategory();
     int maxCapacity = townHall->GetArmyCapacity();
 
@@ -1349,7 +1347,7 @@ Node* UIManager::createArmyTraining(Building* building) {
 void UIManager::refreshArmyTrainingUI(Node* panel) {
     if (!panel) return;
 
-    TownHall* townHall = GetTownHall();
+    TownHall* townHall = TownHall::GetInstance();
     auto soldierTemplates = townHall->GetSoldierCategory();
     int maxCapacity = townHall->GetArmyCapacity();
 
@@ -1441,7 +1439,7 @@ Node* UIManager::createBattleHUD() {
     panel->addChild(bottomBar, 1);
 
     // 从保存的配置读取士兵数据
-    TownHall* townHall = GetTownHall();
+    TownHall* townHall = TownHall::GetInstance();
     auto soldierTemplates = townHall->GetSoldierCategory();
     auto armyConfig = loadArmyConfig();
 
@@ -1554,13 +1552,10 @@ Node* UIManager::createBattleHUD() {
     endBtn->setPosition(Vec2(70 * _scaleFactor, controlBarY + controlBarHeight / 2));
     endBtn->addClickEventListener([this](Ref* sender) {
         showConfirmDialog("End Battle", "Return to village?", [this]() {
-            // 获取当前摧毁率计算星级
-            int destroyPercent = Combat::GetInstance().GetDestroyPercent();
-            int stars = 0;
-            if (destroyPercent >= 50) stars = 1;
-            if (destroyPercent >= 75) stars = 2;
-            if (destroyPercent >= 100) stars = 3;
-            endBattle(stars, destroyPercent);
+            // 不在 UI 内部计算摧毁率或星级。
+            // 改为通过事件通知外部系统（例如 Combat）来处理战斗结束逻辑，
+            // 外部负责计算摧毁率并调用 UIManager::updateDestructionPercent(...) 或 UIManager::endBattle(...)
+            triggerUIEvent("OnRequestEndBattle");
             });
         });
     panel->addChild(endBtn, 2);
