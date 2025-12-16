@@ -27,12 +27,14 @@ protected:
     cocos2d::Vec2 position_;    // 建筑的位置信息 (x, y)
 
 public:
+    //napper:为了进行建筑渲染的测试临时添加
+    std::string texture_;
     /**
      * @brief 构造函数
      * 初始化建筑名称、等级、生命值、防御、建造时间、建造成本和位置。
      */
     Building(std::string name, int level, int health, int defense,
-        int buildtime, int build_cost, std::pair<int, int> position);
+        int buildtime, int build_cost, cocos2d::Vec2 position);
 
     /**
      * @brief 建筑升级接口
@@ -118,7 +120,7 @@ public:
      * @brief 获取建筑位置
      * @return 以 std::pair<int,int> 形式返回的建筑坐标。
      */
-    std::pair<int, int> GetPosition() const;
+    cocos2d::Vec2 GetPosition() const;
 	int GetWidth() const{
         return width_;
     }
@@ -140,7 +142,7 @@ public:
      * @brief 构造函数
      * 使用基准值 base 和位置初始化资源建筑，并设置资源生产速率与纹理。
      */
-    SourceBuilding(std::string name, int base, std::pair<int, int> position, std::string texture);
+    SourceBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture);
 
     /**
      * @brief 生产资源
@@ -168,7 +170,7 @@ public:
      * @brief 构造函数
      * 初始化攻击塔的名称、基准数值、位置、纹理以及攻击范围。
      */
-    AttackBuilding(std::string name, int base, std::pair<int, int> position, std::string texture, int range);
+    AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture, int range);
 
     /**
      * @brief 显示攻击塔信息
@@ -207,7 +209,7 @@ public:
      * @param capacity 训练容量
      * @param speed 训练速度（秒/每兵）
      */
-    TrainingBuilding(std::string name, int base, std::pair<int, int> position,
+    TrainingBuilding(std::string name, int base, cocos2d::Vec2 position,
         std::string texture, int capacity, int speed);
 
     /**

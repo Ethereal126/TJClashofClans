@@ -15,7 +15,6 @@ class BuildingInCombat;
 
 class SoldierInCombat : public cocos2d::Sprite{
 public:
-    ~SoldierInCombat();
     cocos2d::Vec2 location_;
     MapManager* map_;
     bool is_alive_;
@@ -28,13 +27,14 @@ public:
 
     cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos);
 
+    BuildingInCombat* current_target_;
+    void Die();
 protected:
     Soldier* soldier_template_;
     int current_health_;
-    BuildingInCombat* current_target_;
 
+    ~SoldierInCombat() override;
     void SetTarget(BuildingInCombat* target);
-    void Die();
     void MoveToTarget();
     void StartAttack();
     void DealDamageToTarget();

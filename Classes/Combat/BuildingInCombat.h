@@ -7,19 +7,18 @@
 
 #include "cocos2d.h"
 #include "Building/Building.h"
+#include "Map/MapManager.h"
+#include "Combat.h"
 
 class BuildingInCombat : public cocos2d::Sprite{
 public:
     // 构造函数
-    BuildingInCombat(Building* b): building_template(b){
-        current_health = building_template->GetHealth();
-        is_alive_ = true;
-    };
+    static BuildingInCombat* Create(Building* building_template,const cocos2d::Vec2& spawn_pos,MapManager* map);
     // 析构函数
     virtual ~BuildingInCombat();
 
     // 初始化函数
-    virtual bool Init(const std::string& filename);
+    virtual bool Init(const Building* building_template,const cocos2d::Vec2& spawn_pos,MapManager* map);
 
     // 被攻击函数
     virtual void TakeDamage(int damage);
@@ -30,12 +29,13 @@ public:
     // 判断是否存活
     virtual bool IsAlive() const;
 
-    void Destroyed();
+    void Die();
 
 private:
-    Building* building_template;
+    Building* building_template_;
     int current_health;
     bool is_alive_;
+    MapManager* map_;
 };
 
 #endif //PROGRAMMING_PARADIGM_FINAL_PROJECT_BUILDINGINCOMBAT_H

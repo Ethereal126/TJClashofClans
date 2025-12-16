@@ -12,10 +12,10 @@
  * 初始化建筑名称、等级、生命、防御、建造时间与建造成本，并设置在场景中的坐标。
  */
 Building::Building(std::string name, int level, int health, int defense,
-    int buildtime, int build_cost, std::pair<int, int> position)
+    int buildtime, int build_cost, cocos2d::Vec2 position)
     : name_(std::move(name)), level_(level), health_(health), defense_(defense),
     build_time_(buildtime), build_cost_(build_cost),
-    position_(cocos2d::Vec2(static_cast<float>(position.first), static_cast<float>(position.second))) {
+    position_(position) {
     this->setPosition(position_);
 }
 
@@ -135,8 +135,8 @@ int Building::GetBuildCost() const {
  * @brief 获取建筑坐标
  * @return 以整数对形式表示的位置坐标。
  */
-std::pair<int, int> Building::GetPosition() const {
-    return std::make_pair(static_cast<int>(position_.x), static_cast<int>(position_.y));
+cocos2d::Vec2 Building::GetPosition() const {
+    return position_;
 }
 
 // ==================== SourceBuilding 成员函数的实现 ====================
@@ -145,7 +145,7 @@ std::pair<int, int> Building::GetPosition() const {
  * @brief SourceBuilding 构造函数
  * 按给定基数 base 初始化资源建筑的生命、防御、建造时间和成本，并设置纹理。
  */
-SourceBuilding::SourceBuilding(std::string name, int base, std::pair<int, int> position, std::string texture)
+SourceBuilding::SourceBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture)
     : Building(name, 1, 16 * base, 2 * base,
         base, base * 500, position),
     production_rate_(base * 50) {
@@ -177,7 +177,7 @@ void SourceBuilding::ShowInfo() const {
  * @brief AttackBuilding 构造函数
  * 初始化攻击建筑的生命、防御、建造时间和成本，并设置攻击范围与纹理。
  */
-AttackBuilding::AttackBuilding(std::string name, int base, std::pair<int, int> position, std::string texture, int range)
+AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture, int range)
     : Building(name, 1, 6 * base, base,
         base * 2, base * 500, position),
     Range_(range) {
@@ -199,7 +199,7 @@ void AttackBuilding::ShowInfo() const {
  * @brief TrainingBuilding 构造函数
  * 初始化训练营的生命、防御、建造时间和成本，并设置训练属性与纹理。
  */
-TrainingBuilding::TrainingBuilding(std::string name, int base, std::pair<int, int> position,
+TrainingBuilding::TrainingBuilding(std::string name, int base, cocos2d::Vec2 position,
     std::string texture, int capacity, int speed)
     : Building(name, 1, 8 * base, 2 * base,
         base * 3, base * 400, position),
