@@ -113,12 +113,66 @@ public:
     int GetBuildCost() const;
 
     /**
-     * @brief 获取建筑位置
-     * @return 以 std::pair<int,int> 形式返回的建筑坐标。
-     */
+ * @brief 获取建筑位置
+ * @return 以 std::pair<int,int> 形式返回的建筑坐标。
+ */
     std::pair<int, int> GetPosition() const;
-	int GetWidth() const;
-	int GetLength() const;
+
+    /**
+     * @brief 获取建筑宽度
+     * @return 以 int 形式返回的建筑宽度。
+     */
+    int GetWidth() const {
+        return width_;
+    }
+
+    /**
+     * @brief 获取建筑长度
+     * @return 以 int 形式返回的建筑长度。
+     */
+    int GetLength() const {
+        return length_;
+    }
+
+    /**
+     * @brief 获取建筑下一级等级
+     * @return 以 int 形式返回的建筑下一级等级。
+     */
+    int GetNextLevel() const {
+        return level_ + 1;
+    }
+
+    /**
+     * @brief 获取建筑下一级建筑时间
+     * @return 以 int 形式返回的建筑下一级建筑时间。
+     */
+    int GetNextBuildTime() const {
+        return static_cast<int>(build_time_ * (1.2 + 0.3 * level_));
+    }
+
+    /**
+     * @brief 获取建筑下一级建筑费用
+     * @return 以 int 形式返回的建筑下一级建筑费用。
+     */
+    int GetNextBuildCost() const {
+        return static_cast<int>(build_cost_ * (1.2 + 0.3 * level_));
+    }
+
+    /**
+     * @brief 获取建筑下一级防御
+     * @return 以 int 形式返回的建筑下一级防御。
+     */
+    int GetNextDefense() {
+        return static_cast<int>(defense_ * (1.1 + 0.2 * level_));
+    }
+
+    /**
+     * @brief 获取建筑下一级血量
+     * @return 以 int 形式返回的建筑下一级血量。
+     */
+    int GetNextHealth() {
+        return 8 * GetNextDefense();
+    }
 };
 
 /**
