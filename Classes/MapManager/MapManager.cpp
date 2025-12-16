@@ -1,6 +1,6 @@
 ﻿#include "MapManager.h"
-#include "TownHall/TownHall.h"
-#include "UIManager/UIManager.h"
+//#include "TownHall/TownHall.h"
+//#include "UIManager/UIManager.h"
 #include <algorithm>
 #include <cmath>
 
@@ -451,8 +451,8 @@ bool MapManager::confirmPlacement() {
         _buildings_except_for_wall.push_back(_pendingBuilding);
     }
 
-    TownHall* townHall = TownHall::GetInstance();
-    townHall->SpendGold(_pendingBuildingCost);
+    //TownHall* townHall = TownHall::GetInstance();
+    //townHall->SpendGold(_pendingBuildingCost);
     CCLOG("Building placed! Cost: %d gold (TODO: deduct from resources)", _pendingBuildingCost);
 
     // 清理放置模式状态（不删除建筑，因为已放置成功）
