@@ -1,4 +1,4 @@
-#/****************************************************************************
+﻿#/****************************************************************************
 # Copyright (c) 2013-2014 cocos2d-x.org
 # Copyright (c) 2015-2017 Chukong Technologies Inc.
 #
@@ -23,11 +23,39 @@
 # THE SOFTWARE.
 # ****************************************************************************/
 
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.10)
 
 set(APP_NAME TJClashofClans)
 
 project(${APP_NAME})
+
+# ========== 1. 基础配置（对齐Cocos2d） ==========
+
+
+# 强制C++17（gtest 1.17+要求）
+set(CMAKE_CXX_STANDARD 17 FORCE)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_MSVC_CXX_STANDARD_DEFAULT 17 CACHE STRING "" FORCE)
+set(CMAKE_VS_GLOBAL_CppStandard "17" CACHE STRING "" FORCE)
+# 强制编译参数（直接加/std:c++17到编译命令）
+if(MSVC)
+    add_compile_options(/std:c++17) # 所有文件强制用C++17编译
+    # 禁用Cocos2d的C++11强制配置
+    remove_definitions(-D_CXX_STD=11)
+endif()
+
+# 强制CRT为MD/MDd（和Cocos2d、gtest一致）
+if(MSVC)
+    # Debug: MDd（多线程调试DLL），Release: MD（多线程DLL）
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE)
+endif()
+
+# ========== 添加gtest依赖 ==========
+# win32debug版本
+#include_directories(external/gtest/include)
+#link_directories(external/gtest/lib)
+
 
 if(XCODE)
     if(NOT DEFINED CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET)
@@ -48,80 +76,92 @@ set(GAME_SOURCE)
 set(GAME_HEADER)
 
 set(GAME_RES_FOLDER
-    "${CMAKE_CURRENT_SOURCE_DIR}/Resources"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/Resources"
+)
 if(APPLE OR WINDOWS)
     cocos_mark_multi_resources(common_res_files RES_TO "Resources" FOLDERS ${GAME_RES_FOLDER})
 endif()
 
 # add cross-platforms source files and header files 
 list(APPEND GAME_SOURCE
-     Classes/AppDelegate.cpp
-     Classes/HelloWorldScene.cpp
-     )
+    Classes/AppDelegate.cpp
+    Classes/HelloWorldScene.cpp
+    Classes/Map/MapManager.cpp
+    Classes/Building/Building.cpp
+    Classes/Combat/SoldierInCombat.cpp
+    Classes/Combat/BuildingInCombat.cpp
+    Classes/Combat/Combat.cpp
+    Classes/Soldier/Soldier.cpp
+)
 list(APPEND GAME_HEADER
-     Classes/AppDelegate.h
-     Classes/HelloWorldScene.h
-     )
+   Classes/AppDelegate.h
+   Classes/HelloWorldScene.h
+   Classes/Map/MapManager.h
+   Classes/Building/Building.h
+   Classes/MainScene.h
+  # Classes/Combat/CombatTest.h
+   Classes/Combat/CombatAll.h
+   Classes/Soldier/Soldier.h
+)
 
 if(ANDROID)
     # change APP_NAME to the share library name for Android, it's value depend on AndroidManifest.xml
     set(APP_NAME MyGame)
     list(APPEND GAME_SOURCE
-         proj.android/app/jni/hellocpp/main.cpp
-         )
+            proj.android/app/jni/hellocpp/main.cpp
+    )
 elseif(LINUX)
     list(APPEND GAME_SOURCE
-         proj.linux/main.cpp
-         )
+            proj.linux/main.cpp
+    )
 elseif(WINDOWS)
     list(APPEND GAME_HEADER
-         proj.win32/main.h
-         proj.win32/resource.h
-         )
+            proj.win32/main.h
+            proj.win32/resource.h
+    )
     list(APPEND GAME_SOURCE
-         proj.win32/main.cpp
-         proj.win32/game.rc
-         ${common_res_files}
-         )
+            proj.win32/main.cpp
+            proj.win32/game.rc
+            ${common_res_files}
+    )
 elseif(APPLE)
     if(IOS)
         list(APPEND GAME_HEADER
-             proj.ios_mac/ios/AppController.h
-             proj.ios_mac/ios/RootViewController.h
-             )
+                proj.ios_mac/ios/AppController.h
+                proj.ios_mac/ios/RootViewController.h
+        )
         set(APP_UI_RES
-            proj.ios_mac/ios/LaunchScreen.storyboard
-            proj.ios_mac/ios/LaunchScreenBackground.png
-            proj.ios_mac/ios/Images.xcassets
-            )
+                proj.ios_mac/ios/LaunchScreen.storyboard
+                proj.ios_mac/ios/LaunchScreenBackground.png
+                proj.ios_mac/ios/Images.xcassets
+        )
         list(APPEND GAME_SOURCE
-             proj.ios_mac/ios/main.m
-             proj.ios_mac/ios/AppController.mm
-             proj.ios_mac/ios/RootViewController.mm
-             proj.ios_mac/ios/Prefix.pch
-             ${APP_UI_RES}
-             )
+                proj.ios_mac/ios/main.m
+                proj.ios_mac/ios/AppController.mm
+                proj.ios_mac/ios/RootViewController.mm
+                proj.ios_mac/ios/Prefix.pch
+                ${APP_UI_RES}
+        )
     elseif(MACOSX)
         set(APP_UI_RES
-            proj.ios_mac/mac/Icon.icns
-            proj.ios_mac/mac/Info.plist
-            )
+                proj.ios_mac/mac/Icon.icns
+                proj.ios_mac/mac/Info.plist
+        )
         list(APPEND GAME_SOURCE
-             proj.ios_mac/mac/main.cpp
-             proj.ios_mac/mac/Prefix.pch
-             ${APP_UI_RES}
-             )
+                proj.ios_mac/mac/main.cpp
+                proj.ios_mac/mac/Prefix.pch
+                ${APP_UI_RES}
+        )
     endif()
     list(APPEND GAME_SOURCE ${common_res_files})
 endif()
 
+
+
 # mark app complie info and libs info
 set(all_code_files
-    ${GAME_HEADER}
-    ${GAME_SOURCE}
-        Classes/Combat/Combat.h
-        Classes/Combat/Combat.cpp
+        ${GAME_HEADER}
+        ${GAME_SOURCE}
 )
 if(NOT ANDROID)
     add_executable(${APP_NAME} ${all_code_files})
@@ -131,14 +171,22 @@ else()
     target_link_libraries(${APP_NAME} -Wl,--whole-archive cpp_android_spec -Wl,--no-whole-archive)
 endif()
 
-target_link_libraries(${APP_NAME} cocos2d)
+
+
+target_link_libraries(${APP_NAME} PRIVATE
+#gmock
+#gtest
+cocos2d
+)
 target_include_directories(${APP_NAME}
         PRIVATE Classes
         PRIVATE ${COCOS2DX_ROOT_PATH}/cocos/audio/include/
 )
 
+
 # mark app resources
 setup_cocos_app_config(${APP_NAME})
+
 if(APPLE)
     set_target_properties(${APP_NAME} PROPERTIES RESOURCE "${APP_UI_RES}")
 
@@ -159,3 +207,4 @@ if(LINUX OR WINDOWS)
     cocos_get_resource_path(APP_RES_DIR ${APP_NAME})
     cocos_copy_target_res(${APP_NAME} LINK_TO ${APP_RES_DIR} FOLDERS ${GAME_RES_FOLDER})
 endif()
+
