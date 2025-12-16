@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 #include "SoldierInCombat.h"
 #include "Soldier/Soldier.h"
-#include "Map/MapManager.h"
+#include "MapManager/MapManager.h"
 #include "Building/Building.h"
 #include "BuildingInCombat.h"
 #include "MainScene.h"

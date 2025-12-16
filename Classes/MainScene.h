@@ -3,7 +3,7 @@
 #define __HOME_SCENE_H__
 
 #include "cocos2d.h"
-#include "Map/MapManager.h"
+#include "MapManager/MapManager.h"
 
 class MainScene : public cocos2d::Scene {
 public:
@@ -24,8 +24,6 @@ public:
         else {
             CCLOG("map success");
         }
-        // 将地图摆放到屏幕中心偏下
-        map->setPosition(cocos2d::Vec2(0.f, 0.f));
         scene->addChild(map, 0);
 		scene->_map = map;
 

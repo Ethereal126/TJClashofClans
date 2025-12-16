@@ -41,6 +41,7 @@ static cocos2d::Size designResolutionSize = cocos2d::Size(480, 320);
 static cocos2d::Size smallResolutionSize = cocos2d::Size(480, 320);
 static cocos2d::Size mediumResolutionSize = cocos2d::Size(1024, 768);
 static cocos2d::Size largeResolutionSize = cocos2d::Size(2048, 1536);
+static cocos2d::Size ourResolutionSize = cocos2d::Size(1400, 900);
 
 AppDelegate::AppDelegate()
 {
@@ -78,7 +79,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto glview = director->getOpenGLView();
     if(!glview) {
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC) || (CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        glview = GLViewImpl::createWithRect("TJClashofClans", cocos2d::Rect(0, 0, mediumResolutionSize.width, mediumResolutionSize.height));
+        glview = GLViewImpl::createWithRect("TJClashofClans", cocos2d::Rect(0, 0, ourResolutionSize.width, ourResolutionSize.height));
 #else
         glview = GLViewImpl::create("TJClashofClans");
 #endif
@@ -118,7 +119,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     //int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
     //CCLOG("testResult:%d", testResult);
 
-    auto scene = MainScene::createScene(40,40,64);
+    auto scene = MainScene::createScene(20,20,-1);
     director->runWithScene(scene);
     auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 0.1);
     auto soldier = SoldierInCombat::Create(soldier_template, Vec2(5, 5),scene->getMap());

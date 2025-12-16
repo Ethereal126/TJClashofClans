@@ -86,7 +86,7 @@ endif()
 list(APPEND GAME_SOURCE
     Classes/AppDelegate.cpp
     Classes/HelloWorldScene.cpp
-    Classes/Map/MapManager.cpp
+    Classes/MapManager/MapManager.cpp
     Classes/Building/Building.cpp
     Classes/Combat/SoldierInCombat.cpp
     Classes/Combat/BuildingInCombat.cpp
@@ -96,7 +96,7 @@ list(APPEND GAME_SOURCE
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
    Classes/HelloWorldScene.h
-   Classes/Map/MapManager.h
+   Classes/MapManager/MapManager.h
    Classes/Building/Building.h
    Classes/MainScene.h
   # Classes/CombatManager/CombatTest.h

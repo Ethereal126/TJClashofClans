@@ -120,9 +120,6 @@ public:
     // 返回是否成功放置
     bool confirmPlacement();
 
-    //// 是否处于放置模式
-    //bool isInPlacementMode() const;
-
 protected:
     MapManager();
     virtual ~MapManager();

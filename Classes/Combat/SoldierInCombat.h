@@ -8,7 +8,7 @@
 #include "cocos2d.h"
 #include "cocos-ext.h"
 #include "Soldier/Soldier.h"
-#include "Map/MapManager.h"
+#include "MapManager/MapManager.h"
 
 class BuildingInCombat;
 
