@@ -11,7 +11,8 @@
 #include <vector>
 #include "cocos2d.h"
 #include "Building/Building.h"
-#include "ResourceManager/ResourceManager.h"
+#include "Soldier/Soldier.h"
+#include "ResourceStorage/ResourceStorage.h"
 
 /**
  * @brief TownHall类
@@ -19,27 +20,9 @@
  * 继承自 Building 基类，额外维护资源建筑容量和兵营容量等信息。
  */
 class TownHall : public Building {
-protected:
-    // ==================== 资源与容量相关属性 ====================
-    int gold_storage_capacity_;          // 当前等级下可存储的最大金币池数量
-    int elixir_storage_capacity_;        // 当前等级下可存储的最大圣水池数量
-    int gold_;                   // 当前已存储的金币数量
-    int elixir_;                 // 当前已存储的圣水数量
-    int barrack_capacity_;          // 当前等级下可解锁的最大军营上限
-    int max_gold_capacity_;      // 最大可持有金币上限（所有金币池总容量）
-    int max_elixir_capacity_;    // 最大可持有圣水上限（所有圣水池总容量）
-
-    // ==================== 资源池管理相关属性 ====================
-    std::vector<GoldStorage*> gold_storages_;      // 管理的金币池列表
-    std::vector<ElixirStorage*> elixir_storages_;  // 管理的圣水池列表
-
-    // ==================== 与 Cocos2d 渲染相关的属性 ====================
-    cocos2d::Sprite* flag_sprite_;    // 可选：显示部落旗帜的子节点
-    cocos2d::Label* level_label_;    // 显示大本营等级的文本标签
-
-public:
+private:
     /**
-     * @brief 构造函数
+     * @brief 私有构造函数
      * 使用基准数值 base 初始化大本营的生命、防御、建造时间与成本等属性。
      * @param name 大本营名称，一般为 "Town Hall" 或本地化后的名称。
      * @param base 基准数值，不同等级或不同难度下可采用不同的基准系数。
@@ -47,12 +30,89 @@ public:
      * @param texture 大本营当前等级使用的贴图路径。
      */
     TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture);
-
+    
     /**
-     * @brief 析构函数
+     * @brief 私有析构函数
      * 清理UI组件
      */
     ~TownHall();
+
+protected:
+    // ==================== 单例相关 ====================
+    static TownHall* instance_;            // 单例实例指针
+    bool is_initialized_;                  // 标记是否已初始化
+
+    // ==================== 资源与容量相关属性 ====================
+    int gold_storage_capacity_;          // 当前等级下可存储的最大金币池数量
+    int elixir_storage_capacity_;        // 当前等级下可存储的最大圣水池数量
+    int gold_mine_capacity_;             // 当前等级下可解锁的最大金矿上限
+    int elixir_collector_capacity_;      // 当前等级下可解锁的最大圣水收集器上限
+    int barrack_capacity_;               // 当前等级下可解锁的最大训练营上限
+    int army_capacity_;                  // 当前等级下军队总容量（所有军营最大承载人数）
+    int gold_;                           // 当前已存储的金币数量
+    int elixir_;                         // 当前已存储的圣水数量
+    int max_gold_capacity_;              // 最大可持有金币上限（所有金币池总容量）
+    int max_elixir_capacity_;            // 最大可持有圣水上限（所有圣水池总容量）
+    int current_army_count_;             // 当前军队总人数
+
+    // ==================== 资源池管理相关属性 ====================
+    std::vector<GoldStorage*> gold_storages_;           // 管理的金币池列表
+    std::vector<ElixirStorage*> elixir_storages_;       // 管理的圣水池列表
+    std::vector<SourceBuilding*> gold_mines_;           // 管理的金矿列表
+    std::vector<SourceBuilding*> elixir_collectors_;    // 管理的圣水收集器列表
+    std::vector<TrainingBuilding*> barracks_;           // 管理的训练营列表
+    std::vector<Barracks*> all_barracks_;               // 管理的军营列表（特指Barracks）
+
+    // ==================== 与 Cocos2d 渲染相关的属性 ====================
+    cocos2d::Sprite* flag_sprite_;    // 可选：显示部落旗帜的子节点
+    cocos2d::Label* level_label_;    // 显示大本营等级的文本标签
+
+	// ==================== 内部辅助函数 ====================
+    void UpdateArmyCapacityFromBarracks();
+    int GetTotalArmyCapacityFromBarracks() const;
+
+public:
+    /**
+     * @brief 获取大本营单例实例
+     * @return 返回TownHall单例指针，如果未初始化则返回nullptr
+     */
+    static TownHall* GetInstance();
+
+    /**
+     * @brief 初始化大本营单例
+     * @param name 大本营名称
+     * @param base 基准数值
+     * @param position 场景中的网格坐标
+     * @param texture 贴图路径
+     * @return 初始化成功返回true，如果已经初始化则返回false
+     */
+    static bool InitializeInstance(const std::string& name, int base,
+        cocos2d::Vec2 position, const std::string& texture);
+
+    /**
+     * @brief 销毁大本营单例
+     * 清理单例实例并释放资源
+     */
+    static void DestroyInstance();
+
+    /**
+     * @brief 检查单例是否已初始化
+     * @return 已初始化返回true，否则返回false
+     */
+    static bool IsInstanceInitialized();
+
+    /**
+     * @brief 获取当前实例（非静态版本）
+     * 用于从非静态上下文获取单例实例
+     * @return 返回当前实例指针
+     */
+    TownHall* GetCurrentInstance() const;
+
+    /**
+     * @brief 重置大本营状态
+     * 重置所有资源和管理列表，恢复到初始状态
+     */
+    void ResetTownHall();
 
     /**
      * @brief 重写升级接口
@@ -62,6 +122,29 @@ public:
     virtual void Upgrade() override;
 
     // ==================== 资源操作接口 ====================
+
+    // 金矿管理
+    void AddGoldMine(SourceBuilding* gold_mine);
+    void RemoveGoldMine(SourceBuilding* gold_mine);
+    int GetTotalGoldMineCount() const;
+    int GetTotalGoldProduction() const;
+
+    // 圣水收集器管理
+    void AddElixirCollector(SourceBuilding* elixir_collector);
+    void RemoveElixirCollector(SourceBuilding* elixir_collector);
+    int GetTotalElixirCollectorCount() const;
+    int GetTotalElixirProduction() const;
+
+    // 训练营管理
+    void AddTrainingBuilding(TrainingBuilding* training_building);
+    void RemoveTrainingBuilding(TrainingBuilding* training_building);
+    int GetTotalTrainingBuildingCount() const;
+
+    // 军营管理（特指Barracks）
+    void AddBarracks(Barracks* barracks);
+    void RemoveBarracks(Barracks* barracks);
+    int GetTotalBarracksCount() const;
+
     /**
      * @brief 向大本营中存入金币
      * @param amount 要增加的金币数量。
@@ -188,6 +271,33 @@ public:
      */
     bool IsElixirFull() const;
 
+    // ==================== 军队容量相关接口 ====================
+
+    /**
+     * @brief 获取所有军营最大承载人数
+     * @return 军队总容量
+     */
+    int GetArmyCapacity() const;
+
+    /**
+     * @brief 获取当前军队人数
+     * @return 当前军队总人数
+     */
+    int GetCurrentArmyCount() const;
+
+    /**
+     * @brief 更新当前军队人数
+     * 当训练完成或士兵死亡时调用
+     * @param delta 人数变化量（正数为增加，负数为减少）
+     */
+    void UpdateArmyCount(int delta);
+
+    /**
+     * @brief 获取训练营上限（修改函数名，避免冲突）
+     * @return 当前等级可支持的最大训练营数。
+     */
+    int GetBarrackCapacity() const { return barrack_capacity_; }
+
     // ==================== 资源与容量的 Get 接口 ====================
     /**
      * @brief 获取金币池上限
@@ -256,6 +366,56 @@ public:
      * 在基类 Building::ShowInfo 的基础上，额外输出资源容量、当前资源与军队容量。
      */
     virtual void ShowInfo() const override;
+
+    /**
+     * @brief 建筑模板结构体
+     */
+    struct BuildingTemplate {
+        std::string name;           // 建筑名称
+        std::string iconPath;       // 图标路径
+        int cost;                   // 建造费用
+        int width;                  // 占地宽度
+        int length;                 // 占地长度
+
+        // 返回实例的工厂函数
+        std::function<Building* ()> createFunc;
+
+        BuildingTemplate(const std::string& n, const std::string& i, int c, int w, int l,
+            std::function<Building* ()> func)
+            : name(n), iconPath(i), cost(c), width(w), length(l), createFunc(func) {
+        }
+    };
+
+    /**
+     * @brief 获取所有建筑模板列表
+     * @return 包含所有建筑模板的向量
+     */
+    static std::vector<BuildingTemplate> GetAllBuildingTemplates();
+
+    /**
+     * @brief 士兵模板结构体
+     */
+    struct SoldierTemplate {
+        std::string name;           // 士兵名称
+        std::string iconPath;       // 图标路径
+        int housingSpace;           // 人口消耗
+        int trainingTime;           // 训练时间（秒）
+        int trainingCost;           // 训练费用
+        std::function<Soldier* ()> createFunc;  // 创建士兵的工厂函数
+
+        SoldierTemplate(const std::string& n, const std::string& i, int h, int t, int c,
+            std::function<Soldier* ()> func)
+            : name(n), iconPath(i), housingSpace(h), trainingTime(t), trainingCost(c), createFunc(func) {
+        }
+    };
+
+    /**
+     * @brief 获取所有士兵模板列表
+     * @return 包含所有士兵模板的向量
+     */
+    static std::vector<SoldierTemplate> GetSoldierCategory();
+
 };
+
 
 #endif // __TOWN_HALL_H__
