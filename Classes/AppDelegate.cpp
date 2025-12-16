@@ -120,13 +120,16 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     auto scene = MainScene::createScene(40,40,64);
     director->runWithScene(scene);
-//    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 0.1);
-//    auto soldier = SoldierInCombat::Create(soldier_template, Vec2(1, 1),scene->getMap());
-//    auto building_template = new Building("test",1,100,100,10,10,{5,5});
-//    soldier->runAction(soldier->CreateStraightMoveAction(Vec2(10,1)));
+    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 0.1);
+    auto soldier = SoldierInCombat::Create(soldier_template, Vec2(5, 5),scene->getMap());
+    auto building_template = new Building("test",1,100,100,10,10,{5,5});
+    building_template->texture_ = "buildings/building_1.png";
+    auto building = BuildingInCombat::Create(building_template,Vec2(5,5),scene->getMap());
 
-
-
+    soldier->current_target_ = building;
+    auto move = soldier->CreateStraightMoveAction(Vec2(5,10));
+    auto dieCallback = CallFunc::create([=]() { soldier->Die(); });
+    soldier->runAction(Sequence::create(move, dieCallback, nullptr));
     return true;
 }
 

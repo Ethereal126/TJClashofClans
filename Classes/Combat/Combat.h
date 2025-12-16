@@ -14,41 +14,55 @@
 #include "SoldierInCombat.h"
 #include "BuildingInCombat.h"
 
+enum class CombatState {
+    kWrongInit,//初始化失败
+    kReady,   // 战斗准备（未开始）
+    kFighting,// 战斗进行中
+    kEnded    // 战斗结束
+};
+
+enum class WinnerState{
+    kUndetermined,
+    kOffence, //游戏进攻方
+    kDefence //游戏防守方
+};
+
 //负责统筹管理整个战斗过程，仅包含最基本的需求
-class Combat {
-private:
-    // ========== 单例核心：私有构造/拷贝/赋值 ==========
-    // 1. 私有构造函数（禁止外部创建实例）
-    Combat();
-    // 2. 私有析构函数（禁止外部delete）
-    ~Combat();
-
-
-    MapManager* map_;
-    cocos2d::Node* combat_root_node_ = nullptr;
-    int destroy_degree_;
-    bool is_inited_ = false;
-
-    static Combat& GetInstanceInternal();
-
+class CombatManager :public cocos2d::Node {
 public:
-    Combat(const Combat&) = delete;
-    Combat& operator=(const Combat&) = delete;
-
-    std::vector<SoldierInCombat*> soldiers_;
+    std::vector<std::pair<Soldier*,int>> soldier_to_use;
     std::vector<BuildingInCombat*> buildings_;
-    // ========== 单例核心：对外暴露的获取实例接口 ==========
-    // 外部唯一获取实例的方式（全局可访问）
-    static Combat& GetInstance();
-    //初始化战场中的建筑，返回初始化结果
-    bool Init(MapManager* map);
-    void Reset();
+    int live_soldiers_ = 0,live_buildings = 0;
+    WinnerState winner_ = WinnerState::kUndetermined;
+
+    static CombatManager* Create(MapManager* map); // 初始化单例（仅第一次调用有效）
+    static CombatManager* GetInstance();// 获取单例（已初始化则直接返回）
+
     //在接收到交互指令后，将士兵加入到战斗中；
     void SendSoldier(Soldier* soldier_template,cocos2d::Vec2 spawn_pos);
 
+    bool IsCombatEnd();
+    void StartCombat();
+    void PauseCombat();
+    void ResumeCombat();
+    void EndCombat();
+protected:
+    // 禁止外部直接构造/析构，仅通过 Create/Destroy 管理
+    CombatManager() = default;
+    ~CombatManager() override;
+    //初始化战场中的建筑，返回初始化结果
+    bool Init(MapManager* map);
 
-    //退出战斗，返回破坏度（destroy_degree_）
-    int EndCombat();
+private:
+    static CombatManager* instance_;
+    MapManager* map_ = nullptr;
+    cocos2d::Node* combat_root_node_ = nullptr;
+    int destroy_degree_ = 0;
+    CombatState state_ = CombatState::kWrongInit;
+    float combat_time_ = 0.0f;
+    const float kMaxCombatTime = 300.0f;
+
+    void Update(float dt);
 };
 
 #endif //PROGRAMMING_PARADIGM_FINAL_PROJECT_COMBAT_H
