@@ -7,7 +7,7 @@
 
 #include "cocos2d.h"
 #include "Building/Building.h"
-#include "Map/MapManager.h"
+#include "MapManager/MapManager.h"
 #include "Combat.h"
 
 class BuildingInCombat : public cocos2d::Sprite{
