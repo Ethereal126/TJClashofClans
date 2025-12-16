@@ -24,11 +24,11 @@ Building::Building(std::string name, int level, int health, int defense,
  * 提升建筑等级，同时调整建造时间、建造成本、防御并将生命值回满。
  */
 void Building::Upgrade() {
-    level_ += 1;
-    build_time_ = static_cast<int>(build_time_ * (1.2 + 0.3 * level_)); // 升级时间增加
-    build_cost_ = static_cast<int>(build_cost_ * (1.2 + 0.3 * level_)); // 升级成本增加
-    defense_ = static_cast<int>(defense_ * (1.1 + 0.2 * level_)); // 防御提升
-    health_ = GetMaxHealth(); // 血量回满
+    level_ = GetNextLevel();
+    build_time_ = GetNextBuildTime(); // 升级时间增加
+    build_cost_ = GetNextBuildCost(); // 升级成本增加
+    health_ = GetNextHealth(); // 血量回满
+    defense_ = GetNextDefense(); // 防御提升
 }
 
 /**
