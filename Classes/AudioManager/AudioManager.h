@@ -8,209 +8,209 @@
 #include <map>
 #include <vector>
 
-// ÒôÆµÀàÐÍÃ¶¾Ù
+// éŸ³é¢‘ç±»åž‹æžšä¸¾
 enum class AudioType {
-    Music,       // ±³¾°ÒôÀÖ£¨Ñ­»·²¥·Å£¬Í¬Ê±Ö»ÓÐÒ»¸ö£©
-    Effect,      // ÒôÐ§£¨¶ÌÒôÆµ£¬¿ÉÍ¬Ê±²¥·Å¶à¸ö£©
+    Music,       // èƒŒæ™¯éŸ³ä¹ï¼ˆå¾ªçŽ¯æ’­æ”¾ï¼ŒåŒæ—¶åªæœ‰ä¸€ä¸ªï¼‰
+    Effect,      // éŸ³æ•ˆï¼ˆçŸ­éŸ³é¢‘ï¼Œå¯åŒæ—¶æ’­æ”¾å¤šä¸ªï¼‰
 };
 
-// ÒôÆµIDÃ¶¾Ù£¨Ô¤¶¨ÒåµÄÒôÆµ×ÊÔ´£©
+// éŸ³é¢‘IDæžšä¸¾ï¼ˆé¢„å®šä¹‰çš„éŸ³é¢‘èµ„æºï¼‰
 enum class AudioID {
-    // ===== ±³¾°ÒôÀÖ =====
-    BGM_MainMenu,     // Ö÷²Ëµ¥ÒôÀÖ
-    BGM_Village,      // ´å×¯ÒôÀÖ
-    BGM_Battle,       // Õ½¶·ÒôÀÖ
-    BGM_Victory,      // Ê¤ÀûÒôÀÖ
-    BGM_Defeat,       // Ê§°ÜÒôÀÖ
+    // ===== èƒŒæ™¯éŸ³ä¹ =====
+    BGM_MainMenu,     // ä¸»èœå•éŸ³ä¹
+    BGM_Village,      // æ‘åº„éŸ³ä¹
+    BGM_Battle,       // æˆ˜æ–—éŸ³ä¹
+    BGM_Victory,      // èƒœåˆ©éŸ³ä¹
+    BGM_Defeat,       // å¤±è´¥éŸ³ä¹
 
-    // ===== UIÒôÐ§ =====
-    SFX_ButtonClick,      // °´Å¥µã»÷
+    // ===== UIéŸ³æ•ˆ =====
+    SFX_ButtonClick,      // æŒ‰é’®ç‚¹å‡»
 
-    // ===== ½¨ÖþÒôÐ§ =====
-    SFX_BuildingPlace,    // ·ÅÖÃ½¨Öþ
-    SFX_BuildingDestroy,  // ´Ý»Ù½¨Öþ
-
-
-    // ===== ¾ü¶ÓÒôÐ§ =====
-    SFX_ArcherAttack,     // ¹­¼ýÊÖ¹¥»÷
-    SFX_BarbarianAttack,  // Ò°ÂùÈË¹¥»÷
-    SFX_BomberAttack,     // Õ¨µ¯ÈË¹¥»÷
-    SFX_GiantAttack,      // ¾ÞÈË¹¥»÷
-
-    // ===== Õ½¶·ÒôÐ§ =====
-    SFX_Explosion,        // ±¬Õ¨
-    SFX_ArrowShoot,       // Éä¼ý
-    SFX_Spell,            // ·¨ÊõÊÍ·Å
-    SFX_TowerAttack,      // ·ÀÓùËþ¹¥»÷
+    // ===== å»ºç­‘éŸ³æ•ˆ =====
+    SFX_BuildingPlace,    // æ”¾ç½®å»ºç­‘
+    SFX_BuildingDestroy,  // æ‘§æ¯å»ºç­‘
 
 
-    // ===== ×ÊÔ´²É¼¯ÒôÐ§ =====
-    SFX_GoldMine,         // ½ð¿óÉú²ú
-    SFX_ElixirCollector,  // Ê¥Ë®ÊÕ¼¯Æ÷
+    // ===== å†›é˜ŸéŸ³æ•ˆ =====
+    SFX_ArcherAttack,     // å¼“ç®­æ‰‹æ”»å‡»
+    SFX_BarbarianAttack,  // é‡Žè›®äººæ”»å‡»
+    SFX_BomberAttack,     // ç‚¸å¼¹äººæ”»å‡»
+    SFX_GiantAttack,      // å·¨äººæ”»å‡»
+
+    // ===== æˆ˜æ–—éŸ³æ•ˆ =====
+    SFX_Explosion,        // çˆ†ç‚¸
+    SFX_ArrowShoot,       // å°„ç®­
+    SFX_Spell,            // æ³•æœ¯é‡Šæ”¾
+    SFX_TowerAttack,      // é˜²å¾¡å¡”æ”»å‡»
+
+
+    // ===== èµ„æºé‡‡é›†éŸ³æ•ˆ =====
+    SFX_GoldMine,         // é‡‘çŸ¿ç”Ÿäº§
+    SFX_ElixirCollector,  // åœ£æ°´æ”¶é›†å™¨
 };
 
-// ÒôÆµ×ÊÔ´ÐÅÏ¢½á¹¹Ìå
+// éŸ³é¢‘èµ„æºä¿¡æ¯ç»“æž„ä½“
 struct AudioInfo {
-    AudioID id;                   // ÒôÆµID
-    std::string filePath;         // ÎÄ¼þÂ·¾¶
-    AudioType type;               // ÒôÆµÀàÐÍ
-    float defaultVolume;          // Ä¬ÈÏÒôÁ¿£¨0.0 - 1.0£©
-    bool preload;                 // ÊÇ·ñÔ¤¼ÓÔØ
+    AudioID id;                   // éŸ³é¢‘ID
+    std::string filePath;         // æ–‡ä»¶è·¯å¾„
+    AudioType type;               // éŸ³é¢‘ç±»åž‹
+    float defaultVolume;          // é»˜è®¤éŸ³é‡ï¼ˆ0.0 - 1.0ï¼‰
+    bool preload;                 // æ˜¯å¦é¢„åŠ è½½
 
     AudioInfo() : id(AudioID::BGM_MainMenu), type(AudioType::Effect),
         defaultVolume(1.0f), preload(false) {
     }
 };
 
-// ÒôÆµ¹ÜÀíÆ÷£ºµ¥ÀýÄ£Ê½£¬¸ºÔð¹ÜÀíËùÓÐÒôÆµµÄ²¥·Å¡¢ÔÝÍ£¡¢Í£Ö¹ºÍÒôÁ¿¿ØÖÆ
+// éŸ³é¢‘ç®¡ç†å™¨ï¼šå•ä¾‹æ¨¡å¼ï¼Œè´Ÿè´£ç®¡ç†æ‰€æœ‰éŸ³é¢‘çš„æ’­æ”¾ã€æš‚åœã€åœæ­¢å’ŒéŸ³é‡æŽ§åˆ¶
 class AudioManager {
 public:
-    // ========== µ¥Àý¹ÜÀí ==========
+    // ========== å•ä¾‹ç®¡ç† ==========
     static AudioManager* getInstance();
     static void destroyInstance();
 
-    // ========== ³õÊ¼»¯ ==========
-    // ³õÊ¼»¯ÒôÆµ¹ÜÀíÆ÷
-    // µ÷ÓÃÊ±»ú£ºAppDelegate::applicationDidFinishLaunching()
+    // ========== åˆå§‹åŒ– ==========
+    // åˆå§‹åŒ–éŸ³é¢‘ç®¡ç†å™¨
+    // è°ƒç”¨æ—¶æœºï¼šAppDelegate::applicationDidFinishLaunching()
     bool init();
 
-    // ¼ÓÔØÒôÆµÅäÖÃÎÄ¼þ£¨JSON¸ñÊ½£¬¶¨ÒåËùÓÐÒôÆµ×ÊÔ´£©
-    // µ÷ÓÃÊ±»ú£ºinit()Ö®ºó
+    // åŠ è½½éŸ³é¢‘é…ç½®æ–‡ä»¶ï¼ˆJSONæ ¼å¼ï¼Œå®šä¹‰æ‰€æœ‰éŸ³é¢‘èµ„æºï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šinit()ä¹‹åŽ
     bool loadAudioConfig(const std::string& configPath);
 
-    // ========== Ô¤¼ÓÔØÓëÐ¶ÔØ ==========
-    // Ô¤¼ÓÔØµ¥¸öÒôÆµ×ÊÔ´£¨±ÜÃâ²¥·ÅÊ±¿¨¶Ù£©
-    // µ÷ÓÃÊ±»ú£º³¡¾°¼ÓÔØÊ±Ô¤¼ÓÔØ¸Ã³¡¾°ÐèÒªµÄÒôÐ§
+    // ========== é¢„åŠ è½½ä¸Žå¸è½½ ==========
+    // é¢„åŠ è½½å•ä¸ªéŸ³é¢‘èµ„æºï¼ˆé¿å…æ’­æ”¾æ—¶å¡é¡¿ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šåœºæ™¯åŠ è½½æ—¶é¢„åŠ è½½è¯¥åœºæ™¯éœ€è¦çš„éŸ³æ•ˆ
     void preloadAudio(AudioID audioID);
 
-    // Ô¤¼ÓÔØËùÓÐÒôÆµ£¨ÓÎÏ·Æô¶¯Ê±£©
-    // µ÷ÓÃÊ±»ú£º¼ÓÔØ½çÃæÊ±
+    // é¢„åŠ è½½æ‰€æœ‰éŸ³é¢‘ï¼ˆæ¸¸æˆå¯åŠ¨æ—¶ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šåŠ è½½ç•Œé¢æ—¶
     void preloadAllAudio();
 
-    // ÊÍ·Åµ¥¸öÒôÆµ×ÊÔ´£¨½ÚÊ¡ÄÚ´æ£©
+    // é‡Šæ”¾å•ä¸ªéŸ³é¢‘èµ„æºï¼ˆèŠ‚çœå†…å­˜ï¼‰
     void unloadAudio(AudioID audioID);
 
-    // ÊÍ·ÅËùÓÐÒôÆµ
+    // é‡Šæ”¾æ‰€æœ‰éŸ³é¢‘
     void unloadAllAudio();
 
-    // ========== ±³¾°ÒôÀÖ¿ØÖÆ ==========
-    // ²¥·Å±³¾°ÒôÀÖ£¨×Ô¶¯Ñ­»·£¬Í¬Ê±Ö»ÄÜ²¥·ÅÒ»¸ö£©
-    // fadeIn£ºÊÇ·ñµ­Èë£¨Æ½»¬¹ý¶É£©
-    // µ÷ÓÃÊ±»ú£º½øÈë³¡¾°Ê±
-    // Çø±ð£ºplayMusic»áÍ£Ö¹Ö®Ç°µÄÒôÀÖ£¬Ö»±£ÁôÒ»¸ö±³¾°ÒôÀÖ
+    // ========== èƒŒæ™¯éŸ³ä¹æŽ§åˆ¶ ==========
+    // æ’­æ”¾èƒŒæ™¯éŸ³ä¹ï¼ˆè‡ªåŠ¨å¾ªçŽ¯ï¼ŒåŒæ—¶åªèƒ½æ’­æ”¾ä¸€ä¸ªï¼‰
+    // fadeInï¼šæ˜¯å¦æ·¡å…¥ï¼ˆå¹³æ»‘è¿‡æ¸¡ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šè¿›å…¥åœºæ™¯æ—¶
+    // åŒºåˆ«ï¼šplayMusicä¼šåœæ­¢ä¹‹å‰çš„éŸ³ä¹ï¼Œåªä¿ç•™ä¸€ä¸ªèƒŒæ™¯éŸ³ä¹
     void playMusic(AudioID musicID, bool fadeIn = false, float fadeTime = 1.0f);
 
-    // Í£Ö¹±³¾°ÒôÀÖ
-    // fadeOut£ºÊÇ·ñµ­³ö£¨Æ½»¬½áÊø£©
-    // µ÷ÓÃÊ±»ú£ºÍË³öÓÎÏ·¡¢ÇÐ»»³¡¾°Ç°
+    // åœæ­¢èƒŒæ™¯éŸ³ä¹
+    // fadeOutï¼šæ˜¯å¦æ·¡å‡ºï¼ˆå¹³æ»‘ç»“æŸï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šé€€å‡ºæ¸¸æˆã€åˆ‡æ¢åœºæ™¯å‰
     void stopMusic(bool fadeOut = false, float fadeTime = 1.0f);
 
-    // ÔÝÍ£±³¾°ÒôÀÖ£¨±£Áô½ø¶È£©
-    // µ÷ÓÃÊ±»ú£ºÓÎÏ·ÔÝÍ£Ê±
-    // Çø±ðÓÚstopMusic£ºpauseMusic¿ÉÒÔ´ÓÔÝÍ£Î»ÖÃ»Ö¸´
+    // æš‚åœèƒŒæ™¯éŸ³ä¹ï¼ˆä¿ç•™è¿›åº¦ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šæ¸¸æˆæš‚åœæ—¶
+    // åŒºåˆ«äºŽstopMusicï¼špauseMusicå¯ä»¥ä»Žæš‚åœä½ç½®æ¢å¤
     void pauseMusic();
 
-    // »Ö¸´±³¾°ÒôÀÖ£¨´ÓÔÝÍ£Î»ÖÃ¼ÌÐø£©
-    // µ÷ÓÃÊ±»ú£ºÈ¡ÏûÔÝÍ£Ê±
+    // æ¢å¤èƒŒæ™¯éŸ³ä¹ï¼ˆä»Žæš‚åœä½ç½®ç»§ç»­ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šå–æ¶ˆæš‚åœæ—¶
     void resumeMusic();
 
-    // ========== ÒôÐ§¿ØÖÆ ==========
-    // ²¥·ÅÒôÐ§£¨¿ÉÍ¬Ê±²¥·Å¶à¸ö£¬·µ»ØÒôÐ§ÊµÀýID£©
-    // loop£ºÊÇ·ñÑ­»·£¨Ò»°ãÒôÐ§²»Ñ­»·£¬Ö»ÓÐ»·¾³Òô¿ÉÄÜÑ­»·£©
-    // µ÷ÓÃÊ±»ú£º´¥·¢ÊÂ¼þÊ±£¨µã»÷°´Å¥¡¢½¨Öþ·ÅÖÃ¡¢¹¥»÷µÈ£©
-    // ·µ»ØÖµ£ºÒôÐ§ÊµÀýID£¬ÓÃÓÚºóÐø¿ØÖÆ¸ÃÒôÐ§£¨ÈçÌáÇ°Í£Ö¹£©
+    // ========== éŸ³æ•ˆæŽ§åˆ¶ ==========
+    // æ’­æ”¾éŸ³æ•ˆï¼ˆå¯åŒæ—¶æ’­æ”¾å¤šä¸ªï¼Œè¿”å›žéŸ³æ•ˆå®žä¾‹IDï¼‰
+    // loopï¼šæ˜¯å¦å¾ªçŽ¯ï¼ˆä¸€èˆ¬éŸ³æ•ˆä¸å¾ªçŽ¯ï¼Œåªæœ‰çŽ¯å¢ƒéŸ³å¯èƒ½å¾ªçŽ¯ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šè§¦å‘äº‹ä»¶æ—¶ï¼ˆç‚¹å‡»æŒ‰é’®ã€å»ºç­‘æ”¾ç½®ã€æ”»å‡»ç­‰ï¼‰
+    // è¿”å›žå€¼ï¼šéŸ³æ•ˆå®žä¾‹IDï¼Œç”¨äºŽåŽç»­æŽ§åˆ¶è¯¥éŸ³æ•ˆï¼ˆå¦‚æå‰åœæ­¢ï¼‰
     int playSoundEffect(AudioID effectID, bool loop = false, float volume = 1.0f);
 
-    // Í£Ö¹Ö¸¶¨ÒôÐ§ÊµÀý
-    // µ÷ÓÃÊ±»ú£ºÐèÒªÖÐ¶ÏÄ³¸öÕýÔÚ²¥·ÅµÄÒôÐ§
+    // åœæ­¢æŒ‡å®šéŸ³æ•ˆå®žä¾‹
+    // è°ƒç”¨æ—¶æœºï¼šéœ€è¦ä¸­æ–­æŸä¸ªæ­£åœ¨æ’­æ”¾çš„éŸ³æ•ˆ
     void stopSoundEffect(int effectInstanceID);
 
-    // Í£Ö¹ËùÓÐÒôÐ§£¨²»Ó°Ïì±³¾°ÒôÀÖ£©
-    // µ÷ÓÃÊ±»ú£º³¡¾°ÇÐ»»¡¢ÓÎÏ·ÔÝÍ£
+    // åœæ­¢æ‰€æœ‰éŸ³æ•ˆï¼ˆä¸å½±å“èƒŒæ™¯éŸ³ä¹ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šåœºæ™¯åˆ‡æ¢ã€æ¸¸æˆæš‚åœ
     void stopAllSoundEffects();
 
-    // ========== ÒôÁ¿¿ØÖÆ ==========
-    // ÉèÖÃÒôÀÖÒôÁ¿£¨0.0 - 1.0£©
-    // µ÷ÓÃÊ±»ú£ºÉèÖÃ½çÃæÖÐµ÷ÕûÒôÁ¿»¬¿é
+    // ========== éŸ³é‡æŽ§åˆ¶ ==========
+    // è®¾ç½®éŸ³ä¹éŸ³é‡ï¼ˆ0.0 - 1.0ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šè®¾ç½®ç•Œé¢ä¸­è°ƒæ•´éŸ³é‡æ»‘å—
     void setMusicVolume(float volume);
 
-    // ÉèÖÃÒôÐ§ÒôÁ¿
+    // è®¾ç½®éŸ³æ•ˆéŸ³é‡
     void setSoundEffectVolume(float volume);
 
-    // ÉèÖÃÖ÷ÒôÁ¿£¨Ó°ÏìËùÓÐÒôÆµ£©
+    // è®¾ç½®ä¸»éŸ³é‡ï¼ˆå½±å“æ‰€æœ‰éŸ³é¢‘ï¼‰
     void setMasterVolume(float volume);
 
-    // »ñÈ¡µ±Ç°ÒôÁ¿
+    // èŽ·å–å½“å‰éŸ³é‡
     float getMusicVolume() const;
     float getSoundEffectVolume() const;
     float getMasterVolume() const;
 
-    // ========== ¾²Òô¿ØÖÆ ==========
-    // ¾²Òô/È¡Ïû¾²Òô£¨·ÖÀà¿ØÖÆ£©
-    // µ÷ÓÃÊ±»ú£ºÉèÖÃ½çÃæÖÐµÄ¾²Òô¿ª¹Ø
+    // ========== é™éŸ³æŽ§åˆ¶ ==========
+    // é™éŸ³/å–æ¶ˆé™éŸ³ï¼ˆåˆ†ç±»æŽ§åˆ¶ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šè®¾ç½®ç•Œé¢ä¸­çš„é™éŸ³å¼€å…³
     void setMusicMuted(bool muted);
     void setSoundEffectMuted(bool muted);
 
-    // »ñÈ¡¾²Òô×´Ì¬
+    // èŽ·å–é™éŸ³çŠ¶æ€
     bool isMusicMuted() const;
     bool isSoundEffectMuted() const;
 
-    // ========== ×´Ì¬²éÑ¯ ==========
-    // ¼ì²é±³¾°ÒôÀÖÊÇ·ñÕýÔÚ²¥·Å
+    // ========== çŠ¶æ€æŸ¥è¯¢ ==========
+    // æ£€æŸ¥èƒŒæ™¯éŸ³ä¹æ˜¯å¦æ­£åœ¨æ’­æ”¾
     bool isMusicPlaying() const;
 
-    // ¼ì²éÖ¸¶¨ÒôÐ§ÊµÀýÊÇ·ñÕýÔÚ²¥·Å
+    // æ£€æŸ¥æŒ‡å®šéŸ³æ•ˆå®žä¾‹æ˜¯å¦æ­£åœ¨æ’­æ”¾
     bool isSoundEffectPlaying(int effectInstanceID) const;
 
-    // ========== È«¾Ö¿ØÖÆ£¨ÓÃÓÚÓÎÏ·ÔÝÍ££© ==========
-    // ÔÝÍ£ËùÓÐÒôÆµ£¨ÒôÀÖ+ÒôÐ§+ÓïÒô£©
-    // µ÷ÓÃÊ±»ú£º°´ÏÂÔÝÍ£¼ü¡¢Ó¦ÓÃ½øÈëºóÌ¨
+    // ========== å…¨å±€æŽ§åˆ¶ï¼ˆç”¨äºŽæ¸¸æˆæš‚åœï¼‰ ==========
+    // æš‚åœæ‰€æœ‰éŸ³é¢‘ï¼ˆéŸ³ä¹+éŸ³æ•ˆ+è¯­éŸ³ï¼‰
+    // è°ƒç”¨æ—¶æœºï¼šæŒ‰ä¸‹æš‚åœé”®ã€åº”ç”¨è¿›å…¥åŽå°
     void pauseAll();
 
-    // »Ö¸´ËùÓÐÒôÆµ
-    // µ÷ÓÃÊ±»ú£ºÈ¡ÏûÔÝÍ£¡¢Ó¦ÓÃ»Øµ½Ç°Ì¨
+    // æ¢å¤æ‰€æœ‰éŸ³é¢‘
+    // è°ƒç”¨æ—¶æœºï¼šå–æ¶ˆæš‚åœã€åº”ç”¨å›žåˆ°å‰å°
     void resumeAll();
 
-    // Í£Ö¹ËùÓÐÒôÆµ
-    // µ÷ÓÃÊ±»ú£ºÍË³öÓÎÏ·
+    // åœæ­¢æ‰€æœ‰éŸ³é¢‘
+    // è°ƒç”¨æ—¶æœºï¼šé€€å‡ºæ¸¸æˆ
     void stopAll();
 
 protected:
     AudioManager();
     virtual ~AudioManager();
 
-    // ¸ù¾ÝAudioID»ñÈ¡ÒôÆµÐÅÏ¢
+    // æ ¹æ®AudioIDèŽ·å–éŸ³é¢‘ä¿¡æ¯
     const AudioInfo* getAudioInfo(AudioID audioID) const;
 
-    // Ó¦ÓÃÒôÁ¿ÉèÖÃ£¨¿¼ÂÇÖ÷ÒôÁ¿¡¢·ÖÀàÒôÁ¿¡¢¾²Òô×´Ì¬£©
+    // åº”ç”¨éŸ³é‡è®¾ç½®ï¼ˆè€ƒè™‘ä¸»éŸ³é‡ã€åˆ†ç±»éŸ³é‡ã€é™éŸ³çŠ¶æ€ï¼‰
     float getEffectiveVolume(AudioType type, float volume = 1.0f) const;
 
-    // µ­Èëµ­³öÐ§¹û
+    // æ·¡å…¥æ·¡å‡ºæ•ˆæžœ
     void fadeInMusic(int musicInstanceID, float fadeTime);
     void fadeOutMusic(int musicInstanceID, float fadeTime, const std::function<void()>& callback);
 
 private:
     static AudioManager* _instance;
 
-    // ÒôÆµ×ÊÔ´Ó³Éä£¨AudioID -> AudioInfo£©
+    // éŸ³é¢‘èµ„æºæ˜ å°„ï¼ˆAudioID -> AudioInfoï¼‰
     std::map<AudioID, AudioInfo> _audioMap;
 
-    // µ±Ç°²¥·ÅµÄ±³¾°ÒôÀÖÊµÀýID
+    // å½“å‰æ’­æ”¾çš„èƒŒæ™¯éŸ³ä¹å®žä¾‹ID
     int _currentMusicID;
     AudioID _currentMusicEnum;
 
-    // ÕýÔÚ²¥·ÅµÄÒôÐ§ÊµÀýIDÁÐ±í
+    // æ­£åœ¨æ’­æ”¾çš„éŸ³æ•ˆå®žä¾‹IDåˆ—è¡¨
     std::vector<int> _activeSoundEffects;
 
-    // ÒôÁ¿ÉèÖÃ
-    float _musicVolume;          // ÒôÀÖÒôÁ¿
-    float _soundEffectVolume;    // ÒôÐ§ÒôÁ¿
+    // éŸ³é‡è®¾ç½®
+    float _musicVolume;          // éŸ³ä¹éŸ³é‡
+    float _soundEffectVolume;    // éŸ³æ•ˆéŸ³é‡
 
-    // ¾²Òô×´Ì¬
+    // é™éŸ³çŠ¶æ€
     bool _musicMuted;
     bool _soundEffectMuted;
 
-    // ÔÝÍ£×´Ì¬±ê¼Ç
+    // æš‚åœçŠ¶æ€æ ‡è®°
     bool _musicPaused;
 };
 

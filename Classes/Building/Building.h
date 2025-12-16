@@ -27,6 +27,9 @@ protected:
     bool is_upgrading_;               // 是否正在升级中
     float upgrade_remaining_time_;    // 升级剩余时间（秒）
     cocos2d::Vec2 position_;          // 建筑的位置信息 (x, y)
+    int width_;
+    int length_;
+    cocos2d::Vec2 position_;    // 建筑的位置信息 (x, y)
 
 public:
     /**

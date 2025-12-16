@@ -1,4 +1,4 @@
-/****************************************************************************
+﻿/****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
  
  http://www.cocos2d-x.org
@@ -25,6 +25,8 @@
 #include "AppDelegate.h"
 #include "HelloWorldScene.h"
 #include "MainScene.h"
+#include "Combat/CombatAll.h"
+
 
 // #define USE_AUDIO_ENGINE 1
 
@@ -51,6 +53,7 @@ AppDelegate::~AppDelegate()
 #endif
 }
 
+
 // if you want a different context, modify the value of glContextAttrs
 // it will affect all platforms
 void AppDelegate::initGLContextAttrs()
@@ -69,12 +72,13 @@ static int register_all_packages()
 }
 
 bool AppDelegate::applicationDidFinishLaunching() {
+    CCLOG("Hello");
     // initialize director
     auto director = Director::getInstance();
     auto glview = director->getOpenGLView();
     if(!glview) {
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC) || (CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        glview = GLViewImpl::createWithRect("TJClashofClans", cocos2d::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+        glview = GLViewImpl::createWithRect("TJClashofClans", cocos2d::Rect(0, 0, mediumResolutionSize.width, mediumResolutionSize.height));
 #else
         glview = GLViewImpl::create("TJClashofClans");
 #endif
@@ -108,11 +112,20 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     register_all_packages();
 
-    // create a scene. it's an autorelease object
-    auto scene = MainScene::createScene(/*mapWidth*/40, /*mapLength*/40, /*gridSize*/64);
+    //int argc = 0;
+    //char* argv[] = { nullptr };
+    //testing::InitGoogleTest(&argc, argv);
+    //int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
+    //CCLOG("testResult:%d", testResult);
 
-    // run
+    auto scene = MainScene::createScene(40,40,64);
     director->runWithScene(scene);
+//    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 0.1);
+//    auto soldier = SoldierInCombat::Create(soldier_template, Vec2(1, 1),scene->getMap());
+//    auto building_template = new Building("test",1,100,100,10,10,{5,5});
+//    soldier->runAction(soldier->CreateStraightMoveAction(Vec2(10,1)));
+
+
 
     return true;
 }

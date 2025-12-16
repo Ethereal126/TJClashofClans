@@ -1,23 +1,35 @@
-#pragma once
+ï»¿#pragma once
 #ifndef __HOME_SCENE_H__
 #define __HOME_SCENE_H__
 
 #include "cocos2d.h"
-#include "Map/Map.h"
+#include "Map/MapManager.h"
 
 class MainScene : public cocos2d::Scene {
 public:
     static MainScene* createScene(int mapWidth, int mapLength, int gridSize) {
         auto scene = MainScene::create();
-        if (!scene) return nullptr;
-
-        // ´´½¨µØÍ¼£¨Ö÷´å×¯£©
-        auto map = ::Map::create(mapWidth, mapLength, gridSize, TerrainType::Home);
-        // ½«µØÍ¼°Ú·Åµ½ÆÁÄ»ÖĞĞÄÆ«ÏÂ£¨¸ù¾İÄãµÄĞèÇóµ÷Õû£©
+        if (!scene) {
+            CCLOG("scene creation error");
+            return nullptr;
+        }
+        else {
+            CCLOG("scene creation success");
+        }
+        // åˆ›å»ºåœ°å›¾ï¼ˆä¸»æ‘åº„ï¼‰
+        auto map = MapManager::create(mapWidth, mapLength, gridSize, TerrainType::Home);
+        if (!map) {
+            CCLOG("map error");
+        }
+        else {
+            CCLOG("map success");
+        }
+        // å°†åœ°å›¾æ‘†æ”¾åˆ°å±å¹•ä¸­å¿ƒåä¸‹
         map->setPosition(cocos2d::Vec2(0.f, 0.f));
         scene->addChild(map, 0);
+		scene->_map = map;
 
-        // TODO: Èç¹ûÓĞ HUD/UIManager£¬ÕâÀï¿Éµ÷ÓÃ UIManager ÏÔÊ¾ HUD ºÍ ResourceBar
+        // TODO: å¦‚æœæœ‰ HUD/UIManagerï¼Œè¿™é‡Œå¯è°ƒç”¨ UIManager æ˜¾ç¤º HUD å’Œ ResourceBar
 
         return scene;
     }
@@ -27,7 +39,14 @@ public:
         return true;
     }
 
+    // è·å–åœ°å›¾å¼•ç”¨
+    MapManager* getMap() const { return _map; }
+
+
     CREATE_FUNC(MainScene);
+
+private:
+    MapManager* _map = nullptr;
 };
 
 #endif // __HOME_SCENE_H__
