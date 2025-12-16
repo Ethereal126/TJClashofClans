@@ -12,11 +12,11 @@
  * 初始化建筑名称、等级、生命、防御、建造时间与建造成本，并设置在场景中的坐标。
  */
 Building::Building(std::string name, int level, int health, int defense,
-    int buildtime, int build_cost, int width, int length, std::pair<int, int> position)
+    int buildtime, int build_cost, int width, int length, cocos2d::Vec2 position)
     : name_(std::move(name)), level_(level), health_(health), defense_(defense),
     build_time_(buildtime), build_cost_(build_cost), width_(width), length_(length),
     is_upgrading_(false), upgrade_remaining_time_(0.0f),
-    position_(cocos2d::Vec2(static_cast<float>(position.first), static_cast<float>(position.second))) {
+    position_(position) {
     this->setPosition(position_);
 }
 
@@ -191,10 +191,10 @@ int Building::GetBuildCost() const {
 
 /**
  * @brief 获取建筑坐标
- * @return 以整数对形式表示的位置坐标。
+ * @return 以cocos2d::Vec2形式表示的位置坐标。
  */
-std::pair<int, int> Building::GetPosition() const {
-    return std::make_pair(static_cast<int>(position_.x), static_cast<int>(position_.y));
+cocos2d::Vec2 Building::GetPosition() const {
+    return position_;
 }
 
 // ==================== SourceBuilding 成员函数的实现 ====================
@@ -203,7 +203,7 @@ std::pair<int, int> Building::GetPosition() const {
  * @brief SourceBuilding 构造函数
  * 按给定基数 base 初始化资源建筑的生命、防御、建造时间和成本，并设置纹理。
  */
-SourceBuilding::SourceBuilding(std::string name, int base, std::pair<int, int> position, std::string texture)
+SourceBuilding::SourceBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture)
     : Building(name, 1, 16 * base, 2 * base,
         base, base * 500, 3, 3, position),
     production_rate_(base * 50) {
@@ -216,7 +216,7 @@ SourceBuilding::SourceBuilding(std::string name, int base, std::pair<int, int> p
  * 用于创建资源建筑实例的静态工厂方法。
  */
 SourceBuilding* SourceBuilding::Create(const std::string& name, int base,
-    std::pair<int, int> position,
+    cocos2d::Vec2 position,
     const std::string& texture,
     const std::string& resourceType) {
     // 使用nothrow避免分配失败时抛出异常
@@ -238,9 +238,9 @@ SourceBuilding* SourceBuilding::Create(const std::string& name, int base,
                 building->setColor(cocos2d::Color3B(200, 100, 255)); // 紫色
             }
 
-            cocos2d::log("创建资源建筑: %s (类型: %s, 位置: %d,%d)",
+            cocos2d::log("创建资源建筑: %s (类型: %s, 位置: %f,%f)",
                 name.c_str(), resourceType.c_str(),
-                position.first, position.second);
+                position.x, position.y);
             return building;
         }
 
@@ -276,7 +276,7 @@ void SourceBuilding::ShowInfo() const {
  * @brief AttackBuilding 构造函数
  * 初始化攻击建筑的生命、防御、建造时间和成本，并设置攻击范围与纹理。
  */
-AttackBuilding::AttackBuilding(std::string name, int base, std::pair<int, int> position, std::string texture, int range)
+AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture, int range)
     : Building(name, 1, 6 * base, base,
         base * 2, base * 500, 2, 2, position),
     Range_(range) { 
@@ -288,7 +288,7 @@ AttackBuilding::AttackBuilding(std::string name, int base, std::pair<int, int> p
  * 用于创建攻击建筑实例的静态工厂方法。
  */
 AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
-    std::pair<int, int> position,
+    cocos2d::Vec2 position,
     const std::string& texture, int range) {
     // 使用nothrow避免分配失败时抛出异常
     auto building = new (std::nothrow) AttackBuilding(name, base, position, texture, range);
@@ -330,8 +330,8 @@ AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
                 building->setColor(cocos2d::Color3B(150, 150, 200)); // 淡蓝色
             }
 
-            cocos2d::log("创建攻击建筑: %s (范围: %d, 位置: %d,%d)",
-                name.c_str(), range, position.first, position.second);
+            cocos2d::log("创建攻击建筑: %s (范围: %d, 位置: %.1f,%.1f)",
+                name.c_str(), range, position.x, position.y);
             return building;
         }
 
@@ -358,7 +358,7 @@ void AttackBuilding::ShowInfo() const {
  * @brief TrainingBuilding 构造函数
  * 初始化训练营的生命、防御、建造时间和成本，并设置训练属性与纹理。
  */
-TrainingBuilding::TrainingBuilding(std::string name, int base, std::pair<int, int> position,
+TrainingBuilding::TrainingBuilding(std::string name, int base, cocos2d::Vec2 position,
     std::string texture, int capacity, int speed)
     : Building(name, 1, 8 * base, 2 * base,
         base * 3, base * 400, 3, 3, position),
@@ -390,7 +390,7 @@ bool TrainingBuilding::Init() {
 }
 
 /**
- * @brief 构造函数
+ * @brief 创建训练营实例
  * 初始化训练营的名称、基准数值、位置、纹理以及训练属性。
  * @param name 建筑名称
  * @param base 基准数值（用于计算生命值、防御等）
@@ -400,7 +400,7 @@ bool TrainingBuilding::Init() {
  * @param speed 训练速度（秒/每兵）
  */
 TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
-    std::pair<int, int> position,
+    cocos2d::Vec2 position,
     const std::string& texture, int capacity, int speed) {
     auto building = new (std::nothrow) TrainingBuilding(name, base, position, texture, capacity, speed);
 
@@ -409,8 +409,8 @@ TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
             // 标记为自动释放
             building->autorelease();
 
-            cocos2d::log("创建训练营: %s (容量: %d, 速度: %d, 位置: %d,%d)",
-                name.c_str(), capacity, speed, position.first, position.second);
+            cocos2d::log("创建训练营: %s (容量: %d, 速度: %d, 位置: %.1f,%.1f)",
+                name.c_str(), capacity, speed, position.x, position.y);
             return building;
         }
 

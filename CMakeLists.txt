@@ -99,7 +99,7 @@ list(APPEND GAME_HEADER
    Classes/MapManager/MapManager.h
    Classes/Building/Building.h
    Classes/MainScene.h
-  # Classes/Combat/CombatTest.h
+  # Classes/CombatManager/CombatTest.h
    Classes/Combat/CombatAll.h
    Classes/Soldier/Soldier.h
 )

@@ -56,7 +56,7 @@ bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn
     if (map_ != nullptr) {
         map_->addChild(this);
     }
-    this->setScale(0.5f);  // 调整大小（根据实际资源修改）
+    this->setScale(1.5f);  // 调整大小（根据实际资源修改）
 
     return true;
 }
@@ -171,10 +171,16 @@ void SoldierInCombat::Die() {
     is_alive_ = false;
     this->stopAllActions();  // 停止所有当前动作
 
-
     auto death_anim = cocos2d::AnimationCache::getInstance()->getAnimation("Soldier_Death");
     auto animate = cocos2d::Animate::create(death_anim);
-    auto remove_self = cocos2d::CallFunc::create([this]() { this->removeFromParent(); });
+    auto remove_self = cocos2d::CallFunc::create([this]() {
+        this->removeFromParent();
+        auto manager = CombatManager::GetInstance();
+        manager->live_soldiers_--;
+        if(manager->IsCombatEnd()){
+            manager->EndCombat();
+        }
+    });
     auto death_sequence = cocos2d::Sequence::create(animate, remove_self, nullptr);
     this->runAction(death_sequence);
 }
@@ -360,7 +366,7 @@ void SoldierInCombat::SimplifyPath(std::vector<cocos2d::Vec2>& path){
 }
 
 BuildingInCombat* SoldierInCombat::GetNextTarget() const {
-    auto buildings = Combat::GetInstance().buildings_;
+    auto buildings = CombatManager::GetInstance()->buildings_;
     BuildingInCombat* target = *std::min_element(buildings.begin(),buildings.end(),
                                                  [&](BuildingInCombat* a,BuildingInCombat* b){
         return this->location_.distance(a->getPosition())<this->location_.distance(b->getPosition());

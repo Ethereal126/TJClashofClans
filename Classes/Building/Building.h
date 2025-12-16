@@ -7,7 +7,6 @@
 #define __BUILDING_H__
 
 #include <string>
-#include <utility>
 #include "cocos2d.h"
 
 /**
@@ -28,13 +27,17 @@ protected:
     float upgrade_remaining_time_;    // 升级剩余时间（秒）
     cocos2d::Vec2 position_;    // 建筑的位置信息 (x, y)
 
+
 public:
+    //napper:临时添加，用于绑定建筑对应的图片
+    std::string texture_;
+
     /**
      * @brief 构造函数
      * 初始化建筑名称、等级、生命值、防御、建造时间、建造成本和位置。
      */
     Building(std::string name, int level, int health, int defense,
-        int buildtime, int build_cost, int width, int length, std::pair<int, int> position);
+        int buildtime, int build_cost, int width, int length, cocos2d::Vec2 position);
 
     /**
      * @brief 建筑升级接口
@@ -137,9 +140,9 @@ public:
 
     /**
      * @brief 获取建筑位置
-     * @return 以 std::pair<int,int> 形式返回的建筑坐标。
+     * @return 以 cocos2d::Vec2 形式返回的建筑坐标。
      */
-    std::pair<int, int> GetPosition() const;
+    cocos2d::Vec2 GetPosition() const;
 
     /**
      * @brief 获取建筑宽度
@@ -223,7 +226,7 @@ public:
      * @brief 构造函数
      * 使用基准值 base 和位置初始化资源建筑，并设置资源生产速率与纹理。
      */
-    SourceBuilding(std::string name, int base, std::pair<int, int> position, std::string texture);
+    SourceBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture);
 
     /**
      * @brief 创建资源建筑实例
@@ -235,7 +238,7 @@ public:
      * @return 创建的SourceBuilding指针，失败返回nullptr
      */
     static SourceBuilding* Create(const std::string& name, int base,
-        std::pair<int, int> position,
+        cocos2d::Vec2 position,
         const std::string& texture,
         const std::string& resourceType);
 
@@ -283,7 +286,7 @@ public:
      * @brief 构造函数
      * 初始化攻击塔的名称、基准数值、位置、纹理以及攻击范围。
      */
-    AttackBuilding(std::string name, int base, std::pair<int, int> position, std::string texture, int range);
+    AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture, int range);
 
     /**
      * @brief 创建攻击建筑实例
@@ -295,7 +298,7 @@ public:
      * @return 创建的AttackBuilding指针，失败返回nullptr
      */
     static AttackBuilding* Create(const std::string& name, int base,
-        std::pair<int, int> position,
+        cocos2d::Vec2 position,
         const std::string& texture, int range);
 
     /**
@@ -353,7 +356,7 @@ public:
      * @param capacity 训练容量
      * @param speed 训练速度（秒/每兵）
      */
-    TrainingBuilding(std::string name, int base, std::pair<int, int> position,
+    TrainingBuilding(std::string name, int base, cocos2d::Vec2 position,
         std::string texture, int capacity, int speed);
 
     /**
@@ -373,7 +376,7 @@ public:
      * @return 创建的TrainingBuilding指针，失败返回nullptr
      */
     static TrainingBuilding* Create(const std::string& name, int base,
-        std::pair<int, int> position,
+        cocos2d::Vec2 position,
         const std::string& texture, int capacity, int speed);
 
     /**
