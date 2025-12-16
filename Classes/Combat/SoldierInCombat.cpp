@@ -10,9 +10,9 @@
 bool SoldierInCombat::is_animation_loaded_ = false;
 
 // -------------------------- 工厂方法实现 --------------------------
-SoldierInCombat* SoldierInCombat::Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos) {
+SoldierInCombat* SoldierInCombat::Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
     auto soldier = new (std::nothrow) SoldierInCombat();
-    if (soldier && soldier->Init(soldier_template, spawn_pos)) {
+    if (soldier && soldier->Init(soldier_template, spawn_pos,map)) {
         soldier->autorelease();  // Cocos2d-x自动内存管理
         return soldier;
     }
@@ -25,7 +25,7 @@ SoldierInCombat::~SoldierInCombat() {
 }
 
 // -------------------------- 初始化实现 --------------------------
-bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos) {
+bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
     // 1. 调用父类Sprite::init()确保渲染节点初始化
     if (!cocos2d::Sprite::init()) {
         CCLOG("SoldierInCombat Init Failed: Sprite Init Error");
@@ -51,6 +51,7 @@ bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn
 
     // 4. 设置初始状态
     this->setPosition(spawn_pos);
+    map_ = map;
     // 只有在map_不为nullptr时才调用addChild
     if (map_ != nullptr) {
         map_->addChild(this);
@@ -236,7 +237,7 @@ private:
     // 生成8个方向的邻居格子
     constexpr static const float kDestroyCost = 10.0;
     static float ManhattanDistance(const cocos2d::Vec2& a, const::cocos2d::Vec2& b);
-    Map* map_;
+    MapManager* map_;
 };
 
 static const cocos2d::Vec2 kNeighborDirs[] = {

@@ -8,7 +8,7 @@
 #include "cocos2d.h"
 #include "cocos-ext.h"
 #include "Soldier/Soldier.h"
-#include "Map/Map.h"
+#include "Map/MapManager.h"
 
 class BuildingInCombat;
 
@@ -17,12 +17,12 @@ class SoldierInCombat : public cocos2d::Sprite{
 public:
     ~SoldierInCombat();
     cocos2d::Vec2 location_;
-    Map* map_;
+    MapManager* map_;
     bool is_alive_;
 
-    static SoldierInCombat* Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos);
+    static SoldierInCombat* Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map);
     // 初始化函数
-    bool Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos);
+    bool Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map);
     // 被攻击函数
     void TakeDamage(int damage);
 

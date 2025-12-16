@@ -4,7 +4,7 @@
 #include "gtest/gtest.h"
 #include "SoldierInCombat.h"
 #include "Soldier/Soldier.h"
-#include "Map/Map.h"
+#include "Map/MapManager.h"
 #include "Building/Building.h"
 #include "BuildingInCombat.h"
 #include "MainScene.h"
@@ -68,14 +68,14 @@ protected:
     void SetUp() override {
         // 创建mock对象
         mockSoldier = new SoldierInCombat();
-        map = Map::create(40, 40, 64,TerrainType::Battle);
+        map = MapManager::create(40, 40, 64,TerrainType::Battle);
     }
 
     void TearDown() override {
     }
     Soldier* soldier_template = new Soldier(SoldierType::kBarbarian,100,100,1,1,0.1);
     SoldierInCombat* mockSoldier{};
-    Map* map{};
+    MapManager* map{};
 };
 
 // Soldier创建测试

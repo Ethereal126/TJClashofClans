@@ -10,7 +10,7 @@
 #include "cocos-ext.h"
 #include "Building/Building.h"
 #include "Soldier/Soldier.h"
-#include "Map/Map.h"
+#include "Map/MapManager.h"
 #include "SoldierInCombat.h"
 #include "BuildingInCombat.h"
 
@@ -24,7 +24,7 @@ private:
     ~Combat();
 
 
-    Map* map_;
+    MapManager* map_;
     cocos2d::Node* combat_root_node_ = nullptr;
     int destroy_degree_;
     bool is_inited_ = false;
@@ -41,7 +41,7 @@ public:
     // 外部唯一获取实例的方式（全局可访问）
     static Combat& GetInstance();
     //初始化战场中的建筑，返回初始化结果
-    bool Init(Map* map);
+    bool Init(MapManager* map);
     void Reset();
     //在接收到交互指令后，将士兵加入到战斗中；
     void SendSoldier(Soldier* soldier_template,cocos2d::Vec2 spawn_pos);
