@@ -10,7 +10,7 @@
 #include "cocos-ext.h"
 #include "Building/Building.h"
 #include "Soldier/Soldier.h"
-#include "Map/MapManager.h"
+#include "MapManager/MapManager.h"
 #include "SoldierInCombat.h"
 #include "BuildingInCombat.h"
 
