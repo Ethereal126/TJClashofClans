@@ -27,7 +27,7 @@ Combat& Combat::GetInstance() {
 }
 
 //初始化战场中的建筑，返回初始化结果
-bool Combat::Init(Map* map){
+bool Combat::Init(MapManager* map){
     if(map== nullptr) return false;
     this->map_=map;
     for(auto building:map_->getAllBuildings()){
@@ -67,7 +67,7 @@ void Combat::Reset() {
 //在接收到交互指令后，将士兵加入到战斗中；
 void Combat::SendSoldier(Soldier* soldier_template,cocos2d::Vec2 spawn_pos) {
     if (!is_inited_) return;
-    auto soldier = SoldierInCombat::Create(soldier_template,spawn_pos);
+    auto soldier = SoldierInCombat::Create(soldier_template,spawn_pos,map_);
     if (!soldier) { // 创建失败则返回
         std::string name = soldier_template->GetName();
         CCLOG("创建士兵失败，类型：%s",name.c_str());

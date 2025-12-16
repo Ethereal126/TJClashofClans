@@ -1,4 +1,4 @@
-#include "MapManager.h"
+﻿#include "MapManager.h"
 //#include "TownHall/TownHall.h"
 //#include "UIManager/UIManager.h"
 #include <algorithm>
@@ -83,8 +83,9 @@ void MapManager::initGrids() {
         _groundBatch = nullptr;
     }
 
-    const std::string groundTilePath = "....Resources/tiles/ground_iso.png"; 
+    const std::string groundTilePath = "tile/ground_iso.png"; 
     if (cocos2d::FileUtils::getInstance()->isFileExist(groundTilePath)) {
+        CCLOG("file found");
         auto tempSprite = cocos2d::Sprite::create(groundTilePath);
         if (tempSprite) {
             auto texture = tempSprite->getTexture();
@@ -105,6 +106,9 @@ void MapManager::initGrids() {
                 }
             }
         }
+    }
+    else{
+        CCLOG("file unfound");
     }
 }
 

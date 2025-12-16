@@ -9,10 +9,21 @@ class MainScene : public cocos2d::Scene {
 public:
     static MainScene* createScene(int mapWidth, int mapLength, int gridSize) {
         auto scene = MainScene::create();
-        if (!scene) return nullptr;
-
+        if (!scene) {
+            CCLOG("scene creation error");
+            return nullptr;
+        }
+        else {
+            CCLOG("scene creation success");
+        }
         // 创建地图（主村庄）
         auto map = MapManager::create(mapWidth, mapLength, gridSize, TerrainType::Home);
+        if (!map) {
+            CCLOG("map error");
+        }
+        else {
+            CCLOG("map success");
+        }
         // 将地图摆放到屏幕中心偏下
         map->setPosition(cocos2d::Vec2(0.f, 0.f));
         scene->addChild(map, 0);

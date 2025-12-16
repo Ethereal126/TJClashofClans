@@ -25,7 +25,8 @@
 #include "AppDelegate.h"
 #include "HelloWorldScene.h"
 #include "MainScene.h"
-#include "Combat/CombatTest.h"
+#include "Combat/CombatAll.h"
+
 
 // #define USE_AUDIO_ENGINE 1
 
@@ -111,11 +112,20 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     register_all_packages();
 
-    int argc = 0;
-    char* argv[] = { nullptr };
-    testing::InitGoogleTest(&argc, argv);
-    int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
-    CCLOG("testResult:%d", testResult);
+    //int argc = 0;
+    //char* argv[] = { nullptr };
+    //testing::InitGoogleTest(&argc, argv);
+    //int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
+    //CCLOG("testResult:%d", testResult);
+
+    auto scene = MainScene::createScene(40,40,64);
+    director->runWithScene(scene);
+//    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 0.1);
+//    auto soldier = SoldierInCombat::Create(soldier_template, Vec2(1, 1),scene->getMap());
+//    auto building_template = new Building("test",1,100,100,10,10,{5,5});
+//    soldier->runAction(soldier->CreateStraightMoveAction(Vec2(10,1)));
+
+
 
     return true;
 }

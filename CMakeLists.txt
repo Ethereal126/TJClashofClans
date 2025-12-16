@@ -53,8 +53,8 @@ endif()
 
 # ========== 添加gtest依赖 ==========
 # win32debug版本
-include_directories(external/gtest/include)
-link_directories(external/gtest/lib)
+#include_directories(external/gtest/include)
+#link_directories(external/gtest/lib)
 
 
 if(XCODE)
@@ -86,7 +86,7 @@ endif()
 list(APPEND GAME_SOURCE
     Classes/AppDelegate.cpp
     Classes/HelloWorldScene.cpp
-    Classes/Map/Map.cpp
+    Classes/Map/MapManager.cpp
     Classes/Building/Building.cpp
     Classes/Combat/SoldierInCombat.cpp
     Classes/Combat/BuildingInCombat.cpp
@@ -96,10 +96,10 @@ list(APPEND GAME_SOURCE
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
    Classes/HelloWorldScene.h
-   Classes/Map/Map.h
+   Classes/Map/MapManager.h
    Classes/Building/Building.h
    Classes/MainScene.h
-   Classes/Combat/CombatTest.h
+  # Classes/Combat/CombatTest.h
    Classes/Combat/CombatAll.h
    Classes/Soldier/Soldier.h
 )
@@ -156,6 +156,8 @@ elseif(APPLE)
     list(APPEND GAME_SOURCE ${common_res_files})
 endif()
 
+
+
 # mark app complie info and libs info
 set(all_code_files
         ${GAME_HEADER}
@@ -169,9 +171,11 @@ else()
     target_link_libraries(${APP_NAME} -Wl,--whole-archive cpp_android_spec -Wl,--no-whole-archive)
 endif()
 
+
+
 target_link_libraries(${APP_NAME} PRIVATE
-gmock
-gtest
+#gmock
+#gtest
 cocos2d
 )
 target_include_directories(${APP_NAME}
@@ -180,9 +184,9 @@ target_include_directories(${APP_NAME}
 )
 
 
-
 # mark app resources
 setup_cocos_app_config(${APP_NAME})
+
 if(APPLE)
     set_target_properties(${APP_NAME} PROPERTIES RESOURCE "${APP_UI_RES}")
 
