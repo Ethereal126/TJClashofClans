@@ -3,6 +3,7 @@
 //
 #include "Combat.h"
 
+CombatManager* CombatManager::instance_ = nullptr;
 // Combat类的实现
 CombatManager* CombatManager::Create(MapManager* map) {
     // 若已创建，直接返回现有实例（避免重复初始化）

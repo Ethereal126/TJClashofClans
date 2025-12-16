@@ -122,7 +122,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     director->runWithScene(scene);
     auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 0.1);
     auto soldier = SoldierInCombat::Create(soldier_template, Vec2(5, 5),scene->getMap());
-    auto building_template = new Building("test",1,100,100,10,10,{5,5});
+    auto building_template = new Building("test",1,100,100,10,10,2,2,{5,5});
     building_template->texture_ = "buildings/building_1.png";
     auto building = BuildingInCombat::Create(building_template,Vec2(5,5),scene->getMap());
 

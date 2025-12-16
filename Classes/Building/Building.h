@@ -7,7 +7,6 @@
 #define __BUILDING_H__
 
 #include <string>
-#include <utility>
 #include "cocos2d.h"
 
 /**
@@ -20,27 +19,50 @@ protected:
     int level_;                       // 建筑等级
     int health_;                      // 当前生命值
     int defense_;                     // 防御值
-    int build_time_;                   // 建造时间（秒）
-    int build_cost_;                   // 建造成本
-    int width_;
-    int length_;
-    cocos2d::Vec2 position_;    // 建筑的位置信息 (x, y)
+    int build_time_;                  // 建造时间（秒）
+    int build_cost_;                  // 建造成本
+    int width_;                       // 建造宽度
+    int length_;                      // 建造长度
+    bool is_upgrading_;               // 是否正在升级中
+    float upgrade_remaining_time_;    // 升级剩余时间（秒）
+    cocos2d::Vec2 position_;          // 建筑的位置信息 (x, y)
+
 
 public:
-    //napper:为了进行建筑渲染的测试临时添加
+    //napper:临时添加，用于绑定建筑对应的图片
     std::string texture_;
+
     /**
      * @brief 构造函数
      * 初始化建筑名称、等级、生命值、防御、建造时间、建造成本和位置。
      */
     Building(std::string name, int level, int health, int defense,
-        int buildtime, int build_cost, cocos2d::Vec2 position);
+        int buildtime, int build_cost, int width, int length, cocos2d::Vec2 position);
 
     /**
      * @brief 建筑升级接口
      * 包含等级提升、建造时间和费用变化、生命值上限和防御值提升等逻辑。
      */
     virtual void Upgrade();
+
+    /**
+     * @brief 开始升级
+     * 启动升级过程，在指定时间内无法再次升级
+     * @param upgrade_time 升级所需时间（秒）
+     */
+    void StartUpgrade(float upgrade_time);
+
+    /**
+     * @brief 检查是否允许升级
+     * @return true 表示允许升级，false 表示正在升级中
+     */
+    bool IsAllowedUpgrade() const;
+
+    /**
+     * @brief 获取建筑图片路径
+     * @return 建筑图片路径字符串
+     */
+    std::string GetBuildingImagePath() const;
 
     /**
      * @brief 建筑承受伤害
@@ -117,10 +139,10 @@ public:
     int GetBuildCost() const;
 
     /**
- * @brief 获取建筑位置
- * @return 以 std::pair<int,int> 形式返回的建筑坐标。
- */
-    std::pair<int, int> GetPosition() const;
+     * @brief 获取建筑位置
+     * @return 以 cocos2d::Vec2 形式返回的建筑坐标。
+     */
+    cocos2d::Vec2 GetPosition() const;
 
     /**
      * @brief 获取建筑宽度
@@ -177,6 +199,18 @@ public:
     int GetNextHealth() {
         return 8 * GetNextDefense();
     }
+
+    /**
+     * @brief 获取是否正在升级中
+     * @return true 表示正在升级，false 表示未在升级
+     */
+    bool IsUpgrading() const { return is_upgrading_; }
+
+    /**
+     * @brief 获取升级剩余时间
+     * @return 升级剩余时间（秒）
+     */
+    float GetUpgradeRemainingTime() const { return upgrade_remaining_time_; }
 };
 
 /**
@@ -195,16 +229,48 @@ public:
     SourceBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture);
 
     /**
+     * @brief 创建资源建筑实例
+     * @param name 建筑名称
+     * @param base 基准数值
+     * @param position 位置坐标
+     * @param texture 纹理路径
+     * @param resourceType 资源类型 ("Gold" 或 "Elixir")
+     * @return 创建的SourceBuilding指针，失败返回nullptr
+     */
+    static SourceBuilding* Create(const std::string& name, int base,
+        cocos2d::Vec2 position,
+        const std::string& texture,
+        const std::string& resourceType);
+
+    /**
      * @brief 生产资源
      * @return 本次生产的资源数量。
      */
-    virtual int ProduceResource();
+    virtual int ProduceResource () const;
 
     /**
      * @brief 显示资源建筑信息
      * 在基类显示信息基础上，附加资源生产相关信息。
      */
     virtual void ShowInfo() const override;
+
+    /**
+     * @brief 检查建筑是否活跃（是否在工作）
+     * @return true 表示建筑活跃，false 表示建筑被摧毁或暂停工作
+     */
+    bool IsActive() const { return GetHealth() > 0; }
+
+    /**
+     * @brief 获取生产速率
+     * @return 每小时生产的资源数量
+     */
+    int GetProductionRate() const { return production_rate_; }
+
+    /**
+     * @brief 设置生产速率
+     * @param rate 新的生产速率
+     */
+    void SetProductionRate(int rate) { production_rate_ = rate; }
 };
 
 /**
@@ -223,10 +289,41 @@ public:
     AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture, int range);
 
     /**
+     * @brief 创建攻击建筑实例
+     * @param name 建筑名称
+     * @param base 基准数值
+     * @param position 位置坐标
+     * @param texture 纹理路径
+     * @param range 攻击范围
+     * @return 创建的AttackBuilding指针，失败返回nullptr
+     */
+    static AttackBuilding* Create(const std::string& name, int base,
+        cocos2d::Vec2 position,
+        const std::string& texture, int range);
+
+    /**
      * @brief 显示攻击塔信息
      * 在基类显示信息基础上，附加攻击范围等属性。
      */
     virtual void ShowInfo() const override;
+
+    /**
+     * @brief 检查建筑是否活跃
+     * @return true 表示建筑活跃，false 表示建筑被摧毁
+     */
+    bool IsActive() const { return GetHealth() > 0; }
+
+    /**
+     * @brief 获取攻击范围
+     * @return 攻击范围（格子数）
+     */
+    int GetAttackRange() const { return Range_; }
+
+    /**
+     * @brief 设置攻击范围
+     * @param range 新的攻击范围
+     */
+    void SetAttackRange(int range) { Range_ = range; }
 };
 
 /**
@@ -243,7 +340,7 @@ class WallBuilding : public Building {
  * 继承自Building类，表示训练营建筑，用于训练士兵。
  */
 class TrainingBuilding : public Building {
-private:
+protected:
     int training_capacity_;     // 同时训练的最大士兵数量
     int training_speed_;        // 训练速度（单位：秒/每兵）
     std::vector<std::string> available_units_;  // 可训练的单位类型列表
@@ -263,19 +360,51 @@ public:
         std::string texture, int capacity, int speed);
 
     /**
+     * @brief 初始化
+     * @return 是否成功初始化
+     */
+    virtual bool Init();
+
+    /**
+     * @brief 创建训练营实例
+     * @param name 建筑名称
+     * @param base 基准数值
+     * @param position 位置坐标
+     * @param texture 纹理路径
+     * @param capacity 训练容量
+     * @param speed 训练速度
+     * @return 创建的TrainingBuilding指针，失败返回nullptr
+     */
+    static TrainingBuilding* Create(const std::string& name, int base,
+        cocos2d::Vec2 position,
+        const std::string& texture, int capacity, int speed);
+
+    /**
+     * @brief 添加可训练单位
+     * @param unit_type 要添加的士兵类型
+     */
+    void AddAvailableUnit(const std::string& unit_type);
+
+    /**
+     * @brief 获取可训练单位列表
+     * @return 可训练单位列表
+     */
+    std::vector<std::string>& GetAvailableUnits();
+
+    /**
      * @brief 开始训练士兵
      * @param unit_type 要训练的士兵类型
      * @param count 训练数量
      * @return 是否成功开始训练
      */
-    bool StartTraining(const std::string& unit_type, int count);
+    virtual bool StartTraining(const std::string& unit_type, int count);
 
     /**
      * @brief 取消训练
      * @param unit_type 要取消的士兵类型
      * @param count 取消数量
      */
-    void CancelTraining(const std::string& unit_type, int count);
+    virtual void CancelTraining(const std::string& unit_type, int count);
 
     /**
      * @brief 获取当前训练队列信息
