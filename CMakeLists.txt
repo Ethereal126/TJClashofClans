@@ -179,6 +179,8 @@ target_include_directories(${APP_NAME}
         PRIVATE ${COCOS2DX_ROOT_PATH}/cocos/audio/include/
 )
 
+
+
 # mark app resources
 setup_cocos_app_config(${APP_NAME})
 if(APPLE)
