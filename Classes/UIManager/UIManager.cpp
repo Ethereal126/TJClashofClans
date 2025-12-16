@@ -3,7 +3,7 @@
 #include "TownHall/TownHall.h"
 #include "AudioManager/AudioManager.h"
 #include <sstream>
-#include "Map/MapManager.h"      
+#include "MapManager/MapManager.h"      
 #include "Combat/Combat.h"        
 #include "MainScene.h"          
 
@@ -1967,8 +1967,8 @@ Node* UIManager::createUpgradeProgressOverlay(Building* building, float totalTim
     progressBg->setPosition(Vec2(0, 20 * _scaleFactor));
     overlay->addChild(progressBg, 0);
 
-    // 进度条填充
-    float progress = (totalTime - remainingTime) / totalTime;
+    // 进度条填充（初始）
+    float progress = (totalTime > 0.0f) ? (totalTime - remainingTime) / totalTime : 0.0f;
     auto progressFill = LayerColor::create(Color4B(100, 200, 100, 255),
         overlay->getContentSize().width * progress,
         15 * _scaleFactor);
@@ -1992,95 +1992,107 @@ Node* UIManager::createUpgradeProgressOverlay(Building* building, float totalTim
 void UIManager::showUpgradeProgress(Building* building, float totalTime, float remainingTime) {
     if (!building || !_rootScene) return;
 
-    // 移除已存在的进度条
+    // 移除已存在的进度条（防止重复）
     removeUpgradeProgress(building);
 
     auto overlay = createUpgradeProgressOverlay(building, totalTime, remainingTime);
-    if (overlay) {
-        // 获取建筑在世界坐标系的位置
-        Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
+    if (!overlay) return;
 
-        // 进度条显示在建筑上方
-        overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
-            buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
+    // 放置在建筑上方
+    Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
+    overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
+        buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
 
-        _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
-        _upgradeProgressNodes[building] = overlay;
+    _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
+    _upgradeProgressNodes[building] = overlay;
 
-        // 存储totalTime用于更新计算
-        overlay->setUserData(new float(totalTime));
+    // 存储 totalTime（用于计算进度），removeUpgradeProgress 会 delete
+    overlay->setUserData(new float(totalTime));
 
-        // 启动更新定时器
-        overlay->schedule([this, building, totalTime](float dt) {
-            auto it = _upgradeProgressNodes.find(building);
-            if (it != _upgradeProgressNodes.end()) {
-                auto timeLabel = it->second->getChildByName<Label*>("timeLabel");
-                auto progressFill = it->second->getChildByName<LayerColor*>("progressFill");
+    // 启动更新定时器：每次读取 Building 的剩余时间（权威来源）
+    overlay->schedule([this, building](float dt) {
+        auto it = _upgradeProgressNodes.find(building);
+        if (it == _upgradeProgressNodes.end()) return;
 
-                if (timeLabel && progressFill) {
-                    // 获取当前剩余时间 - 这里需要替换为 building->getRemainingUpgradeTime()
-                    static float remaining = totalTime;
-                    remaining -= dt;
+        Node* ov = it->second;
+        if (!ov) return;
 
-                    if (remaining <= 0) {
-                        remaining = 0;
-                        removeUpgradeProgress(building);
-                        showToast("Upgrade complete!");
-                        triggerUIEvent("OnUpgradeComplete");
-                        return;
-                    }
+        // 从 building 获取剩余时间（请根据实际方法名替换）
+        float remaining = 0.0f;
+        remaining = building->GetUpgradeRemainingTime();
 
-                    int minutes = (int)remaining / 60;
-                    int seconds = (int)remaining % 60;
-                    timeLabel->setString(StringUtils::format("%02d:%02d", minutes, seconds));
+        // 安全读取 totalTime
+        float totalTime = 0.0f;
+        float* totalPtr = static_cast<float*>(ov->getUserData());
+        if (totalPtr) totalTime = *totalPtr;
 
-                    float progress = (totalTime - remaining) / totalTime;
-                    progressFill->setContentSize(Size(it->second->getContentSize().width * progress,
-                        15 * _scaleFactor));
-                }
+        auto timeLabel = ov->getChildByName<Label*>("timeLabel");
+        auto progressFill = ov->getChildByName<LayerColor*>("progressFill");
+
+        if (remaining <= 0.0f) {
+            // 完成
+            if (timeLabel) timeLabel->setString("00:00");
+            if (progressFill && totalTime > 0.0f) {
+                progressFill->setContentSize(Size(ov->getContentSize().width, 15 * _scaleFactor));
             }
-            }, "upgradeTimer");
-    }
+            removeUpgradeProgress(building);
+            showToast("Upgrade complete!");
+            triggerUIEvent("OnUpgradeComplete");
+            return;
+        }
+
+        // 更新 UI
+        int minutes = static_cast<int>(remaining) / 60;
+        int seconds = static_cast<int>(remaining) % 60;
+        if (timeLabel) timeLabel->setString(StringUtils::format("%02d:%02d", minutes, seconds));
+
+        if (progressFill && totalTime > 0.0f) {
+            float progress = (totalTime - remaining) / totalTime;
+            progress = std::clamp(progress, 0.0f, 1.0f);
+            progressFill->setContentSize(Size(ov->getContentSize().width * progress, 15 * _scaleFactor));
+        }
+        }, "upgradeTimer");
 }
 
 void UIManager::updateUpgradeProgress(Building* building, float remainingTime) {
     auto it = _upgradeProgressNodes.find(building);
-    if (it != _upgradeProgressNodes.end() && it->second) {
-        auto timeLabel = it->second->getChildByName<Label*>("timeLabel");
-        auto progressFill = it->second->getChildByName<LayerColor*>("progressFill");
+    if (it == _upgradeProgressNodes.end() || !it->second) return;
 
-        if (timeLabel) {
-            int minutes = (int)remainingTime / 60;
-            int seconds = (int)remainingTime % 60;
-            timeLabel->setString(StringUtils::format("%02d:%02d", minutes, seconds));
-        }
+    Node* ov = it->second;
+    auto timeLabel = ov->getChildByName<Label*>("timeLabel");
+    auto progressFill = ov->getChildByName<LayerColor*>("progressFill");
 
-        if (progressFill) {
-            float* totalTimePtr = static_cast<float*>(it->second->getUserData());
-            if (totalTimePtr) {
-                float totalTime = *totalTimePtr;
-                float progress = (totalTime - remainingTime) / totalTime;
-                progressFill->setContentSize(Size(it->second->getContentSize().width * progress,
-                    15 * _scaleFactor));
-            }
-        }
+    if (timeLabel) {
+        int minutes = static_cast<int>(remainingTime) / 60;
+        int seconds = static_cast<int>(remainingTime) % 60;
+        timeLabel->setString(StringUtils::format("%02d:%02d", minutes, seconds));
+    }
+
+    // 读取 totalTime 计算进度
+    float* totalTimePtr = static_cast<float*>(ov->getUserData());
+    if (progressFill && totalTimePtr && *totalTimePtr > 0.0f) {
+        float totalTime = *totalTimePtr;
+        float progress = (totalTime - remainingTime) / totalTime;
+        progress = std::clamp(progress, 0.0f, 1.0f);
+        progressFill->setContentSize(Size(ov->getContentSize().width * progress, 15 * _scaleFactor));
     }
 }
 
 void UIManager::removeUpgradeProgress(Building* building) {
     auto it = _upgradeProgressNodes.find(building);
-    if (it != _upgradeProgressNodes.end()) {
-        if (it->second) {
-            // 清理userData
-            float* totalTimePtr = static_cast<float*>(it->second->getUserData());
-            if (totalTimePtr) {
-                delete totalTimePtr;
-            }
-            it->second->unschedule("upgradeTimer");
-            it->second->removeFromParent();
+    if (it == _upgradeProgressNodes.end()) return;
+
+    if (it->second) {
+        // 清理 userData（totalTime）
+        float* totalTimePtr = static_cast<float*>(it->second->getUserData());
+        if (totalTimePtr) {
+            delete totalTimePtr;
+            it->second->setUserData(nullptr);
         }
-        _upgradeProgressNodes.erase(it);
+        it->second->unschedule("upgradeTimer");
+        it->second->removeFromParent();
     }
+    _upgradeProgressNodes.erase(it);
 }
 
 // ==================== 提示与对话框 ====================

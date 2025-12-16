@@ -42,29 +42,45 @@ bool MapManager::init(int width, int length, int gridSize, TerrainType terrainTy
 
     _width = width;
     _length = length;
+    // 如果外部传入 gridSize <= 0，则在 init 中自动计算合适的 gridSize（按窗口宽度占比）
     _gridSize = gridSize;
     _terrainType = terrainType;
 
-    // 地图以左下角为原点
-    this->setAnchorPoint(cocos2d::Vec2::ANCHOR_BOTTOM_LEFT);
+    // 设默认占比（可调整）
+    const float defaultMapWidthRatio = 0.90f;
 
+    // 如果未传有效 gridSize，则按照窗口计算
+    if (_gridSize <= 0) {
+        cocos2d::Director* director = cocos2d::Director::getInstance();
+        if (director) {
+            cocos2d::Size visibleSize = director->getVisibleSize();
+            // 期望地图像素宽度
+            float desiredMapPixelWidth = visibleSize.width * defaultMapWidthRatio;
+            // tileWidth = desiredMapPixelWidth * 2 / (width + length)
+            float tileWidth = desiredMapPixelWidth * 2.0f / static_cast<float>(_width + _length);
+            _gridSize = std::max(1, static_cast<int>(std::round(tileWidth)));
+            _gridSize = _gridSize * 0.95f;
+        }
+        else {
+            // fallback
+            _gridSize = 64;
+        }
+    }
+
+    // 改为中心锚点（按你之前的做法）
+    this->setAnchorPoint(cocos2d::Vec2(0.5f, 0.5f));
+
+    // 放置位置：保持你之前偏下的视觉效果（如果你想改为顶部/完全居中可调整）
     cocos2d::Director* director = cocos2d::Director::getInstance();
-    cocos2d::Size visibleSize = director->getVisibleSize(); // 窗口宽高（如1280x720）
-    cocos2d::Vec2 origin = director->getVisibleOrigin();     // 窗口原点（通常为(0,0)）
+    if (director) {
+        cocos2d::Size visibleSize = director->getVisibleSize();
+        cocos2d::Vec2 origin = director->getVisibleOrigin();
+        float windowCenterX = origin.x + visibleSize.width / 2.0f;
+        float windowCenterY = origin.y + visibleSize.height / 7.0f;
+        this->setPosition(windowCenterX, windowCenterY);
+    }
 
-    // 4. 计算等距地图的总宽度（关键：等距地图宽度公式）
-    // 等距地图总宽 = (横向格子数 + 纵向格子数) * (单个格子大小 / 2)
-    float mapTotalWidth = (_width + _length) * (_gridSize / 2.0f);
-
-    // 5. 计算地图的最终位置（核心：让地图底边中心对齐窗口底边中心）
-    float windowBottomCenterX = origin.x + visibleSize.width / 2.0f; // 窗口底边中心x坐标
-    float mapPositionX = windowBottomCenterX - (mapTotalWidth / 2.0f); // 地图左下角x（整体居中）
-    float mapPositionY = origin.y; // 地图y坐标（贴窗口底边）
-
-    // 6. 应用位置设置
-    this->setPosition(mapPositionX, mapPositionY);
-
-
+    // 初始化网格数据并创建地面 tile（initGrids 会调用 rebuildGroundTiles）
     initGrids();
     return true;
 }
