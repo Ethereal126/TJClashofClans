@@ -9,6 +9,7 @@
 #include <vector>
 #include <functional>
 
+class WallBuilding;
 /**
  * @brief 资源建筑基类
  * 继承自Building类，管理资源的存储和生产
