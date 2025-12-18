@@ -4,7 +4,21 @@
 
 #include "TownHall.h"
 #include <cmath>
-
+// 士兵模板静态变量定义
+static std::vector<SoldierTemplate> soldier_templates = {
+    // 野蛮人
+    SoldierTemplate(SoldierType::kBarbarian, "Barbarian",
+                    45, 8, 1.0f, 0.4f, 1.0f, 1, 25, 20),
+    // 弓箭手
+    SoldierTemplate(SoldierType::kArcher, "Archer",
+                    20, 7, 0.8f, 3.5f, 1.0f, 1, 50, 25),
+    // 炸弹人
+    SoldierTemplate(SoldierType::kBomber, "Bomber",
+                    20, 6, 1.2f, 0.4f, 1.0f, 2, 1000, 60),
+    // 巨人
+    SoldierTemplate(SoldierType::kGiant, "Giant",
+                    300, 22, 0.6f, 1.0f, 2.0f, 5, 500, 120)
+};
 USING_NS_CC;
 
 // ==================== TownHall 实现 ====================
@@ -80,7 +94,7 @@ void TownHall::ResetTownHall() {
 
 TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture)
     : Building(name, 1, base * 100, base * 5, base * 60, base * 200, 4, 4,
-        std::make_pair(static_cast<int>(position.x), static_cast<int>(position.y)))
+        position)
     , is_initialized_(false)
     , gold_storage_capacity_(base * 2)
     , elixir_storage_capacity_(base * 2)
@@ -93,6 +107,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     , current_army_count_(0)
     , max_gold_capacity_(0)
     , max_elixir_capacity_(0)
+    , wall_capacity_(base * 10)
     , flag_sprite_(nullptr)
     , level_label_(nullptr) {
 
@@ -120,6 +135,7 @@ TownHall::~TownHall() {
     // 清空管理列表
     gold_storages_.clear();
     elixir_storages_.clear();
+    walls_.clear();
 }
 
 void TownHall::Upgrade() {
@@ -127,13 +143,13 @@ void TownHall::Upgrade() {
     Building::Upgrade();
 
     // 提升大本营特有属性
-    level_ += 1;
     gold_storage_capacity_ += 1;           // 每级增加1个资源池容量
     elixir_storage_capacity_ += 1;
     gold_mine_capacity_ += 1;              // 每级增加1个金矿容量
     elixir_collector_capacity_ += 1;       // 每级增加1个圣水收集器容量
     barrack_capacity_ += 1;                // 每级增加1个兵营容量
-    army_capacity_ += 5;                   // 每级增加5个军队容量
+    army_capacity_ += 8;                   // 每级增加5个军队容量
+    wall_capacity_ += 5;                   // 每级增加5个城墙容量
 
     // 更新资源持有上限
     UpdateAllResourceCapacities();
@@ -322,6 +338,187 @@ void TownHall::UpdateArmyCapacityFromBarracks() {
         base_capacity, total_barracks_capacity, army_capacity_);
 }
 
+// ==================== 城墙管理 ====================
+
+void TownHall::AddWall(WallBuilding* wall) {
+    if (!wall) {
+        cocos2d::log("错误: 尝试添加空的城墙指针");
+        return;
+    }
+
+    // 检查是否已达到上限
+    if (IsWallCapacityFull()) {
+        cocos2d::log("已达到城墙上限 %d/%d，无法添加更多城墙",
+            GetCurrentWallCount(), wall_capacity_);
+        PlayFullCapacityAnimation();
+        return;
+    }
+
+    // 检查是否已存在
+    auto it = std::find(walls_.begin(), walls_.end(), wall);
+    if (it == walls_.end()) {
+        walls_.push_back(wall);
+        cocos2d::log("添加城墙 %s，当前数量: %d/%d",
+            wall->GetName().c_str(),
+            GetCurrentWallCount(),
+            wall_capacity_);
+    }
+    else {
+        cocos2d::log("城墙 %s 已在管理列表中", wall->GetName().c_str());
+    }
+}
+
+void TownHall::RemoveWall(WallBuilding* wall) {
+    if (!wall) {
+        cocos2d::log("错误: 尝试移除空的城墙指针");
+        return;
+    }
+
+    auto it = std::find(walls_.begin(), walls_.end(), wall);
+    if (it != walls_.end()) {
+        walls_.erase(it);
+        cocos2d::log("移除城墙 %s，剩余数量: %d",
+            wall->GetName().c_str(),
+            GetCurrentWallCount());
+    }
+    else {
+        cocos2d::log("城墙 %s 不在管理列表中", wall->GetName().c_str());
+    }
+}
+
+int TownHall::GetCurrentWallCount() const {
+    return static_cast<int>(walls_.size());
+}
+
+bool TownHall::IsWallCapacityFull() const {
+    return GetCurrentWallCount() >= wall_capacity_;
+}
+
+bool TownHall::HasDamagedWalls() const {
+    for (const auto* wall : walls_) {
+        if (wall && wall->IsActive() && wall->GetHealth() < wall->GetMaxHealth()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int TownHall::UpgradeAllWalls() {
+    int upgraded_count = 0;
+
+    for (auto* wall : walls_) {
+        if (!wall || !wall->IsActive()) {
+            continue;
+        }
+
+        
+        // 计算升级成本（简化处理）
+        int upgrade_cost = wall->GetNextBuildCost();
+
+            // 检查资源是否足够（这里只检查金币）
+        if (SpendGold(upgrade_cost)) {
+            wall->StartUpgrade(wall->GetNextBuildTime());
+            upgraded_count++;
+            cocos2d::log("开始升级城墙 %s，消耗金币: %d",
+                wall->GetName().c_str(), upgrade_cost);
+        }
+        else {
+            cocos2d::log("金币不足，无法升级城墙 %s",
+                wall->GetName().c_str());
+            break; // 资源不足，停止批量升级
+        }
+        
+    }
+
+    cocos2d::log("批量升级完成，开始升级 %d 个城墙", upgraded_count);
+    return upgraded_count;
+}
+
+int TownHall::RepairAllDamagedWalls() {
+    int repaired_count = 0;
+    int total_cost = 0;
+
+    for (auto* wall : walls_) {
+        if (!wall || !wall->IsActive()) {
+            continue;
+        }
+
+        // 检查是否需要修复
+        if (wall->GetHealth() < wall->GetMaxHealth()) {
+            // 计算修复成本（简化处理：修复成本为缺失生命值的5%）
+            int repair_cost = (wall->GetMaxHealth() - wall->GetHealth()) / 20;
+
+            if (repair_cost <= 0) {
+                repair_cost = 1; // 至少1金币
+            }
+
+            // 检查金币是否足够
+            if (SpendGold(repair_cost)) {
+                wall->Repair();
+                repaired_count++;
+                total_cost += repair_cost;
+                cocos2d::log("修复城墙 %s，消耗金币: %d",
+                    wall->GetName().c_str(), repair_cost);
+            }
+            else {
+                cocos2d::log("金币不足，停止批量修复");
+                break; // 资源不足，停止批量修复
+            }
+        }
+    }
+
+    if (repaired_count > 0) {
+        cocos2d::log("批量修复完成，修复 %d 个城墙，总计消耗金币: %d",
+            repaired_count, total_cost);
+    }
+
+    return repaired_count;
+}
+
+void TownHall::GetWallStats(int& active_count, int& damaged_count, int& upgrading_count) const {
+    active_count = 0;
+    damaged_count = 0;
+    upgrading_count = 0;
+
+    for (const auto* wall : walls_) {
+        if (!wall) {
+            continue;
+        }
+
+        if (wall->IsActive()) {
+            active_count++;
+
+            if (wall->GetHealth() < wall->GetMaxHealth()) {
+                damaged_count++;
+            }
+
+            if (wall->IsUpgrading()) {
+                upgrading_count++;
+            }
+        }
+    }
+}
+
+void TownHall::ClearAllWalls() {
+    int wall_count = GetCurrentWallCount();
+    walls_.clear();
+    cocos2d::log("清空所有 %d 个城墙", wall_count);
+}
+
+int TownHall::CountWallsByLevel(int min_level, int max_level) const {
+    int count = 0;
+
+    for (const auto* wall : walls_) {
+        if (wall && wall->IsActive()) {
+            int level = wall->GetLevel();
+            if (level >= min_level && level <= max_level) {
+                count++;
+            }
+        }
+    }
+
+    return count;
+}
 // ==================== 军队人数更新 ====================
 
 void TownHall::UpdateArmyCount(int delta) {
@@ -787,6 +984,7 @@ void TownHall::ShowInfo() const {
         current_army_count_,
         army_capacity_,
         army_capacity_ > 0 ? current_army_count_ * 100.0f / army_capacity_ : 0);
+    cocos2d::log("城墙数量: %d/%d", GetCurrentWallCount(), wall_capacity_);
     cocos2d::log("金币已满: %s", IsGoldFull() ? "是" : "否");
     cocos2d::log("圣水已满: %s", IsElixirFull() ? "是" : "否");
 
@@ -862,7 +1060,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         }
     );
 
-    // 训练营（更高级的军营）
+    // 训练营
     templates.emplace_back(
         "Training Camp",
         "ui/icons/training_camp_icon.png",
@@ -876,15 +1074,15 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         }
     );
 
-    // 防御建筑
+    // 城墙
     templates.emplace_back(
-        "Cannon",
-        "ui/icons/cannon_icon.png",
-        250,
-        2,
-        2,
+        "Wall",
+        "ui/icons/wall_icon.png",
+        100,  // 建造成本
+        1,    // 宽度
+        1,    // 长度
         []() -> Building* {
-            return AttackBuilding::Create("Cannon", 1, { 0, 0 }, "textures/cannon.png", 5);
+            return WallBuilding::Create("Wall", 1, { 0, 0 }, "textures/wall.png");
         }
     );
 
@@ -905,9 +1103,6 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
 std::vector<TownHall::SoldierTemplate> TownHall::GetSoldierCategory() {
     std::vector<SoldierTemplate> soldiers;
 
-    // 假设有一个Soldier基类和对应的创建函数
-    // 这里需要你实现具体的Soldier类和创建函数
-
     soldiers.emplace_back(
         "Barbarian",
         "ui/icons/barbarian_icon.png",
@@ -915,9 +1110,8 @@ std::vector<TownHall::SoldierTemplate> TownHall::GetSoldierCategory() {
         20,   // 训练时间（秒）
         25,   // 训练费用（金币）
         []() -> Soldier* {
-            // 实现野蛮人创建函数
-            // return new Barbarian();
-            return nullptr; // 暂时返回空
+            // 使用 Soldier 构造函数创建野蛮人
+            return new Soldier(SoldierType::kBarbarian, 45, 8, 1.0f, 0.4f, 1.0f);
         }
     );
 
@@ -928,9 +1122,8 @@ std::vector<TownHall::SoldierTemplate> TownHall::GetSoldierCategory() {
         25,
         50,
         []() -> Soldier* {
-            // 实现弓箭手创建函数
-            // return new Archer();
-            return nullptr; // 暂时返回空
+            // 使用 Soldier 构造函数创建弓箭手
+            return new Soldier(SoldierType::kArcher, 20, 7, 0.8f, 3.5f, 1.0f);
         }
     );
 
@@ -941,102 +1134,104 @@ std::vector<TownHall::SoldierTemplate> TownHall::GetSoldierCategory() {
         120,
         500,
         []() -> Soldier* {
-            // 实现巨人创建函数
-            // return new Giant();
-            return nullptr; // 暂时返回空
+            // 使用 Soldier 构造函数创建巨人
+            return new Soldier(SoldierType::kGiant, 300, 22, 0.6f, 1.0f, 2.0f);
         }
     );
 
+    
     soldiers.emplace_back(
-        "Goblin",
-        "ui/icons/goblin_icon.png",
-        1,
-        30,
-        25,
-        []() -> Soldier* {
-            // 实现哥布林创建函数
-            // return new Goblin();
-            return nullptr; // 暂时返回空
-        }
-    );
-
-    soldiers.emplace_back(
-        "Wall Breaker",
+        "Bomber",
         "ui/icons/wall_breaker_icon.png",
         2,
         60,
         1000,
         []() -> Soldier* {
-            // 实现炸弹人创建函数
-            // return new WallBreaker();
-            return nullptr; // 暂时返回空
+            // 需要先在 SoldierType 枚举中添加 WallBreaker
+            return new Soldier(SoldierType::kBomber, 20, 6, 1.2f, 0.4f, 1.0f);
         }
     );
-
-    soldiers.emplace_back(
-        "Balloon",
-        "ui/icons/balloon_icon.png",
-        5,
-        180,
-        2000,
-        []() -> Soldier* {
-            // 实现气球兵创建函数
-            // return new Balloon();
-            return nullptr; // 暂时返回空
-        }
-    );
-
-    soldiers.emplace_back(
-        "Wizard",
-        "ui/icons/wizard_icon.png",
-        4,
-        150,
-        1500,
-        []() -> Soldier* {
-            // 实现法师创建函数
-            // return new Wizard();
-            return nullptr; // 暂时返回空
-        }
-    );
-
-    soldiers.emplace_back(
-        "Healer",
-        "ui/icons/healer_icon.png",
-        14,
-        900,
-        6000,
-        []() -> Soldier* {
-            // 实现治疗师创建函数
-            // return new Healer();
-            return nullptr; // 暂时返回空
-        }
-    );
-
-    soldiers.emplace_back(
-        "Dragon",
-        "ui/icons/dragon_icon.png",
-        20,
-        1800,
-        25000,
-        []() -> Soldier* {
-            // 实现飞龙创建函数
-            // return new Dragon();
-            return nullptr; // 暂时返回空
-        }
-    );
-
-    soldiers.emplace_back(
-        "P.E.K.K.A",
-        "ui/icons/pekka_icon.png",
-        25,
-        2400,
-        30000,
-        []() -> Soldier* {
-            // 实现皮卡超人创建函数
-            // return new PEKKA();
-            return nullptr; // 暂时返回空
-        }
-    );
+    
 
     return soldiers;
+}
+
+std::vector<Soldier*> TownHall::GetAllTrainedSoldiers() const {
+    std::vector<Soldier*> soldiers;
+    // TODO: 遍历所有军营，收集已训练的士兵
+    return soldiers;
+}
+
+int TownHall::GetTotalTrainedSoldierCount() const {
+    int total = 0;
+    for (const auto* barracks : all_barracks_) {
+        // 需要 Barracks 类提供获取已训练士兵数量的方法
+        // total += barracks->GetTrainedSoldierCount();
+    }
+    return total;
+}
+
+// 在 TownHall.cpp 文件的末尾，最后一个函数之后添加：
+
+// ==================== 士兵模板管理函数实现 ====================
+
+const std::vector<SoldierTemplate>& TownHall::GetSoldierTemplates() {
+    return soldier_templates;
+}
+
+const SoldierTemplate* TownHall::GetSoldierTemplate(SoldierType type) {
+    for (const auto& tmpl : soldier_templates) {
+        if (tmpl.type == type) {
+            return &tmpl;
+        }
+    }
+    return nullptr;
+}
+
+const SoldierTemplate* TownHall::GetSoldierTemplate(const std::string& name) {
+    for (const auto& tmpl : soldier_templates) {
+        if (tmpl.name == name) {
+            return &tmpl;
+        }
+    }
+    return nullptr;
+}
+
+// ==================== 士兵添加函数实现 ====================
+
+bool TownHall::AddTrainedSoldier(Soldier* soldier) {
+    if (!soldier) {
+        cocos2d::log("错误：尝试添加空的士兵指针");
+        return false;
+    }
+
+    // 获取士兵模板以确定人口占用
+    const SoldierTemplate* tmpl = GetSoldierTemplate(soldier->GetSoldierType());
+    if (!tmpl) {
+        cocos2d::log("错误：未找到士兵类型 %d 的模板", static_cast<int>(soldier->GetSoldierType()));
+        delete soldier;
+        return false;
+    }
+
+    // 检查军队容量
+    if (!CanAddSoldier(tmpl->housing_space)) {
+        cocos2d::log("军队容量不足，无法添加士兵 %s", soldier->GetName().c_str());
+        delete soldier;
+        return false;
+    }
+
+    // 更新军队人数（人口占用）
+    UpdateArmyCount(tmpl->housing_space);
+
+    // 存储士兵指针（如果需要后续使用）
+    // 注意：这里根据你的需求决定是否存储士兵对象
+    // 如果只需要计数，可以删除士兵对象
+    delete soldier; // 先删除，如果后续需要存储，注释掉这行并添加到容器
+
+    cocos2d::log("士兵 %s 已成功添加到军队", tmpl->name.c_str());
+    return true;
+}
+
+bool TownHall::CanAddSoldier(int housing_space) const {
+    return (current_army_count_ + housing_space) <= army_capacity_;
 }
