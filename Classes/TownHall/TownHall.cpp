@@ -80,7 +80,7 @@ void TownHall::ResetTownHall() {
 
 TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture)
     : Building(name, 1, base * 100, base * 5, base * 60, base * 200, 4, 4,
-        std::make_pair(static_cast<int>(position.x), static_cast<int>(position.y)))
+        position)
     , is_initialized_(false)
     , gold_storage_capacity_(base * 2)
     , elixir_storage_capacity_(base * 2)
@@ -127,13 +127,12 @@ void TownHall::Upgrade() {
     Building::Upgrade();
 
     // 提升大本营特有属性
-    level_ += 1;
     gold_storage_capacity_ += 1;           // 每级增加1个资源池容量
     elixir_storage_capacity_ += 1;
     gold_mine_capacity_ += 1;              // 每级增加1个金矿容量
     elixir_collector_capacity_ += 1;       // 每级增加1个圣水收集器容量
     barrack_capacity_ += 1;                // 每级增加1个兵营容量
-    army_capacity_ += 5;                   // 每级增加5个军队容量
+    army_capacity_ += 8;                   // 每级增加5个军队容量
 
     // 更新资源持有上限
     UpdateAllResourceCapacities();

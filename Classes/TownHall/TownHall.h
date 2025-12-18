@@ -293,10 +293,10 @@ public:
     void UpdateArmyCount(int delta);
 
     /**
-     * @brief 获取训练营上限（修改函数名，避免冲突）
+     * @brief 获取训练营上限
      * @return 当前等级可支持的最大训练营数。
      */
-    int GetBarrackCapacity() const { return barrack_capacity_; }
+    int GetTrainingCampCapacity() const { return barrack_capacity_; }
 
     // ==================== 资源与容量的 Get 接口 ====================
     /**
@@ -315,7 +315,7 @@ public:
      * @brief 获取兵营上限
      * @return 当前等级可支持的最大兵营数。
      */
-    int GetArmyCapacity() const { return barrack_capacity_; }
+    int GetBarrackCapacity() const { return barrack_capacity_; }
 
     /**
     * @brief 获取当前金币数量
