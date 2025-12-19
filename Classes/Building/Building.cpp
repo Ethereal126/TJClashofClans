@@ -355,11 +355,10 @@ void WallBuilding::ShowInfo() const {
  * @brief AttackBuilding 构造函数
  * 初始化攻击建筑的生命、防御、建造时间和成本，并设置攻击范围与纹理。
  */
-AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture,
-                               float range,float attack_interval,float attack_damage)
+AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture, int range)
     : Building(name, 1, 6 * base, base,
         base * 2, base * 500, 2, 2, position),
-    Range_(range),attack_interval_(attack_interval),attack_damage_(attack_damage) {
+    Range_(range) { 
     this->setTexture(texture);
 }
 
@@ -369,9 +368,9 @@ AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 positio
  */
 AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
     cocos2d::Vec2 position,
-    const std::string& texture, float range,float attack_interval,float attack_damage) {
+    const std::string& texture, int range) {
     // 使用nothrow避免分配失败时抛出异常
-    auto building = new (std::nothrow) AttackBuilding(name, base, position, texture, range,attack_interval,attack_damage);
+    auto building = new (std::nothrow) AttackBuilding(name, base, position, texture, range);
 
     if (building) {
         if (building->initWithFile(texture)) {

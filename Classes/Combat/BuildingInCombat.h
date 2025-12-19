@@ -12,41 +12,30 @@
 
 class BuildingInCombat : public cocos2d::Sprite{
 public:
-    cocos2d::Vec2 position_;
-    std::vector<SoldierInCombat*> subscribers;
     // 构造函数
-    static BuildingInCombat* Create(Building* building_template,MapManager* map);
+    static BuildingInCombat* Create(Building* building_template,const cocos2d::Vec2& spawn_pos,MapManager* map);
     // 析构函数
-    ~BuildingInCombat() override;
+    virtual ~BuildingInCombat();
 
     // 初始化函数
-    virtual bool Init(const Building* building_template,MapManager* map);
+    virtual bool Init(const Building* building_template,const cocos2d::Vec2& spawn_pos,MapManager* map);
 
     // 被攻击函数
     virtual void TakeDamage(int damage);
+
+    //使用时应确保建筑类型为防御类建筑，函数参数有待确定，暂时考虑通过轮询方式搜索攻击目标，如果有更好的想法再做优化
+    void Attack();
 
     // 判断是否存活
     virtual bool IsAlive() const;
 
     void Die();
 
-    int GetCurrentHealth() const{return current_health_;};
 private:
-    int current_health_;
     Building* building_template_;
+    int current_health;
     bool is_alive_;
     MapManager* map_;
-};
-
-class AttackBuildingInCombat : public BuildingInCombat{
-public:
-    void StartAttack();
-private:
-    AttackBuilding* building_template_;
-    SoldierInCombat* current_target_;
-
-    void DealDamageToTarget();
-    void ChooseTarget();
 };
 
 #endif //PROGRAMMING_PARADIGM_FINAL_PROJECT_BUILDINGINCOMBAT_H

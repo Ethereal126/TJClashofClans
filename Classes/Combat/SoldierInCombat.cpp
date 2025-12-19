@@ -40,7 +40,7 @@ bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn
     // 3.设置兵种属性
     is_alive_ = true;
     soldier_template_ = soldier_template;
-    position_ = spawn_pos;
+    location_ = spawn_pos;
     current_health_ = soldier_template->GetHealth();
     current_target_ = nullptr;
 
@@ -50,27 +50,20 @@ bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn
     }
 
     // 4. 设置初始状态
+    this->setPosition(spawn_pos);
     map_ = map;
     // 只有在map_不为nullptr时才调用addChild
-    if (map_ == nullptr) {
-        CCLOG("SoldierInCombat init failed: Invalid map!");
-        return false;
+    if (map_ != nullptr) {
+        map_->addChild(this);
     }
-    this->setPosition(map_->vecToWorld(spawn_pos));
-    map_->addChild(this);
     this->setScale(1.5f);  // 调整大小（根据实际资源修改）
-
-    this->DoAllMyActions();
 
     return true;
 }
 
 void SoldierInCombat::TakeDamage(int damage) {
     current_health_ -= damage;
-    if (current_health_ < 0){
-        current_health_ = 0;
-        Die();
-    }
+    if (current_health_ < 0) current_health_ = 0;
 }
 
 
@@ -115,7 +108,6 @@ enum class MoveDirection :int{
     RIGHT = 3
 };
 MoveDirection GetMoveDirection(const cocos2d::Vec2& move_delta){
-    CCLOG("move_delta:%f,%f",move_delta.x,move_delta.y);
     if (move_delta.isZero()) return MoveDirection::DOWN; // 默认方向
     float abs_x = abs(move_delta.x);
     float abs_y = abs(move_delta.y);
@@ -123,15 +115,15 @@ MoveDirection GetMoveDirection(const cocos2d::Vec2& move_delta){
     if (abs_x > abs_y) {
         return move_delta.x > 0 ? MoveDirection::RIGHT : MoveDirection::LEFT;
     } else {
-        return move_delta.y > 0 ? MoveDirection::LEFT : MoveDirection::RIGHT;
+        return move_delta.y > 0 ? MoveDirection::UP : MoveDirection::DOWN;
     }
 }
 
-const float kCheckInterval = 0.1f;
 // -------------------------- 核心：封装单段直线移动Action（Spawn同步MoveTo+动画） --------------------------
-cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& start_map_pos,const cocos2d::Vec2& target_map_pos) {
+cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos) {
     // 1. 计算移动参数
-    cocos2d::Vec2 move_delta = target_map_pos - start_map_pos;
+    cocos2d::Vec2 current_map_pos = map_->worldToVec(this->getPosition());
+    cocos2d::Vec2 move_delta = target_map_pos - current_map_pos;
     float move_distance = move_delta.length();
     float move_time = move_distance / soldier_template_->GetMoveSpeed(); // 基于数据类的移动速度
 
@@ -139,10 +131,8 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
     cocos2d::Vec2 target_screen_pos = map_->vecToWorld(target_map_pos);
     auto move_to = cocos2d::MoveTo::create(move_time, target_screen_pos);
 
-
     // 3. 获取对应方向的动画
     MoveDirection dir = GetMoveDirection(move_delta);
-    CCLOG("direction : %d",static_cast<int>(dir));
     const std::string direction_names[] = {"up", "down", "left", "right"};
     std::string dir_name = direction_names[static_cast<int>(dir)];
     auto move_anim = cocos2d::AnimationCache::getInstance()->getAnimation( "Soldier_Move_" + dir_name);
@@ -156,29 +146,22 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
 
     // 4. 构建“延迟+检测”的循环动作（每0.1秒检测一次）
     auto check_target = cocos2d::CallFunc::create([this]() {
-        this->UpdatePositionAndCheckTargetAlive();
+        this->CheckTargetAlive();
     });
+    float check_interval = 0.1f;
     // 单轮检测：延迟0.1秒 → 执行检测
     auto single_check_loop = cocos2d::Sequence::create(
-            cocos2d::DelayTime::create(kCheckInterval),
+            cocos2d::DelayTime::create(check_interval),
             check_target,
             nullptr
     );
     // 循环次数：移动总时长 / 检测间隔（确保移动过程中持续检测）
-    int check_repeat_count = static_cast<int>(move_time / kCheckInterval);
+    int check_repeat_count = static_cast<int>(move_time / check_interval);
     // 避免除数为0（移动时间极短时）
     check_repeat_count = std::max(check_repeat_count, 1);
     // 循环执行检测
     auto repeat_check = cocos2d::Repeat::create(single_check_loop, check_repeat_count);
     return cocos2d::Spawn::create(move_to,animate,repeat_check,nullptr);
-}
-
-void SoldierInCombat::DoAllMyActions(){
-    BuildingInCombat* next_target = GetNextTarget();  // 寻找下一个目标
-    if (next_target) {
-        current_target_ = next_target;
-        MoveToTargetAndStartAttack();  // 移动到新目标继续攻击
-    }
 }
 
 // -------------------------- 死亡动画实现 --------------------------
@@ -193,13 +176,7 @@ void SoldierInCombat::Die() {
     auto remove_self = cocos2d::CallFunc::create([this]() {
         this->removeFromParent();
         auto manager = CombatManager::GetInstance();
-        for(auto it = manager->live_soldiers.begin(); it != manager->live_soldiers.end(); ++it){
-            if(*it==this){
-                manager->live_soldiers.erase(it);
-                break;
-            }
-        }
-        manager->num_of_live_soldiers_--;
+        manager->live_soldiers_--;
         if(manager->IsCombatEnd()){
             manager->EndCombat();
         }
@@ -208,30 +185,33 @@ void SoldierInCombat::Die() {
     this->runAction(death_sequence);
 }
 
-void SoldierInCombat::Attack() {
-    auto single_attack = cocos2d::CallFunc::create([this]() {
-        this->UpdatePositionAndCheckTargetAlive();
-        this->DealDamageToTarget();
-    });
-    // 单轮检测：延迟0.1秒 → 执行检测
-    auto single_check_loop = cocos2d::Sequence::create(
-            cocos2d::DelayTime::create(this->soldier_template_->GetAttackDelay()),
-            single_attack,
-            nullptr
-    );
-    auto repeat_attack = cocos2d::RepeatForever::create(single_check_loop);
-    this->runAction(repeat_attack);
+
+// -------------------------- 对外接口实现 --------------------------
+void SoldierInCombat::SetTarget(BuildingInCombat* target) {
+    if (!is_alive_ || !target || !target->IsAlive()) return;
+
+    // 核心：停止当前所有Action（避免旧行为与新行为冲突）
+    this->stopAllActions();
+    current_target_ = target;
+    MoveToTarget();  // 开始新行为：移动到目标
 }
 
 void SoldierInCombat::DealDamageToTarget() {
     if (current_target_ && current_target_->IsAlive()) {
         current_target_->TakeDamage(soldier_template_->GetDamage());  // 调用建筑的受伤害方法
     }
-    CCLOG("current target health:%d",current_target_->GetCurrentHealth());
 }
 
-void SoldierInCombat::UpdatePositionAndCheckTargetAlive() {
-    this->position_=map_->worldToVec(this->getPosition());
+void SoldierInCombat::CheckTargetAlive() {
+    this->location_=map_->worldToVec(this->getPosition());
+    if (!current_target_ || !current_target_->IsAlive()) {
+        this->stopAllActions();  // 目标死亡，停止当前攻击动作
+        BuildingInCombat* next_target = GetNextTarget();  // 寻找下一个目标
+        if (next_target) {
+            current_target_ = next_target;
+            MoveToTarget();  // 移动到新目标继续攻击
+        }
+    }
 }
 
 struct AStarNode {
@@ -256,7 +236,6 @@ struct Vec2Hash {
 
 class PathFinder {
 public:
-    explicit PathFinder(MapManager* map):map_(map){};
     // A*寻路入口：返回从start到end的格子路径（若失败则返回空）
     std::vector<cocos2d::Vec2> FindPath(const cocos2d::Vec2& start_tile,const cocos2d::Vec2& end_tile,float soldier_range_);
 
@@ -277,29 +256,33 @@ float PathFinder::ManhattanDistance(const cocos2d::Vec2& a, const::cocos2d::Vec2
 
 // -------------------------- A*寻路入口 --------------------------
 std::vector<cocos2d::Vec2> PathFinder::FindPath(const cocos2d::Vec2& start_tile, const cocos2d::Vec2& end_tile, const float soldier_range) {
-    CCLOG("Finding Path from (%f,%f) to (%f,%f)",start_tile.x,start_tile.y,end_tile.x,end_tile.y);
-    // 1. 初始化OpenList（小根堆，按F值排序）、ClosedList（哈希表，避免重复）
+    // 1. 边界检查：起点/终点不可通行则直接返回失败
+    if (!map_->IsGridAvailable(start_tile) || !map_->IsGridAvailable(end_tile)) {
+        return {};
+    }
+
+    // 2. 初始化OpenList（小根堆，按F值排序）、ClosedList（哈希表，避免重复）
     std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<>> open_list;
     std::unordered_set<cocos2d::Vec2, Vec2Hash> closed_list;
     // node_map：存储所有节点的详细信息（坐标→节点，避免指针拷贝）
     std::unordered_map<cocos2d::Vec2, AStarNode, Vec2Hash> node_map;
 
-    // 2. 起点入队
+    // 3. 起点入队
     AStarNode start_node(start_tile);
     start_node.h_cost = ManhattanDistance(start_tile, end_tile);
     open_list.push(start_node);
     node_map[start_tile] = start_node;
 
-    // 3. 核心寻路循环
+    // 4. 核心寻路循环
     while (!open_list.empty()) {
-        // 3.1 取出OpenList中F值最小的节点
+        // 4.1 取出OpenList中F值最小的节点
         AStarNode current = open_list.top();
         open_list.pop();
 
-        // 3.2 若到达终点，回溯路径
+        // 4.2 若到达终点，回溯路径
         if (current.tile_pos.distance(end_tile)<=soldier_range) {
             std::vector<cocos2d::Vec2> path;
-            cocos2d::Vec2 temp_pos = current.tile_pos;
+            cocos2d::Vec2 temp_pos = end_tile;
             // 回溯父节点直到起点
             while (temp_pos != start_tile) {
                 path.push_back(temp_pos);
@@ -309,11 +292,11 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(const cocos2d::Vec2& start_tile,
             return path;
         }
 
-        // 3.3 标记当前节点为已考察
+        // 4.3 标记当前节点为已考察
         if(closed_list.count(current.tile_pos)) continue;
         closed_list.insert(current.tile_pos);
 
-        // 3.4 遍历所有邻居节点
+        // 4.4 遍历所有邻居节点
         for (const auto& dir : kNeighborDirs) {
             cocos2d::Vec2 neighbor_tile = current.tile_pos + dir;
 
@@ -321,9 +304,9 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(const cocos2d::Vec2& start_tile,
             if (!map_->isValidGrid(neighbor_tile) || closed_list.count(neighbor_tile)) {
                 continue;
             }
-            // 3.5 计算邻居的G/H/F代价
+            // 4.5 计算邻居的G/H/F代价
             float new_g = current.g_cost + 1;
-            float new_h = ManhattanDistance(neighbor_tile,end_tile);  // 启发代价为对角线距离
+            float new_h = ManhattanDistance(current.tile_pos,end_tile);  // 启发代价为对角线距离
             if(!map_->IsGridAvailable(neighbor_tile)){
                 new_g += kDestroyCost;
             }
@@ -342,19 +325,11 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(const cocos2d::Vec2& start_tile,
         }
     }
 
-    CCLOG("no path");
-    // 4. 寻路失败，返回空
+    // 5. 寻路失败，返回空
     return {};
 }
 
 void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
-    CCLOG("current path:");
-    if(path.empty()){
-        CCLOG("empty path");
-    }
-    for(auto it:path){
-        CCLOG("(%f,%f)",it.x,it.y);
-    }
     for(auto ptr = path.begin();ptr != path.end();ptr++){
         if(!map_->IsGridAvailable(*ptr)){
             auto new_target = *ptr;
@@ -369,13 +344,7 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
 }
 
 void SoldierInCombat::SimplifyPath(std::vector<cocos2d::Vec2>& path){
-    if(path.size()<2){
-        if(path.empty()){
-            CCLOG("empty path");
-        }
-        for(auto it:path){
-            CCLOG("(%f,%f)",it.x,it.y);
-        }
+    if(path.size()<=2){
         CCLOG("invalid path found when simplified");
         return;
     }
@@ -396,31 +365,25 @@ void SoldierInCombat::SimplifyPath(std::vector<cocos2d::Vec2>& path){
     }
 }
 
-BuildingInCombat* SoldierInCombat::GetNextTarget() {
-    auto buildings = CombatManager::GetInstance()->live_buildings_;
-    if(buildings.empty()) return nullptr;
+BuildingInCombat* SoldierInCombat::GetNextTarget() const {
+    auto buildings = CombatManager::GetInstance()->buildings_;
     BuildingInCombat* target = *std::min_element(buildings.begin(),buildings.end(),
                                                  [&](BuildingInCombat* a,BuildingInCombat* b){
-        return this->position_.distance(a->position_) < this->position_.distance(b->position_);
+        return this->location_.distance(a->getPosition())<this->location_.distance(b->getPosition());
     });
-    target->subscribers.push_back(this);
     return target;
 }
 
-void SoldierInCombat::MoveToTargetAndStartAttack() {
-    PathFinder pf(map_);
-    auto path = pf.FindPath(this->position_, current_target_->position_,
+void SoldierInCombat::MoveToTarget() {
+    PathFinder pf{};
+    auto path = pf.FindPath(this->location_,current_target_->getPosition(),
                             this->soldier_template_->GetAttackRange());
     RedirectPath(path);
     SimplifyPath(path);
     cocos2d::Vector<cocos2d::FiniteTimeAction*> moves;
     for(int i=1;i<path.size();i++){
-        moves.pushBack(CreateStraightMoveAction(path[i-1],path[i]));
+        moves.pushBack(CreateStraightMoveAction(path[i]));
     }
-    auto start_attack = cocos2d::CallFunc::create([this]() {
-        this->Attack();
-    });
-    moves.pushBack(start_attack);
     cocos2d::Sequence* seq = cocos2d::Sequence::create(moves);
     if(seq) this->runAction(seq);
 }

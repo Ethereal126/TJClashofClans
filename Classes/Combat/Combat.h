@@ -30,10 +30,9 @@ enum class WinnerState{
 //负责统筹管理整个战斗过程，仅包含最基本的需求
 class CombatManager :public cocos2d::Node {
 public:
-    std::vector<std::pair<Soldier*,int>> soldier_to_use_;
-    std::vector<BuildingInCombat*> live_buildings_;
-    std::vector<SoldierInCombat*> live_soldiers;
-    int num_of_live_soldiers_ = 0,num_of_live_buildings = 0;
+    std::vector<std::pair<Soldier*,int>> soldier_to_use;
+    std::vector<BuildingInCombat*> buildings_;
+    int live_soldiers_ = 0,live_buildings = 0;
     WinnerState winner_ = WinnerState::kUndetermined;
 
     static CombatManager* Create(MapManager* map); // 初始化单例（仅第一次调用有效）
@@ -57,6 +56,7 @@ protected:
 private:
     static CombatManager* instance_;
     MapManager* map_ = nullptr;
+    cocos2d::Node* combat_root_node_ = nullptr;
     int destroy_degree_ = 0;
     CombatState state_ = CombatState::kWrongInit;
     float combat_time_ = 0.0f;
