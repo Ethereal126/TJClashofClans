@@ -55,6 +55,10 @@ protected:
     int max_elixir_capacity_;            // 最大可持有圣水上限（所有圣水池总容量）
     int current_army_count_;             // 当前军队总人数
 
+    // ==================== 城墙管理相关属性 ====================
+    int wall_capacity_;                        // 当前等级下可建造的最大城墙数量
+    std::vector<WallBuilding*> walls_;         // 管理的城墙列表
+
     // ==================== 资源池管理相关属性 ====================
     std::vector<GoldStorage*> gold_storages_;           // 管理的金币池列表
     std::vector<ElixirStorage*> elixir_storages_;       // 管理的圣水池列表
@@ -293,10 +297,91 @@ public:
     void UpdateArmyCount(int delta);
 
     /**
-     * @brief 获取训练营上限（修改函数名，避免冲突）
+     * @brief 获取训练营上限
      * @return 当前等级可支持的最大训练营数。
      */
-    int GetBarrackCapacity() const { return barrack_capacity_; }
+    int GetTrainingCampCapacity() const { return barrack_capacity_; }
+
+    // ==================== 城墙管理接口 ====================
+
+    /**
+     * @brief 添加城墙到管理列表
+     * @param wall 城墙指针
+     */
+    void AddWall(WallBuilding* wall);
+
+    /**
+     * @brief 从管理列表中移除城墙
+     * @param wall 城墙指针
+     */
+    void RemoveWall(WallBuilding* wall);
+
+    /**
+     * @brief 获取当前城墙数量
+     * @return 当前管理的城墙数量
+     */
+    int GetCurrentWallCount() const;
+
+    /**
+     * @brief 获取城墙容量上限
+     * @return 当前等级允许的最大城墙数量
+     */
+    int GetWallCapacity() const { return wall_capacity_; }
+
+    /**
+     * @brief 检查是否可以添加更多城墙
+     * @return true 表示已达到容量上限，无法添加更多城墙
+     */
+    bool IsWallCapacityFull() const;
+
+    /**
+     * @brief 检查是否有城墙需要修复
+     * @return true 表示有城墙生命值不满
+     */
+    bool HasDamagedWalls() const;
+
+    /**
+     * @brief 检查是否有城墙可以升级
+     * @return true 表示有未达到最大等级且未在升级中的城墙
+     */
+    bool HasUpgradableWalls() const;
+
+    /**
+     * @brief 批量升级所有可升级的城墙
+     * 尝试升级所有未达到最大等级且未在升级中的城墙
+     * @return 成功开始升级的城墙数量
+     */
+    int UpgradeAllWalls();
+
+    /**
+     * @brief 批量修复所有受损的城墙
+     * 修复所有生命值不满的城墙
+     * @return 成功修复的城墙数量
+     */
+    int RepairAllDamagedWalls();
+
+    /**
+     * @brief 获取城墙统计信息
+     * @param[out] active_count 活跃城墙数量
+     * @param[out] damaged_count 受损城墙数量
+     * @param[out] upgrading_count 正在升级的城墙数量
+     */
+    void GetWallStats(int& active_count, int& damaged_count, int& upgrading_count) const;
+
+    /**
+     * @brief 清空所有城墙
+     * 移除所有城墙（用于重置游戏或清理场景）
+     */
+    void ClearAllWalls();
+
+    /**
+     * @brief 按等级筛选城墙
+     * @param min_level 最小等级
+     * @param max_level 最大等级
+     * @return 符合等级范围的城墙数量
+     */
+    int CountWallsByLevel(int min_level, int max_level) const;
+
 
     // ==================== 资源与容量的 Get 接口 ====================
     /**
@@ -315,7 +400,7 @@ public:
      * @brief 获取兵营上限
      * @return 当前等级可支持的最大兵营数。
      */
-    int GetArmyCapacity() const { return barrack_capacity_; }
+    int GetBarrackCapacity() const { return barrack_capacity_; }
 
     /**
     * @brief 获取当前金币数量
@@ -328,6 +413,49 @@ public:
      * @return 当前存储的圣水数量。
      */
     int GetElixir() const { return elixir_; }
+
+    // ==================== 士兵管理相关 ====================
+    std::vector<Soldier*> GetAllTrainedSoldiers() const;
+    int GetTotalTrainedSoldierCount() const;
+    int GetTotalSoldierHousingSpace() const;
+    bool CanTrainMoreSoldiers() const;
+    bool IsSoldierTypeAvailable(const std::string& soldierType) const;
+
+    // ==================== 士兵管理相关接口 ====================
+
+   /**
+    * @brief 添加训练完成的士兵到军队
+    * @param soldier 训练完成的士兵指针
+    * @return 添加成功返回true，军队已满返回false
+    */
+    bool AddTrainedSoldier(Soldier* soldier);
+
+    /**
+     * @brief 检查是否可以添加指定人口的士兵
+     * @param housing_space 需要的人口空间
+     * @return 如果可以添加返回true，军队已满返回false
+     */
+    bool CanAddSoldier(int housing_space) const;
+
+    /**
+     * @brief 获取士兵模板列表
+     * @return 所有士兵模板的引用
+     */
+    static const std::vector<SoldierTemplate>& GetSoldierTemplates();
+
+    /**
+     * @brief 根据士兵类型获取士兵模板
+     * @param type 士兵类型
+     * @return 士兵模板指针，未找到返回nullptr
+     */
+    static const SoldierTemplate* GetSoldierTemplate(SoldierType type);
+
+    /**
+     * @brief 根据士兵名称获取士兵模板
+     * @param name 士兵名称
+     * @return 士兵模板指针，未找到返回nullptr
+     */
+    static const SoldierTemplate* GetSoldierTemplate(const std::string& name);
 
     // ==================== Cocos2d 显示相关接口 ====================
 
