@@ -21,7 +21,7 @@ ResourceStorage::~ResourceStorage() {
     if (progressBar_) progressBar_->removeFromParent();
 }
 
-ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec2 position,
+ResourceStorage::ResourceStorage(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType)
     : Building(name, 1, base * 8, base, 0, base * 10, 3, 3, position)
     , resourceType_(resourceType)
@@ -35,7 +35,7 @@ ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec
     , particleEffect_(nullptr) {
 }
 
-ResourceStorage* ResourceStorage::Create(const std::string& name, int base, cocos2d::Vec2 position,
+ResourceStorage* ResourceStorage::Create(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType) {
     auto storage = new (std::nothrow) ResourceStorage(name, base, position, texture, resourceType);
     if (storage && storage->Init()) {
@@ -295,14 +295,14 @@ ProductionBuilding::~ProductionBuilding() {
     }
 }
 
-ProductionBuilding::ProductionBuilding(const std::string& name, int base, cocos2d::Vec2 position,
+ProductionBuilding::ProductionBuilding(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType)
     : ResourceStorage(name, base, position, texture, resourceType)
     , productionRate_(base * 10)
     , productionTimer_(0.0f) {
 }
 
-ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, cocos2d::Vec2 position,
+ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType) {
     auto building = new (std::nothrow) ProductionBuilding(name, base, position, texture, resourceType);
     if (building && building->Init()) {
@@ -432,7 +432,7 @@ void ProductionBuilding::OnProductionUpdate(float deltaTime) {
 
 // ==================== ElixirStorage 实现 ====================
 
-ElixirStorage* ElixirStorage::Create(std::string name, int base, cocos2d::Vec2 position) {
+ElixirStorage* ElixirStorage::Create(std::string name, int base, std::pair<int, int> position) {
     auto storage = new (std::nothrow) ElixirStorage(name, base, position);
     if (storage && storage->Init()) {
         storage->autorelease();
@@ -445,7 +445,7 @@ ElixirStorage* ElixirStorage::Create(std::string name, int base, cocos2d::Vec2 p
 ElixirStorage::~ElixirStorage() {
 }
 
-ElixirStorage::ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position)
+ElixirStorage::ElixirStorage(const std::string& name, int base, std::pair<int, int> position)
     : ProductionBuilding(name, base, position, "textures/elixir_storage.png", "Elixir")
     , collectionRadius_(100.0f)
     , elixirColor_(Color4F(0.8f, 0.2f, 0.8f, 1.0f)) {  // 紫色
@@ -564,7 +564,7 @@ void ElixirStorage::InitElixirSpecificComponents() {
 
 // ==================== GoldStorage 实现 ====================
 
-GoldStorage* GoldStorage::Create(std::string name, int base, cocos2d::Vec2 position) {
+GoldStorage* GoldStorage::Create(std::string name, int base, std::pair<int, int> position) {
     auto storage = new (std::nothrow) GoldStorage(name, base, position);
     if (storage && storage->Init()) {
         storage->autorelease();
@@ -579,7 +579,7 @@ GoldStorage::~GoldStorage() {
     if (shieldEffect_) shieldEffect_->removeFromParent();
 }
 
-GoldStorage::GoldStorage(const std::string& name, int base, cocos2d::Vec2 position)
+GoldStorage::GoldStorage(const std::string& name, int base, std::pair<int, int> position)
     : ProductionBuilding(name, base, position, "textures/gold_storage.png", "Gold")
     , isVaultProtected_(false)
     , protectionPercentage_(0.3f)
@@ -764,7 +764,7 @@ void GoldStorage::InitGoldSpecificComponents() {
 
 // ==================== Barracks 实现 ====================
 
-Barracks* Barracks::Create(const std::string& name, int base, cocos2d::Vec2 position) {
+Barracks* Barracks::Create(const std::string& name, int base, std::pair<int, int> position) {
     auto barracks = new (std::nothrow) Barracks(name, base, position);
     if (barracks && barracks->Init()) {
         barracks->autorelease();
@@ -784,7 +784,7 @@ Barracks::~Barracks() {
     }
 }
 
-Barracks::Barracks(const std::string& name, int base, cocos2d::Vec2 position)
+Barracks::Barracks(const std::string& name, int base, std::pair<int, int> position)
     : TrainingBuilding(name, base, position, "textures/barracks.png", 5, 30) {
     // 初始化默认兵种
     availableTroops_.push_back("Barbarian");
