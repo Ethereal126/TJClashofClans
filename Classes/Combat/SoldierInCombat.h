@@ -15,7 +15,7 @@ class BuildingInCombat;
 
 class SoldierInCombat : public cocos2d::Sprite{
 public:
-    cocos2d::Vec2 location_;
+    cocos2d::Vec2 position_;
     MapManager* map_;
     bool is_alive_;
 
@@ -25,21 +25,23 @@ public:
     // 被攻击函数
     void TakeDamage(int damage);
 
-    cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& target_map_pos);
+    cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& start_map_pos,const cocos2d::Vec2& target_map_pos);
+    void DoAllMyActions();
 
     BuildingInCombat* current_target_;
     void Die();
+
+    int GetCurrentHealth() const{return current_health_;};
 protected:
-    Soldier* soldier_template_;
     int current_health_;
+    Soldier* soldier_template_;
 
     ~SoldierInCombat() override;
-    void SetTarget(BuildingInCombat* target);
-    void MoveToTarget();
-    void StartAttack();
+    void MoveToTargetAndStartAttack();
+    void Attack();
     void DealDamageToTarget();
-    void CheckTargetAlive();
-    BuildingInCombat* GetNextTarget() const;
+    void UpdatePositionAndCheckTargetAlive();
+    BuildingInCombat* GetNextTarget();
 
     void RedirectPath(std::vector<cocos2d::Vec2>& path);
     static void SimplifyPath(std::vector<cocos2d::Vec2>& path);

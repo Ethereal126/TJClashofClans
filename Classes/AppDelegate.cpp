@@ -121,16 +121,18 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     auto scene = MainScene::createScene(20,20,-1);
     director->runWithScene(scene);
-    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 0.1);
-    auto soldier = SoldierInCombat::Create(soldier_template, Vec2(5, 5),scene->getMap());
-    auto building_template = new Building("test",1,100,100,10,10,2,2,{5,5});
+    auto map = scene->getMap();
+    auto building_template = new Building("test",1,300,100,10,10,2,2,{5,5});
     building_template->texture_ = "buildings/building_1.png";
-    auto building = BuildingInCombat::Create(building_template,Vec2(5,5),scene->getMap());
+    map->placeBuilding(building_template,5,5);
+    CombatManager::Create(map);
+    auto p = map->getMapSize();
+    CCLOG("%d,%d",p.first,p.second);
+    auto manager = CombatManager::GetInstance();
+    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 1);
+    manager->StartCombat();
+    manager->SendSoldier(soldier_template,cocos2d::Vec2(2,2));
 
-    soldier->current_target_ = building;
-    auto move = soldier->CreateStraightMoveAction(Vec2(5,10));
-    auto dieCallback = CallFunc::create([=]() { soldier->Die(); });
-    soldier->runAction(Sequence::create(move, dieCallback, nullptr));
     return true;
 }
 

@@ -50,16 +50,23 @@ CombatManager::~CombatManager(){
 
 //初始化战场中的建筑，返回初始化结果
 bool CombatManager::Init(MapManager* map){
-    if(map== nullptr) return false;
     this->map_=map;
-    combat_root_node_ = cocos2d::Node::create();
-    combat_root_node_->retain(); // 手动管理内存，防止被自动释放
+    if(map_ == nullptr){
+        CCLOG("manager init failure : map is null");
+        return false;
+    }
 
+    if(map->getAllBuildings().empty()){
+        CCLOG("no building available");
+    }
     for(auto building:map_->getAllBuildings()){
-        auto b = BuildingInCombat::Create(building,building->GetPosition(),map_);
-        combat_root_node_->addChild(b);
-        buildings_.push_back(b);
-        live_buildings++;
+        BuildingInCombat* b = BuildingInCombat::Create(building,map_);
+        if(typeid(*building)==typeid(AttackBuilding)){
+            auto attack_b = dynamic_cast<AttackBuildingInCombat*>(b);
+            attack_b->StartAttack();
+        }
+        live_buildings_.push_back(b);
+        num_of_live_buildings++;
     }
     destroy_degree_ = 0;
     state_ = CombatState::kReady;
@@ -108,6 +115,16 @@ void CombatManager::EndCombat() {
 
     state_ = CombatState::kEnded;
     this->unscheduleUpdate(); // 停止帧检测
+
+    for(auto it:live_soldiers){
+        it->stopAllActions();
+        it->removeFromParent();
+    }
+    for(auto it:live_buildings_){
+        it->stopAllActions();
+        it->removeFromParent();
+    }
+    this->removeFromParent();
 }
 
 // 每帧更新：核心检测逻辑（Cocos 帧循环驱动）
@@ -136,20 +153,20 @@ void CombatManager::SendSoldier(Soldier* soldier_template, cocos2d::Vec2 spawn_p
         CCLOG("SendSoldier() when not fighting");
         return;
     }
-    auto soldier = SoldierInCombat::Create(soldier_template,spawn_pos,map_);
+    auto soldier = SoldierInCombat::Create(soldier_template,spawn_pos,this->map_);
     if (!soldier) { // 创建失败则返回
         std::string name = soldier_template->GetName();
         CCLOG("创建士兵失败，类型：%s",name.c_str());
         return;
     }
 
-    combat_root_node_->addChild(soldier);
-    live_soldiers_++;
+    num_of_live_soldiers_++;
+
 }
 
 bool CombatManager::IsCombatEnd() {
-    bool all_soldiers_die = (live_soldiers_==0);
-    for(auto it:soldier_to_use){
+    bool all_soldiers_die = (num_of_live_soldiers_ == 0);
+    for(auto it:soldier_to_use_){
         if(it.second!=0){
             all_soldiers_die = false;
             break;
@@ -160,7 +177,7 @@ bool CombatManager::IsCombatEnd() {
         return true;
     }
 
-    bool all_buildings_die = (live_buildings==0);
+    bool all_buildings_die = (num_of_live_buildings == 0);
     if(all_buildings_die) {
         winner_ = WinnerState::kOffence;
         return true;
