@@ -6,8 +6,6 @@
 #define TJCLASHOFCLANS_SOLDIER_H
 
 #include <cocos2d.h>
-#include <string>
-#include <vector>
 
 enum class SoldierType {
     kBarbarian,  // 野蛮人
@@ -74,51 +72,4 @@ protected:
     float move_speed_;
     std::string name;
 };
-
-// 士兵模板结构体（用于工厂函数）
-struct SoldierTemplate {
-    SoldierType type;
-    std::string name;
-    int health;
-    int damage;
-    float move_speed;
-    float attack_range;
-    float attack_delay;
-    int housing_space;  // 人口占用
-    int training_cost;  // 训练费用
-    int training_time;  // 训练时间（秒）
-
-    SoldierTemplate(SoldierType t, std::string n, int hp, int dmg,
-        float ms, float ar, float ad, int hs, int tc, int tt)
-        : type(t), name(std::move(n)), health(hp), damage(dmg),
-        move_speed(ms), attack_range(ar), attack_delay(ad),
-        housing_space(hs), training_cost(tc), training_time(tt) {
-    }
-
-    // 创建士兵的工厂函数
-    Soldier* Create() const {
-        return new Soldier(type, health, damage, move_speed, attack_range, attack_delay);
-    }
-};
-
-// 添加获取所有士兵模板的静态函数（在类外部）
-static std::vector<SoldierTemplate> GetSoldierTemplates() {
-    std::vector<SoldierTemplate> templates;
-
-    // 野蛮人
-    templates.emplace_back(SoldierType::kBarbarian, "Barbarian",
-        45, 8, 1.0f, 0.4f, 1.0f, 1, 25, 20);
-    // 弓箭手
-    templates.emplace_back(SoldierType::kArcher, "Archer",
-        20, 7, 0.8f, 3.5f, 1.0f, 1, 50, 25);
-    // 炸弹人
-    templates.emplace_back(SoldierType::kBomber, "Bomber",
-        20, 6, 1.2f, 0.4f, 1.0f, 2, 1000, 60);
-    // 巨人
-    templates.emplace_back(SoldierType::kGiant, "Giant",
-        300, 22, 0.6f, 1.0f, 2.0f, 5, 500, 120);
-
-    return templates;
-}
-
 #endif //TJCLASHOFCLANS_SOLDIER_H
