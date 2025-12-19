@@ -1090,7 +1090,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "textures/archer_tower.png", 7);
+            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "textures/archer_tower.png", 7, 1, 50);
         }
     );
 
@@ -1101,11 +1101,12 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     std::vector<SoldierTemplate> soldiers;
 
     soldiers.emplace_back(
+        SoldierType::kBarbarian,
         "Barbarian",
         "ui/icons/barbarian_icon.png",
         1,    // 人口消耗
-        20,   // 训练时间（秒）
         25,   // 训练费用（金币）
+        20,   // 训练时间（秒）
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建野蛮人
             return new Soldier(SoldierType::kBarbarian, 45, 8, 1.0f, 0.4f, 1.0f);
@@ -1113,11 +1114,12 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     );
 
     soldiers.emplace_back(
+        SoldierType::kArcher,
         "Archer",
         "ui/icons/archer_icon.png",
         1,
-        25,
         50,
+        25,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建弓箭手
             return new Soldier(SoldierType::kArcher, 20, 7, 0.8f, 3.5f, 1.0f);
@@ -1125,11 +1127,12 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     );
 
     soldiers.emplace_back(
+        SoldierType::kGiant,
         "Giant",
         "ui/icons/giant_icon.png",
         5,
-        120,
         500,
+        120,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建巨人
             return new Soldier(SoldierType::kGiant, 300, 22, 0.6f, 1.0f, 2.0f);
@@ -1138,11 +1141,12 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
 
     
     soldiers.emplace_back(
+        SoldierType::kBomber,
         "Bomber",
         "ui/icons/wall_breaker_icon.png",
         2,
-        60,
         1000,
+        60,
         []() -> Soldier* {
             // 需要先在 SoldierType 枚举中添加 WallBreaker
             return new Soldier(SoldierType::kBomber, 20, 6, 1.2f, 0.4f, 1.0f);

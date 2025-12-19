@@ -438,36 +438,12 @@ public:
         const std::string& texture, int capacity, int speed);
 
     /**
-     * @brief 添加可训练士兵类型
-     * @param soldier_type 要添加的士兵类型
-     */
-    void AddAvailableSoldierType(SoldierType soldier_type);
-
-    /**
-     * @brief 获取可训练士兵类型列表
-     * @return 可训练士兵类型列表
-     */
-    const std::vector<SoldierType>& GetAvailableSoldierTypes() const;
-
-    /**
      * @brief 开始训练士兵
      * @param soldier_type 要训练的士兵类型
      * @param count 训练数量
      * @return 是否成功开始训练
      */
     virtual bool StartTraining(SoldierType soldier_type, int count);
-
-    /**
-     * @brief 取消训练
-     * @param queue_index 训练队列中的索引（从0开始）
-     */
-    virtual void CancelTraining(int queue_index);
-
-    /**
-     * @brief 获取当前训练队列信息
-     * @return 训练队列的常量引用
-     */
-    const std::vector<TrainingItem>& GetTrainingQueue() const;
 
     /**
      * @brief 获取可用单位名称列表
@@ -511,13 +487,13 @@ public:
      * @brief 获取训练容量
      * @return 同时训练的最大人口数
      */
-    int GetTrainingCapacity() const;
+    int GetTrainingCapacity() const { return 1; };
 
     /**
      * @brief 获取训练速度
      * @return 训练速度（秒/每人口）
      */
-    int GetTrainingSpeed() const;
+    int GetTrainingSpeed() const { return 1; };
 
     /**
      * @brief 计算训练指定数量士兵所需时间
