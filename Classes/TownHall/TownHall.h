@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by Faith_Oriest on 2025/12/9.
 //
 
@@ -448,14 +448,14 @@ public:
      * @param type 士兵类型
      * @return 士兵模板指针，未找到返回nullptr
      */
-    static const SoldierTemplate* GetSoldierTemplate(SoldierType type);
+    static const ::SoldierTemplate* GetSoldierTemplate(SoldierType type);
 
     /**
      * @brief 根据士兵名称获取士兵模板
      * @param name 士兵名称
      * @return 士兵模板指针，未找到返回nullptr
      */
-    static const SoldierTemplate* GetSoldierTemplate(const std::string& name);
+    static const ::SoldierTemplate* GetSoldierTemplate(const std::string& name);
 
     // ==================== Cocos2d 显示相关接口 ====================
 
@@ -495,22 +495,18 @@ public:
      */
     virtual void ShowInfo() const override;
 
-    /**
-     * @brief 建筑模板结构体
-     */
+    
     struct BuildingTemplate {
-        std::string name;           // 建筑名称
-        std::string iconPath;       // 图标路径
-        int cost;                   // 建造费用
-        int width;                  // 占地宽度
-        int length;                 // 占地长度
-
-        // 返回实例的工厂函数
+        std::string name_;
+        std::string icon_path_;
+        int cost_;
+        int width_;
+        int length_;
         std::function<Building* ()> createFunc;
 
-        BuildingTemplate(const std::string& n, const std::string& i, int c, int w, int l,
-            std::function<Building* ()> func)
-            : name(n), iconPath(i), cost(c), width(w), length(l), createFunc(func) {
+        BuildingTemplate(const std::string& n, const std::string& i, int c,
+            int w, int l, std::function<Building* ()> func)
+            : name_(n), icon_path_(i), cost_(c), width_(w), length_(l), createFunc(func) {
         }
     };
 
@@ -521,28 +517,10 @@ public:
     static std::vector<BuildingTemplate> GetAllBuildingTemplates();
 
     /**
-     * @brief 士兵模板结构体
-     */
-    struct SoldierTemplate {
-        std::string name;           // 士兵名称
-        std::string iconPath;       // 图标路径
-        int housingSpace;           // 人口消耗
-        int trainingTime;           // 训练时间（秒）
-        int trainingCost;           // 训练费用
-        std::function<Soldier* ()> createFunc;  // 创建士兵的工厂函数
-
-        SoldierTemplate(const std::string& n, const std::string& i, int h, int t, int c,
-            std::function<Soldier* ()> func)
-            : name(n), iconPath(i), housingSpace(h), trainingTime(t), trainingCost(c), createFunc(func) {
-        }
-    };
-
-    /**
      * @brief 获取所有士兵模板列表
      * @return 包含所有士兵模板的向量
      */
-    static std::vector<SoldierTemplate> GetSoldierCategory();
-
+    static std::vector<::SoldierTemplate> GetSoldierCategory();
 };
 
 

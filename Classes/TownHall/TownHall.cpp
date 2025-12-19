@@ -3,23 +3,20 @@
 //
 
 #include "TownHall.h"
+#include "Soldier/Soldier.h"
 #include <cmath>
-// 士兵模板静态变量定义
+USING_NS_CC;
+
 static std::vector<SoldierTemplate> soldier_templates = {
-    // 野蛮人
-    SoldierTemplate(SoldierType::kBarbarian, "Barbarian",
+    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldier/Barbarian.png",
                     45, 8, 1.0f, 0.4f, 1.0f, 1, 25, 20),
-    // 弓箭手
-    SoldierTemplate(SoldierType::kArcher, "Archer",
+    SoldierTemplate(SoldierType::kArcher, "Archer","Soldier/Archer.png",
                     20, 7, 0.8f, 3.5f, 1.0f, 1, 50, 25),
-    // 炸弹人
-    SoldierTemplate(SoldierType::kBomber, "Bomber",
+    SoldierTemplate(SoldierType::kBomber, "Bomber","Soldier/Bomber.png",
                     20, 6, 1.2f, 0.4f, 1.0f, 2, 1000, 60),
-    // 巨人
-    SoldierTemplate(SoldierType::kGiant, "Giant",
+    SoldierTemplate(SoldierType::kGiant, "Giant","Soldier/Giant.png",
                     300, 22, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
-USING_NS_CC;
 
 // ==================== TownHall 实现 ====================
 
@@ -998,7 +995,7 @@ void TownHall::ShowInfo() const {
 }
 
 std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
-    std::vector<BuildingTemplate> templates;
+    std::vector<TownHall::BuildingTemplate> templates;
 
     // 金矿
     templates.emplace_back(
@@ -1100,7 +1097,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
     return templates;
 }
 
-std::vector<TownHall::SoldierTemplate> TownHall::GetSoldierCategory() {
+std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     std::vector<SoldierTemplate> soldiers;
 
     soldiers.emplace_back(
@@ -1181,7 +1178,7 @@ const std::vector<SoldierTemplate>& TownHall::GetSoldierTemplates() {
 
 const SoldierTemplate* TownHall::GetSoldierTemplate(SoldierType type) {
     for (const auto& tmpl : soldier_templates) {
-        if (tmpl.type == type) {
+        if (tmpl.type_ == type) {
             return &tmpl;
         }
     }
@@ -1190,7 +1187,7 @@ const SoldierTemplate* TownHall::GetSoldierTemplate(SoldierType type) {
 
 const SoldierTemplate* TownHall::GetSoldierTemplate(const std::string& name) {
     for (const auto& tmpl : soldier_templates) {
-        if (tmpl.name == name) {
+        if (tmpl.name_ == name) {
             return &tmpl;
         }
     }
@@ -1214,21 +1211,21 @@ bool TownHall::AddTrainedSoldier(Soldier* soldier) {
     }
 
     // 检查军队容量
-    if (!CanAddSoldier(tmpl->housing_space)) {
+    if (!CanAddSoldier(tmpl->housing_space_)) {
         cocos2d::log("军队容量不足，无法添加士兵 %s", soldier->GetName().c_str());
         delete soldier;
         return false;
     }
 
     // 更新军队人数（人口占用）
-    UpdateArmyCount(tmpl->housing_space);
+    UpdateArmyCount(tmpl->housing_space_);
 
     // 存储士兵指针（如果需要后续使用）
     // 注意：这里根据你的需求决定是否存储士兵对象
     // 如果只需要计数，可以删除士兵对象
     delete soldier; // 先删除，如果后续需要存储，注释掉这行并添加到容器
 
-    cocos2d::log("士兵 %s 已成功添加到军队", tmpl->name.c_str());
+    cocos2d::log("士兵 %s 已成功添加到军队", tmpl->name_.c_str());
     return true;
 }
 

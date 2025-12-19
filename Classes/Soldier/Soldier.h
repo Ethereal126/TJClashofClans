@@ -72,53 +72,34 @@ protected:
     float attack_range_;//攻击范围
     float attack_delay_;//一次攻击所花费的时间
     float move_speed_;
-    std::string name;
+    std::string name_;
 };
 
 // 士兵模板结构体（用于工厂函数）
 struct SoldierTemplate {
-    SoldierType type;
-    std::string name;
-    int health;
-    int damage;
-    float move_speed;
-    float attack_range;
-    float attack_delay;
-    int housing_space;  // 人口占用
-    int training_cost;  // 训练费用
-    int training_time;  // 训练时间（秒）
+    SoldierType type_;
+    std::string name_;
+    std::string icon_path_;
+    int health_;
+    int damage_;
+    float move_speed_;
+    float attack_range_;
+    float attack_delay_;
+    int housing_space_;  // 人口占用
+    int training_cost_;  // 训练费用
+    int training_time_;  // 训练时间（秒）
 
-    SoldierTemplate(SoldierType t, std::string n, int hp, int dmg,
+    SoldierTemplate(SoldierType t, std::string n, std::string p, int hp, int dmg,
         float ms, float ar, float ad, int hs, int tc, int tt)
-        : type(t), name(std::move(n)), health(hp), damage(dmg),
-        move_speed(ms), attack_range(ar), attack_delay(ad),
-        housing_space(hs), training_cost(tc), training_time(tt) {
+        : type_(t), name_(std::move(n)), icon_path_(p), health_(hp), damage_(dmg),
+        move_speed_(ms), attack_range_(ar), attack_delay_(ad),
+        housing_space_(hs), training_cost_(tc), training_time_(tt) {
     }
 
     // 创建士兵的工厂函数
     Soldier* Create() const {
-        return new Soldier(type, health, damage, move_speed, attack_range, attack_delay);
+        return new Soldier(type_, health_, damage_, move_speed_, attack_range_, attack_delay_);
     }
 };
-
-// 添加获取所有士兵模板的静态函数（在类外部）
-static std::vector<SoldierTemplate> GetSoldierTemplates() {
-    std::vector<SoldierTemplate> templates;
-
-    // 野蛮人
-    templates.emplace_back(SoldierType::kBarbarian, "Barbarian",
-        45, 8, 1.0f, 0.4f, 1.0f, 1, 25, 20);
-    // 弓箭手
-    templates.emplace_back(SoldierType::kArcher, "Archer",
-        20, 7, 0.8f, 3.5f, 1.0f, 1, 50, 25);
-    // 炸弹人
-    templates.emplace_back(SoldierType::kBomber, "Bomber",
-        20, 6, 1.2f, 0.4f, 1.0f, 2, 1000, 60);
-    // 巨人
-    templates.emplace_back(SoldierType::kGiant, "Giant",
-        300, 22, 0.6f, 1.0f, 2.0f, 5, 500, 120);
-
-    return templates;
-}
 
 #endif //TJCLASHOFCLANS_SOLDIER_H

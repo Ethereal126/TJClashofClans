@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by Faith_Oriest on 2025/12/1.
 //
 
@@ -401,6 +401,7 @@ protected:
     std::vector<TrainingItem> training_queue_;  // 训练队列
     float training_timer_;                      // 训练计时器（用于每秒更新）
     std::vector<SoldierType> available_soldier_types_;  // 可训练的士兵类型列表
+    std::vector<std::string> available_unit_names_;
 
 public:
     /**
@@ -467,6 +468,18 @@ public:
      * @return 训练队列的常量引用
      */
     const std::vector<TrainingItem>& GetTrainingQueue() const;
+
+    /**
+     * @brief 获取可用单位名称列表
+     * @return 可用单位名称列表
+     */
+    const std::vector<std::string>& GetAvailableUnitNames() const { return available_unit_names_; }
+
+    /**
+     * @brief 添加可用单位名称
+     * @param name 单位名称
+     */
+    void AddAvailableUnitName(const std::string& name) { available_unit_names_.push_back(name); }
 
     /**
      * @brief 检查并处理训练完成的士兵
@@ -546,5 +559,6 @@ public:
      * @return true 表示训练营活跃，false 表示训练营被摧毁
      */
     bool IsActive() const { return GetHealth() > 0; }
+
 };
 #endif // __BUILDING_H__

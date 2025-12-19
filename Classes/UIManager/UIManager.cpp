@@ -542,7 +542,7 @@ Node* UIManager::createShop() {
         container->addChild(itemBg, 0);
 
         // 建筑图标
-        auto icon = Sprite::create(tmpl.iconPath);
+        auto icon = Sprite::create(tmpl.icon_path_);
         if (!icon) {
             icon = Sprite::create();
             icon->setTextureRect(Rect(0, 0, 50 * _scaleFactor, 50 * _scaleFactor));
@@ -553,14 +553,14 @@ Node* UIManager::createShop() {
         container->addChild(icon, 1);
 
         // 建筑名称
-        auto nameLabel = Label::createWithTTF(tmpl.name, "fonts/arial.ttf", 18 * _scaleFactor);
+        auto nameLabel = Label::createWithTTF(tmpl.name_, "fonts/arial.ttf", 18 * _scaleFactor);
         nameLabel->setPosition(Vec2(100 * _scaleFactor, itemY + 10 * _scaleFactor));
         nameLabel->setAnchorPoint(Vec2(0, 0.5f));
         nameLabel->setColor(Color3B::WHITE);
         container->addChild(nameLabel, 1);
 
         // 建造成本
-        auto costLabel = Label::createWithTTF("Cost: " + std::to_string(tmpl.cost), "fonts/arial.ttf", 14 * _scaleFactor);
+        auto costLabel = Label::createWithTTF("Cost: " + std::to_string(tmpl.cost_), "fonts/arial.ttf", 14 * _scaleFactor);
         costLabel->setPosition(Vec2(100 * _scaleFactor, itemY - 10 * _scaleFactor));
         costLabel->setAnchorPoint(Vec2(0, 0.5f));
         costLabel->setColor(Color3B(255, 215, 0));
@@ -581,7 +581,7 @@ Node* UIManager::createShop() {
             TownHall* townHall = TownHall::GetInstance();
             int currentGold = townHall->GetGold();
 
-            if (currentGold >= templateCopy.cost) {
+            if (currentGold >= templateCopy.cost_) {
                 hidePanel(UIPanelType::Shop, true);
 
                 // 使用工厂函数创建建筑实例
@@ -589,15 +589,15 @@ Node* UIManager::createShop() {
                 if (newBuilding) {
                     // 保存待放置信息
                     _pendingPlacementBuilding = newBuilding;
-                    _pendingPlacementCost = templateCopy.cost;
+                    _pendingPlacementCost = templateCopy.cost_;
 
-                    showToast("Drag to place " + templateCopy.name);
+                    showToast("Drag to place " + templateCopy.name_);
                     triggerUIEvent("OnEnterPlacementMode");
                 }
             }
             else {
                 showInfoDialog("Insufficient Gold",
-                    "You need " + std::to_string(templateCopy.cost) + " gold to build " + templateCopy.name);
+                    "You need " + std::to_string(templateCopy.cost_) + " gold to build " + templateCopy.name_);
             }
             });
         container->addChild(buyBtn, 1);
@@ -1188,12 +1188,12 @@ Node* UIManager::createArmyTraining(Building* building) {
 
     // 计算当前人口
     for (const auto& tmpl : soldierTemplates) {
-        auto it = _tempArmyConfig.find(tmpl.name);
+        auto it = _tempArmyConfig.find(tmpl.name_);
         if (it != _tempArmyConfig.end()) {
-            _tempCurrentPopulation += it->second * tmpl.populationCost;
+            _tempCurrentPopulation += it->second * tmpl.housing_space_;
         }
         else {
-            _tempArmyConfig[tmpl.name] = 0;
+            _tempArmyConfig[tmpl.name_] = 0;
         }
     }
 
@@ -1240,10 +1240,10 @@ Node* UIManager::createArmyTraining(Building* building) {
         auto leftItem = Node::create();
         leftItem->setContentSize(Size(iconSize, iconSize + 20 * _scaleFactor));
         leftItem->setPosition(Vec2(xPos, yPos));
-        leftItem->setName("left_" + tmpl.name);
+        leftItem->setName("left_" + tmpl.name_);
 
         // 左侧图标
-        auto leftIcon = Sprite::create(tmpl.iconPath);
+        auto leftIcon = Sprite::create(tmpl.icon_path_);
         if (!leftIcon) {
             leftIcon = Sprite::create();
             leftIcon->setTextureRect(Rect(0, 0, iconSize, iconSize));
@@ -1255,7 +1255,7 @@ Node* UIManager::createArmyTraining(Building* building) {
         leftItem->addChild(leftIcon, 1);
 
         // 左侧数量标签
-        int count = _tempArmyConfig[tmpl.name];
+        int count = _tempArmyConfig[tmpl.name_];
         auto leftCountLabel = Label::createWithTTF("x" + std::to_string(count), "fonts/arial.ttf", 14 * _scaleFactor);
         leftCountLabel->setPosition(Vec2(iconSize / 2, 5 * _scaleFactor));
         leftCountLabel->setColor(count > 0 ? Color3B::WHITE : Color3B(100, 100, 100));
@@ -1271,8 +1271,8 @@ Node* UIManager::createArmyTraining(Building* building) {
             return rect.containsPoint(locationInNode);
             };
 
-        std::string soldierName = tmpl.name;
-        int populationCost = tmpl.populationCost;
+        std::string soldierName = tmpl.name_;
+        int populationCost = tmpl.housing_space_;
         leftTouchListener->onTouchEnded = [this, panel, soldierName, populationCost](Touch* touch, Event* event) {
             if (_tempArmyConfig[soldierName] > 0) {
                 _tempArmyConfig[soldierName]--;
@@ -1288,10 +1288,10 @@ Node* UIManager::createArmyTraining(Building* building) {
         auto rightItem = Node::create();
         rightItem->setContentSize(Size(iconSize, iconSize));
         rightItem->setPosition(Vec2(xPos, yPos + 10 * _scaleFactor));
-        rightItem->setName("right_" + tmpl.name);
+        rightItem->setName("right_" + tmpl.name_);
 
         // 右侧图标
-        auto rightIcon = Sprite::create(tmpl.iconPath);
+        auto rightIcon = Sprite::create(tmpl.icon_path_);
         if (!rightIcon) {
             rightIcon = Sprite::create();
             rightIcon->setTextureRect(Rect(0, 0, iconSize, iconSize));
@@ -1362,12 +1362,12 @@ void UIManager::refreshArmyTrainingUI(Node* panel) {
     auto rightContainer = panel->getChildByName("rightContainer");
 
     for (const auto& tmpl : soldierTemplates) {
-        int count = _tempArmyConfig[tmpl.name];
-        bool canAdd = (_tempCurrentPopulation + tmpl.populationCost <= maxCapacity);
+        int count = _tempArmyConfig[tmpl.name_];
+        bool canAdd = (_tempCurrentPopulation + tmpl.housing_space_ <= maxCapacity);
 
         // 更新左侧数量
         if (leftContainer) {
-            auto leftItem = leftContainer->getChildByName("left_" + tmpl.name);
+            auto leftItem = leftContainer->getChildByName("left_" + tmpl.name_);
             if (leftItem) {
                 auto countLabel = leftItem->getChildByName<Label*>("countLabel");
                 if (countLabel) {
@@ -1383,7 +1383,7 @@ void UIManager::refreshArmyTrainingUI(Node* panel) {
 
         // 更新右侧可选状态
         if (rightContainer) {
-            auto rightItem = rightContainer->getChildByName("right_" + tmpl.name);
+            auto rightItem = rightContainer->getChildByName("right_" + tmpl.name_);
             if (rightItem) {
                 auto icon = rightItem->getChildByName<Sprite*>("icon");
                 if (icon) {
@@ -1446,14 +1446,14 @@ Node* UIManager::createBattleHUD() {
     // 构建部署数据（只显示数量 > 0 的士兵）
     struct DeployTroop {
         std::string name;
-        std::string iconPath;
+        std::string icon_path_;
         int count;
     };
     std::vector<DeployTroop> deployTroops;
     for (const auto& tmpl : soldierTemplates) {
-        auto it = armyConfig.find(tmpl.name);
+        auto it = armyConfig.find(tmpl.name_);
         if (it != armyConfig.end() && it->second > 0) {
-            deployTroops.push_back({ tmpl.name, tmpl.iconPath, it->second });
+            deployTroops.push_back({ tmpl.name_, tmpl.icon_path_, it->second });
         }
     }
 
@@ -1495,7 +1495,7 @@ Node* UIManager::createBattleHUD() {
         btnContainer->addChild(selectBorder, 0);
 
         // 士兵图标
-        auto icon = Sprite::create(troop.iconPath);
+        auto icon = Sprite::create(troop.icon_path_);
         if (!icon) {
             icon = Sprite::create();
             icon->setTextureRect(Rect(0, 0, btnSize, btnSize));
