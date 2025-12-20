@@ -92,16 +92,24 @@ list(APPEND GAME_SOURCE
     Classes/Combat/BuildingInCombat.cpp
     Classes/Combat/Combat.cpp
     Classes/Soldier/Soldier.cpp
+    Classes/TownHall/TownHall.cpp
+    # Classes/ResourceStorage/ResourceStorage.cpp
+    Classes/UIManager/UIManager.cpp
 )
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
    Classes/HelloWorldScene.h
    Classes/MapManager/MapManager.h
    Classes/Building/Building.h
+   Classes/UIManager/UIManager.h
+   Classes/AudioManager/AudioManager.h
+   # Classes/ResourceStorage/ResourceStorage.h   
    Classes/MainScene.h
   # Classes/CombatManager/CombatTest.h
    Classes/Combat/CombatAll.h
    Classes/Soldier/Soldier.h
+   Classes/BattleScene.h
+   Classes/TownHall/TownHall.h  
 )
 
 if(ANDROID)

@@ -1,0 +1,25 @@
+{
+  "player_stats": {
+    "gold": 5000,
+    "elixir": 3500,
+    "town_hall_level": 3,
+    "player_name": "Commander_TJ",
+    "last_save_time": 1703059200
+  },
+  "map_layout": {
+    "width": 40,
+    "length": 40,
+    "buildings": [
+      { "type": "TownHall", "x": 18, "y": 18, "level": 3 },
+      { "type": "GoldMine", "x": 10, "y": 15, "level": 2 },
+      { "type": "ElixirCollector", "x": 12, "y": 15, "level": 2 },
+      { "type": "Barrack", "x": 25, "y": 10, "level": 1 },
+      { "type": "ArmyCamp", "x": 25, "y": 20, "level": 1 },
+      { "type": "Cannon", "x": 20, "y": 10, "level": 2 }
+    ],
+    "obstacles": [
+      { "type": "Tree", "x": 5, "y": 5 },
+      { "type": "Stone", "x": 35, "y": 35 }
+    ]
+  }
+}

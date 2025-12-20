@@ -26,6 +26,7 @@
 #include "HelloWorldScene.h"
 #include "MainScene.h"
 #include "Combat/CombatAll.h"
+#include "TownHall/TownHall.h"
 
 
 // #define USE_AUDIO_ENGINE 1
@@ -119,7 +120,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     //int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
     //CCLOG("testResult:%d", testResult);
 
-    auto scene = MainScene::createScene(20,20,-1);
+    auto scene = MainScene::createScene();
     director->runWithScene(scene);
     auto map = scene->getMap();
     auto building_template = new Building("test",1,300,100,10,10,2,2,{5,5});

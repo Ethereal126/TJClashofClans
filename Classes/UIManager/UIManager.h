@@ -239,7 +239,7 @@ protected:
     cocos2d::Node* createBattleResult(int stars, int destroyPercent);
     cocos2d::Node* createUpgradeProgressOverlay(Building* building, float totalTime, float remainingTime);
 
-    // 创建通用关闭按钮（右上角❌）
+    // 创建通用关闭按钮（右上角叉）
     cocos2d::ui::Button* createCloseButton(const std::function<void()>& onClose);
 
     // 添加面板到场景

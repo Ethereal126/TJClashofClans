@@ -48,6 +48,8 @@ bool UIManager::init(Scene* rootScene) {
     }
 
     _rootScene = rootScene;
+    _callbacks.clear();
+    
     _visibleSize = Director::getInstance()->getVisibleSize();
     _visibleOrigin = Director::getInstance()->getVisibleOrigin();
 
@@ -1926,7 +1928,7 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent) {
             _battleTroopNames.clear();
 
             // 返回主场景
-            auto mainScene = MainScene::create();
+            auto mainScene = MainScene::createScene();
             Director::getInstance()->replaceScene(mainScene);
             });
         });
