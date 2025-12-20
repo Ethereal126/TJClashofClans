@@ -4,6 +4,7 @@
 
 #include "cocos2d.h"
 #include "MapManager/MapManager.h"
+#include "UIManager/UIManager.h"
 
 class MainScene : public cocos2d::Scene {
 public:
@@ -27,7 +28,10 @@ public:
         scene->addChild(map, 0);
 		scene->_map = map;
 
-        // TODO: 如果有 HUD/UIManager，这里可调用 UIManager 显示 HUD 和 ResourceBar
+        if (UIManager::getInstance()->init(scene)) {
+            UIManager::getInstance()->showPanel(UIPanelType::GameHUD, UILayer::HUD);
+            UIManager::getInstance()->showPanel(UIPanelType::ResourceBar, UILayer::HUD);
+        }
 
         return scene;
     }
