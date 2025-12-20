@@ -1555,12 +1555,9 @@ Node* UIManager::createBattleHUD() {
     endBtn->setPosition(Vec2(70 * _scaleFactor, controlBarY + controlBarHeight / 2));
     endBtn->addClickEventListener([this](Ref* sender) {
         showConfirmDialog("End Battle", "Return to village?", [this]() {
-            // 不在 UI 内部计算摧毁率或星级。
-            // 改为通过事件通知外部系统（例如 Combat）来处理战斗结束逻辑，
-            // 外部负责计算摧毁率并调用 UIManager::updateDestructionPercent(...) 或 UIManager::endBattle(...)
             triggerUIEvent("OnRequestEndBattle");
             });
-        });
+        }); 
     panel->addChild(endBtn, 2);
 
     // 右侧：摧毁率状态栏（半透明黑色背景）
@@ -2239,6 +2236,8 @@ void UIManager::showInfoDialog(const std::string& title, const std::string& cont
     okBtn->setPosition(Vec2(panelSize.width / 2, 40 * _scaleFactor));
     okBtn->addClickEventListener([panel](Ref* sender) {
         panel->removeFromParent();
+        auto scene = MainScene::createScene();
+        Director::getInstance()->replaceScene(TransitionFade::create(0.8f, scene));
         });
     panel->addChild(okBtn, 1);
 

@@ -40,8 +40,18 @@ public:
         scene->addChild(combatMgr); // 挂载到场景中以触发 Update
 
         // 初始化战斗 UI
-        if (UIManager::getInstance()->init(scene)) {
-            UIManager::getInstance()->enterBattleMode(map);
+        auto ui = UIManager::getInstance();
+        if (ui->init(scene)) {
+            // 开启战斗模式：显示 HUD，激活部署监听
+            ui->enterBattleMode(map);
+            // 注册直接退出逻辑：点击 End Battle 并确认后，不计算摧毁率，直接返回
+            ui->setUICallback("OnRequestEndBattle", []() {
+                // A. 清理 UI 状态（隐藏 HUD 等）
+                UIManager::getInstance()->exitBattleMode();
+                // B. 直接切换回主场景
+                auto homeScene = MainScene::createScene();
+                cocos2d::Director::getInstance()->replaceScene(cocos2d::TransitionFade::create(0.5f, homeScene));
+            });
         }
         
         return scene;
