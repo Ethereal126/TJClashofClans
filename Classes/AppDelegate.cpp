@@ -123,11 +123,10 @@ bool AppDelegate::applicationDidFinishLaunching() {
     director->runWithScene(scene);
     auto map = scene->getMap();
     auto building_template = new Building("test",1,300,100,10,10,2,2,{5,5});
-    building_template->texture_ = "buildings/building_1.png";
-    map->placeBuilding(building_template,5,5);
+    auto attack_building_template = new AttackBuilding("testt",40,{5,10},"tt",3,9,40);
+    attack_building_template->texture_ = "buildings/building_1.png";
+    map->placeBuilding(attack_building_template,5,10);
     CombatManager::Create(map);
-    auto p = map->getMapSize();
-    CCLOG("%d,%d",p.first,p.second);
     auto manager = CombatManager::GetInstance();
     auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 1);
     manager->StartCombat();

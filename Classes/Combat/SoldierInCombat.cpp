@@ -201,6 +201,7 @@ void SoldierInCombat::Die() {
         }
         manager->num_of_live_soldiers_--;
         if(manager->IsCombatEnd()){
+            CCLOG("call EndCombat() from soldier");
             manager->EndCombat();
         }
     });
@@ -227,7 +228,7 @@ void SoldierInCombat::DealDamageToTarget() {
     if (current_target_ && current_target_->IsAlive()) {
         current_target_->TakeDamage(soldier_template_->GetDamage());  // 调用建筑的受伤害方法
     }
-    CCLOG("current target health:%d",current_target_->GetCurrentHealth());
+    CCLOG("current target building health:%d",current_target_->GetCurrentHealth());
 }
 
 void SoldierInCombat::UpdatePositionAndCheckTargetAlive() {
@@ -399,6 +400,10 @@ void SoldierInCombat::SimplifyPath(std::vector<cocos2d::Vec2>& path){
 BuildingInCombat* SoldierInCombat::GetNextTarget() {
     auto buildings = CombatManager::GetInstance()->live_buildings_;
     if(buildings.empty()) return nullptr;
+    else{
+        auto b = buildings.front();
+        CCLOG("building name:%s",b->getResourceName().c_str());
+    }
     BuildingInCombat* target = *std::min_element(buildings.begin(),buildings.end(),
                                                  [&](BuildingInCombat* a,BuildingInCombat* b){
         return this->position_.distance(a->position_) < this->position_.distance(b->position_);

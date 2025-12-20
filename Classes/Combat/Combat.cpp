@@ -60,12 +60,17 @@ bool CombatManager::Init(MapManager* map){
         CCLOG("no building available");
     }
     for(auto building:map_->getAllBuildings()){
-        BuildingInCombat* b = BuildingInCombat::Create(building,map_);
         if(typeid(*building)==typeid(AttackBuilding)){
-            auto attack_b = dynamic_cast<AttackBuildingInCombat*>(b);
+            CCLOG("attack building");
+            auto attack_b = AttackBuildingInCombat::Create(building,map_);
             attack_b->StartAttack();
+            live_buildings_.push_back(attack_b);
         }
-        live_buildings_.push_back(b);
+        else {
+            CCLOG("common building");
+            auto b = BuildingInCombat::Create(building, map_);
+            live_buildings_.push_back(b);
+        }
         num_of_live_buildings++;
     }
     destroy_degree_ = 0;
@@ -125,6 +130,7 @@ void CombatManager::EndCombat() {
         it->removeFromParent();
     }
     this->removeFromParent();
+    CCLOG("EndCombat() finished");
 }
 
 // 每帧更新：核心检测逻辑（Cocos 帧循环驱动）
@@ -160,8 +166,8 @@ void CombatManager::SendSoldier(Soldier* soldier_template, cocos2d::Vec2 spawn_p
         return;
     }
 
+    live_soldiers.push_back(soldier);
     num_of_live_soldiers_++;
-
 }
 
 bool CombatManager::IsCombatEnd() {
