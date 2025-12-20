@@ -1,4 +1,4 @@
-//
+﻿//
 // Created by Faith_Oriest on 2025/12/1.
 //
 
@@ -401,6 +401,7 @@ protected:
     std::vector<TrainingItem> training_queue_;  // 训练队列
     float training_timer_;                      // 训练计时器（用于每秒更新）
     std::vector<SoldierType> available_soldier_types_;  // 可训练的士兵类型列表
+    std::vector<std::string> available_unit_names_;
 
 public:
     /**
@@ -437,18 +438,6 @@ public:
         const std::string& texture, int capacity, int speed);
 
     /**
-     * @brief 添加可训练士兵类型
-     * @param soldier_type 要添加的士兵类型
-     */
-    void AddAvailableSoldierType(SoldierType soldier_type);
-
-    /**
-     * @brief 获取可训练士兵类型列表
-     * @return 可训练士兵类型列表
-     */
-    const std::vector<SoldierType>& GetAvailableSoldierTypes() const;
-
-    /**
      * @brief 开始训练士兵
      * @param soldier_type 要训练的士兵类型
      * @param count 训练数量
@@ -457,16 +446,16 @@ public:
     virtual bool StartTraining(SoldierType soldier_type, int count);
 
     /**
-     * @brief 取消训练
-     * @param queue_index 训练队列中的索引（从0开始）
+     * @brief 获取可用单位名称列表
+     * @return 可用单位名称列表
      */
-    virtual void CancelTraining(int queue_index);
+    const std::vector<std::string>& GetAvailableUnitNames() const { return available_unit_names_; }
 
     /**
-     * @brief 获取当前训练队列信息
-     * @return 训练队列的常量引用
+     * @brief 添加可用单位名称
+     * @param name 单位名称
      */
-    const std::vector<TrainingItem>& GetTrainingQueue() const;
+    void AddAvailableUnitName(const std::string& name) { available_unit_names_.push_back(name); }
 
     /**
      * @brief 检查并处理训练完成的士兵
@@ -498,13 +487,13 @@ public:
      * @brief 获取训练容量
      * @return 同时训练的最大人口数
      */
-    int GetTrainingCapacity() const;
+    int GetTrainingCapacity() const { return 1; };
 
     /**
      * @brief 获取训练速度
      * @return 训练速度（秒/每人口）
      */
-    int GetTrainingSpeed() const;
+    int GetTrainingSpeed() const { return 1; };
 
     /**
      * @brief 计算训练指定数量士兵所需时间
@@ -546,5 +535,6 @@ public:
      * @return true 表示训练营活跃，false 表示训练营被摧毁
      */
     bool IsActive() const { return GetHealth() > 0; }
+
 };
 #endif // __BUILDING_H__

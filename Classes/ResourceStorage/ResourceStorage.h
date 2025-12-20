@@ -1,4 +1,4 @@
-// ResourceBuildings.h
+﻿// ResourceBuildings.h
 #pragma once
 
 #ifndef RESOURCE_BUILDINGS_H
@@ -301,10 +301,6 @@ public:
     bool UnlockTroopType(const std::string& troopType, const std::string& iconPath);
     bool IsTroopAvailable(const std::string& troopType) const;
 
-    // 训练管理（扩展原有方法）
-    virtual bool StartTraining(const std::string& unitType, int count) override;
-    virtual void CancelTraining(const std::string& unitType, int count) override;
-
     // 容量管理重写
     void UpgradeTroopCapacity(const std::string& troopType, int additionalCapacity);
 
@@ -318,6 +314,19 @@ public:
     // 信息获取
     int GetTrainedTroopCount(const std::string& troopType) const;
     int GetTroopCapacity(const std::string& troopType) const;
+    
+    /**
+     * @brief 获取可用的士兵类型列表
+     * @return 士兵类型字符串列表
+     */
+    std::vector<std::string> GetAvailableTroopTypes() const;
+    
+    /**
+     * @brief 获取可用士兵名称
+     * @return 士兵名称列表
+     */
+    std::vector<std::string> GetAvailableSoldierNames() const;
+
     const std::vector<std::string>& GetAvailableTroops() const { return availableTroops_; }
 
     // UI 更新
@@ -354,6 +363,7 @@ protected:
     std::unordered_map<std::string, cocos2d::Sprite*> troopIcons_;
     std::vector<TrainingUnit> trainingQueue_;
     std::unordered_map<std::string, int> trainedTroops_;
+    std::vector<std::string> availableSoldierTypes_;
 
 private:
     Barracks(const Barracks&) = delete;

@@ -518,7 +518,7 @@ bool TrainingBuilding::StartTraining(SoldierType soldier_type, int count) {
     }
 
     // 计算所需人口
-    int required_population = tmpl->housing_space * count;
+    int required_population = tmpl->housing_space_ * count;
 
     // 检查训练队列容量
     if (GetTrainingQueuePopulation() + required_population > training_capacity_) {
@@ -550,7 +550,7 @@ bool TrainingBuilding::StartTraining(SoldierType soldier_type, int count) {
     training_queue_.emplace_back(soldier_type, count, training_time);
 
     cocos2d::log("开始训练 %d 个 %s，需要 %d 秒，消耗金币: %d，圣水: %d",
-        count, tmpl->name.c_str(), training_time, gold_cost, elixir_cost);
+        count, tmpl->name_.c_str(), training_time, gold_cost, elixir_cost);
 
     return true;
 }
@@ -608,7 +608,7 @@ int TrainingBuilding::ProcessCompletedTraining() {
                 }
 
                 completed_count += it->count;
-                cocos2d::log("训练完成: %d 个 %s", it->count, tmpl->name.c_str());
+                cocos2d::log("训练完成: %d 个 %s", it->count, tmpl->name_.c_str());
             }
 
             // 从队列中移除
@@ -631,7 +631,7 @@ int TrainingBuilding::CalculateTrainingTime(SoldierType soldier_type, int count)
 
     // 训练时间 = 单个士兵训练时间 × 数量 / 训练速度
     // 注意：这里假设训练速度是倍数，实际可能需要调整公式
-    return (tmpl->training_time * count) / training_speed_;
+    return (tmpl->training_time_ * count) / training_speed_;
 }
 
 /**
@@ -643,7 +643,7 @@ std::pair<int, int> TrainingBuilding::CalculateTrainingCost(SoldierType soldier_
 
     // 这里简单处理：所有士兵都用金币训练
     // 实际上部落冲突中不同士兵消耗不同资源，你可以根据需要扩展
-    return { tmpl->training_cost * count, 0 };
+    return { tmpl->training_cost_ * count, 0 };
 }
 
 /**
@@ -661,7 +661,7 @@ int TrainingBuilding::GetTrainingQueuePopulation() const {
     for (const auto& item : training_queue_) {
         const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(item.soldier_type);
         if (tmpl) {
-            population += tmpl->housing_space * item.count;
+            population += tmpl->housing_space_ * item.count;
         }
     }
     return population;
@@ -721,7 +721,7 @@ void TrainingBuilding::ShowInfo() const {
         const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(type);
         if (tmpl) {
             cocos2d::log("  - %s (人口: %d, 训练时间: %d秒, 费用: %d金币)",
-                tmpl->name.c_str(), tmpl->housing_space, tmpl->training_time, tmpl->training_cost);
+                tmpl->name_.c_str(), tmpl->housing_space_, tmpl->training_time_, tmpl->training_cost_);
         }
     }
     cocos2d::log("训练队列: %d个项目，占用人口: %d/%d",
