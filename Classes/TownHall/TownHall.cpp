@@ -1093,7 +1093,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "textures/archer_tower.png", 7);
+            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "textures/archer_tower.png", 7.0f,1.0f,1.0f);  // 这里需要nzq调整一下
         }
     );
 
@@ -1214,14 +1214,14 @@ bool TownHall::AddTrainedSoldier(Soldier* soldier) {
     }
 
     // 检查军队容量
-    if (!CanAddSoldier(tmpl->housing_space)) {
+    if (!CanAddSoldier(tmpl->housingSpace)) {
         cocos2d::log("军队容量不足，无法添加士兵 %s", soldier->GetName().c_str());
         delete soldier;
         return false;
     }
 
     // 更新军队人数（人口占用）
-    UpdateArmyCount(tmpl->housing_space);
+    UpdateArmyCount(tmpl->housingSpace);
 
     // 存储士兵指针（如果需要后续使用）
     // 注意：这里根据你的需求决定是否存储士兵对象

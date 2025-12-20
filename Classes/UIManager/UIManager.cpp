@@ -1190,7 +1190,7 @@ Node* UIManager::createArmyTraining(Building* building) {
     for (const auto& tmpl : soldierTemplates) {
         auto it = _tempArmyConfig.find(tmpl.name);
         if (it != _tempArmyConfig.end()) {
-            _tempCurrentPopulation += it->second * tmpl.populationCost;
+            _tempCurrentPopulation += it->second * tmpl.housingSpace;
         }
         else {
             _tempArmyConfig[tmpl.name] = 0;
@@ -1272,7 +1272,7 @@ Node* UIManager::createArmyTraining(Building* building) {
             };
 
         std::string soldierName = tmpl.name;
-        int populationCost = tmpl.populationCost;
+        int populationCost = tmpl.housingSpace;
         leftTouchListener->onTouchEnded = [this, panel, soldierName, populationCost](Touch* touch, Event* event) {
             if (_tempArmyConfig[soldierName] > 0) {
                 _tempArmyConfig[soldierName]--;
@@ -1363,7 +1363,7 @@ void UIManager::refreshArmyTrainingUI(Node* panel) {
 
     for (const auto& tmpl : soldierTemplates) {
         int count = _tempArmyConfig[tmpl.name];
-        bool canAdd = (_tempCurrentPopulation + tmpl.populationCost <= maxCapacity);
+        bool canAdd = (_tempCurrentPopulation + tmpl.housingSpace <= maxCapacity);
 
         // 更新左侧数量
         if (leftContainer) {
@@ -1818,8 +1818,15 @@ bool UIManager::deploySoldierAt(const cocos2d::Vec2& screenPos) {
         return false;
     }
 
-    // 调用 Combat 创建士兵（无返回值）
-    Combat::GetInstance().DeploySoldier(_selectedTroopName, vecPos);
+    // 调用 Combat 创建士兵
+	auto soldier_template = TownHall::GetInstance()->GetSoldierCategory();
+	Soldier* soldier = nullptr;
+    for (const auto& tmpl : soldier_template) {
+        if (tmpl.name == _selectedTroopName) {
+            soldier = tmpl.createFunc();
+        }
+    }
+    CombatManager::GetInstance()->SendSoldier(soldier, vecPos);
 
     // 更新 UI 数量
     updateBattleTroopCount(_selectedTroopName, remaining - 1);
