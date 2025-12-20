@@ -31,6 +31,7 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     }
 
     is_alive_ = true;
+    this->building_template_ = building_template;
     current_health_ = building_template->GetHealth();
 
     if(!this->initWithFile(building_template->texture_)){
@@ -119,9 +120,7 @@ void AttackBuildingInCombat::StartAttack() {
 void AttackBuildingInCombat::ChooseTarget(){
     if(current_target_!= nullptr && current_target_->is_alive_) return;
     auto soldiers = CombatManager::GetInstance()->live_soldiers;
-    if(soldiers.empty()){
-        CCLOG("no target for building");
-    }
+    if(soldiers.empty()) CCLOG("no target for building");
     SoldierInCombat* target = *std::min_element(soldiers.begin(),soldiers.end(),
                                                  [&](SoldierInCombat* a,SoldierInCombat* b){
                                                      return this->position_.distance(a->position_)<this->position_.distance(b->position_);

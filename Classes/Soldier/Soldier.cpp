@@ -19,9 +19,11 @@ Soldier::Soldier(SoldierType type, int health, int damage, float move_speed, flo
             break;
         case SoldierType::kBomber:
             name = "Bomber";
+            building_preference_ = "WallBuilding";
             break;
         case SoldierType::kGiant:
             name = "Giant";
+            building_preference_ = "AttackBuilding";
             break;
         default:
             name = "Unknown Soldier";

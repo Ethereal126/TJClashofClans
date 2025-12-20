@@ -19,45 +19,46 @@ class Soldier {
 public:
     // 构造函数
     Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, double attack_delay);
+    std::string building_preference_;
     
     // 获取士兵类型
     SoldierType GetSoldierType() const;
     
     // 获取士兵生命值
-    virtual int GetHealth() const;
+    int GetHealth() const;
     
     // 设置士兵生命值
-    virtual void SetHealth(int health);
+    void SetHealth(int health);
     
     // 获取士兵伤害值
-    virtual int GetDamage() const;
+    int GetDamage() const;
     
     // 设置士兵伤害值
-    virtual void SetDamage(int damage);
+    void SetDamage(int damage);
     
     // 获取士兵移动速度
-    virtual float GetMoveSpeed() const;
+    float GetMoveSpeed() const;
     
     // 设置士兵移动速度
-    virtual void SetMoveSpeed(double move_speed);
+    void SetMoveSpeed(double move_speed);
     
     // 获取士兵攻击范围
-    virtual float GetAttackRange() const;
+    float GetAttackRange() const;
     
     // 设置士兵攻击范围
-    virtual void SetAttackRange(double attack_range);
+    void SetAttackRange(double attack_range);
     
     // 获取士兵攻击延迟
-    virtual float GetAttackDelay() const;
+    float GetAttackDelay() const;
     
     // 设置士兵攻击延迟
-    virtual void SetAttackDelay(double attack_delay);
+    void SetAttackDelay(double attack_delay);
     
     // 获取士兵名称
-    virtual std::string GetName() const;
+    std::string GetName() const;
     
     // 设置士兵名称
-    virtual void SetName(std::string name);
+    void SetName(std::string name);
     
     // TODO: Village类尚未实现，暂时注释掉相关方法
     // void SetVillage(Village* village);

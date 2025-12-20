@@ -122,15 +122,21 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto scene = MainScene::createScene(20,20,-1);
     director->runWithScene(scene);
     auto map = scene->getMap();
-    auto building_template = new Building("test",1,300,100,10,10,2,2,{5,5});
-    auto attack_building_template = new AttackBuilding("testt",40,{5,10},"tt",3,9,40);
+    auto building_template = new WallBuilding("WallBuilding",1,300,100,10,10,2,2,{5,5});
+    building_template->texture_ = "buildings/building_1.png";
+    auto attack_building_template = new AttackBuilding("AttackBuilding",40,{5,10},"tt",3,9,40);
     attack_building_template->texture_ = "buildings/building_1.png";
+
+
+    map->placeBuilding(building_template,5,20);
     map->placeBuilding(attack_building_template,5,10);
     CombatManager::Create(map);
     auto manager = CombatManager::GetInstance();
-    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 1);
+    auto soldier_template1 = new Soldier(SoldierType::kGiant, 100, 100, 1, 3, 1);
+    auto soldier_template2 = new Soldier(SoldierType::kBomber, 100, 100, 1, 3, 1);
     manager->StartCombat();
-    manager->SendSoldier(soldier_template,cocos2d::Vec2(2,2));
+    manager->SendSoldier(soldier_template1,cocos2d::Vec2(10,10));
+    manager->SendSoldier(soldier_template2,cocos2d::Vec2(10,10));
 
     return true;
 }

@@ -404,8 +404,14 @@ BuildingInCombat* SoldierInCombat::GetNextTarget() {
         auto b = buildings.front();
         CCLOG("building name:%s",b->getResourceName().c_str());
     }
+
     BuildingInCombat* target = *std::min_element(buildings.begin(),buildings.end(),
                                                  [&](BuildingInCombat* a,BuildingInCombat* b){
+        bool aIsTarget = (a->building_template_->getName() == this->soldier_template_->building_preference_);
+        bool bIsTarget = (b->building_template_->getName() == this->soldier_template_->building_preference_);
+        if (aIsTarget != bIsTarget) {
+            return !aIsTarget;
+        }
         return this->position_.distance(a->position_) < this->position_.distance(b->position_);
     });
     target->subscribers.push_back(this);
