@@ -26,21 +26,17 @@ public:
     // 被攻击函数
     virtual void TakeDamage(int damage);
 
-    // 判断是否存活
-    virtual bool IsAlive() const;
-
     void Die();
 
     int GetCurrentHealth() const{return current_health_;};
 private:
     int current_health_;
-    bool is_alive_;
     MapManager* map_;
 };
 
 class AttackBuildingInCombat : public BuildingInCombat{
 public:
-    static AttackBuildingInCombat* Create(Building* building_template, MapManager* map);
+    static AttackBuildingInCombat* Create(const Building* building_template, MapManager* map);
     bool Init(const Building* building_template,MapManager* map) override;
     void StartAttack();
 private:

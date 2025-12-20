@@ -10,7 +10,7 @@
 bool SoldierInCombat::is_animation_loaded_ = false;
 
 // -------------------------- 工厂方法实现 --------------------------
-SoldierInCombat* SoldierInCombat::Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
+SoldierInCombat* SoldierInCombat::Create(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
     auto soldier = new (std::nothrow) SoldierInCombat();
     if (soldier && soldier->Init(soldier_template, spawn_pos,map)) {
         soldier->autorelease();  // Cocos2d-x自动内存管理
@@ -25,7 +25,7 @@ SoldierInCombat::~SoldierInCombat() {
 }
 
 // -------------------------- 初始化实现 --------------------------
-bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
+bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
     // 1. 调用父类Sprite::init()确保渲染节点初始化
     if (!cocos2d::Sprite::init()) {
         CCLOG("SoldierInCombat Init Failed: Sprite Init Error");
@@ -58,7 +58,7 @@ bool SoldierInCombat::Init(Soldier* soldier_template, const cocos2d::Vec2& spawn
     }
     this->setPosition(map_->vecToWorld(spawn_pos));
     map_->addChild(this);
-    this->setScale(1.5f);  // 调整大小（根据实际资源修改）
+    this->setScale(soldier_template->size_);  // 调整大小（根据实际资源修改）
 
     this->DoAllMyActions();
 
@@ -199,6 +199,12 @@ void SoldierInCombat::Die() {
                 break;
             }
         }
+        for(auto it = current_target_->subscribers.begin(); it != current_target_->subscribers.end(); ++it){
+            if(*it==this){
+                current_target_->subscribers.erase(it);
+                break;
+            }
+        }
         manager->num_of_live_soldiers_--;
         if(manager->IsCombatEnd()){
             CCLOG("call EndCombat() from soldier");
@@ -225,10 +231,16 @@ void SoldierInCombat::Attack() {
 }
 
 void SoldierInCombat::DealDamageToTarget() {
-    if (current_target_ && current_target_->IsAlive()) {
+    if (current_target_) {
         current_target_->TakeDamage(soldier_template_->GetDamage());  // 调用建筑的受伤害方法
+        if(!current_target_) return;
     }
-    CCLOG("current target building health:%d",current_target_->GetCurrentHealth());
+    auto name = current_target_->building_template_->GetName();
+    CCLOG("%s health:%d",name.c_str(),current_target_->GetCurrentHealth());
+    if(this->soldier_template_->GetSoldierType()==SoldierType::kBomber){
+        CCLOG("bomber kill self");
+        this->Die();
+    }
 }
 
 void SoldierInCombat::UpdatePositionAndCheckTargetAlive() {
@@ -407,10 +419,14 @@ BuildingInCombat* SoldierInCombat::GetNextTarget() {
 
     BuildingInCombat* target = *std::min_element(buildings.begin(),buildings.end(),
                                                  [&](BuildingInCombat* a,BuildingInCombat* b){
-        bool aIsTarget = (a->building_template_->getName() == this->soldier_template_->building_preference_);
-        bool bIsTarget = (b->building_template_->getName() == this->soldier_template_->building_preference_);
+        std::string ta = a->building_template_->GetName(),tb = b->building_template_->GetName();
+        std::string preference = this->soldier_template_->building_preference_;
+        bool aIsTarget = (ta == preference),bIsTarget = (tb == preference);
+
+        CCLOG("a:%s,b:%s,preference:%s",ta.c_str(),tb.c_str(),preference.c_str());
+
         if (aIsTarget != bIsTarget) {
-            return !aIsTarget;
+            return aIsTarget;
         }
         return this->position_.distance(a->position_) < this->position_.distance(b->position_);
     });

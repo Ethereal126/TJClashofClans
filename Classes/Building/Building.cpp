@@ -356,10 +356,10 @@ void WallBuilding::ShowInfo() const {
  * 初始化攻击建筑的生命、防御、建造时间和成本，并设置攻击范围与纹理。
  */
 AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture,
-                               float range,float attack_interval,float attack_damage)
+                               float attack_interval,int attack_damage,float attack_range)
     : Building(name, 1, 6 * base, base,
         base * 2, base * 500, 2, 2, position),
-    Range_(range),attack_interval_(attack_interval),attack_damage_(attack_damage) {
+    attack_interval_(attack_interval),attack_damage_(attack_damage),attack_range_(attack_range) {
     this->setTexture(texture);
 }
 
@@ -369,9 +369,9 @@ AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 positio
  */
 AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
     cocos2d::Vec2 position,
-    const std::string& texture, float range,float attack_interval,float attack_damage) {
+    const std::string& texture, float attack_interval,int attack_damage,float attack_range) {
     // 使用nothrow避免分配失败时抛出异常
-    auto building = new (std::nothrow) AttackBuilding(name, base, position, texture, range,attack_interval,attack_damage);
+    auto building = new (std::nothrow) AttackBuilding(name, base, position, texture, attack_interval,attack_damage,attack_range);
 
     if (building) {
         if (building->initWithFile(texture)) {
@@ -411,7 +411,7 @@ AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
             }
 
             cocos2d::log("创建攻击建筑: %s (范围: %d, 位置: %.1f,%.1f)",
-                name.c_str(), range, position.x, position.y);
+                name.c_str(), attack_range, position.x, position.y);
             return building;
         }
 
@@ -429,7 +429,7 @@ AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
  */
 void AttackBuilding::ShowInfo() const {
     Building::ShowInfo();
-    cocos2d::log("攻击范围: %d 格", Range_);
+    cocos2d::log("攻击范围: %f 格", attack_range_);
 }
 
 // ==================== TrainingBuilding 成员函数的实现 ====================

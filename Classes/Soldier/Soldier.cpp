@@ -6,22 +6,28 @@
 #include <string>
 
 // 构造函数实现
-Soldier::Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, double attack_delay)
+Soldier::Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, float attack_delay)
     : type_(type), health_(health), damage_(damage), move_speed_(move_speed), attack_range_(attack_range), attack_delay_(attack_delay)
 {
     // 根据士兵类型设置默认名称
     switch (type_) {
         case SoldierType::kBarbarian:
             name_ = "Barbarian";
+            size_=2.5f;
             break;
         case SoldierType::kArcher:
             name_ = "Archer";
+            size_=2.0f;
             break;
         case SoldierType::kBomber:
             name_ = "Bomber";
+            building_preference_ = "WallBuilding";
+            size_=1.5f;
             break;
         case SoldierType::kGiant:
             name_ = "Giant";
+            building_preference_ = "AttackBuilding";
+            size_=4.0f;
             break;
         default:
             name_ = "Unknown Soldier";

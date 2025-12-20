@@ -30,11 +30,10 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
         return false;
     }
 
-    is_alive_ = true;
     this->building_template_ = building_template;
     current_health_ = building_template->GetHealth();
 
-    if(!this->initWithFile(building_template->texture_)){
+    if(!this->initWithTexture(building_template->getTexture())){
         CCLOG("BuildingInCombat init failed: init texture failure!");
         return false;
     }
@@ -42,7 +41,7 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     map_ = map;
     // 只有在map_不为nullptr时才调用addChild
     if (map_ != nullptr) {
-        map_->addChild(this);
+        map_->addChild(this,1);
     }
     else{
         CCLOG("BuildingInCombat init failed: get map failure!");
@@ -65,7 +64,7 @@ void BuildingInCombat::TakeDamage(int damage) {
     }
 }
 
-AttackBuildingInCombat* AttackBuildingInCombat::Create(Building* building_template, MapManager* map) {
+AttackBuildingInCombat* AttackBuildingInCombat::Create(const Building* building_template, MapManager* map) {
     auto soldier = new (std::nothrow) AttackBuildingInCombat();
     if (soldier && soldier->Init(building_template, map)) {
         soldier->autorelease();  // Cocos2d-x自动内存管理
@@ -133,16 +132,10 @@ void AttackBuildingInCombat::ChooseTarget(){
     }
 }
 
-bool BuildingInCombat::IsAlive() const {
-    return is_alive_;
-}
-
 void BuildingInCombat::Die() {
-    if (!is_alive_) return;
-    is_alive_ = false;
-
     for(auto s:subscribers){
         s->stopAllActions();  // 目标死亡，停止当前攻击动作
+        s->current_target_ = nullptr;
     }
 
     auto manager = CombatManager::GetInstance();
@@ -154,11 +147,17 @@ void BuildingInCombat::Die() {
         return;
     }
 
+    auto it = find(manager->live_buildings_.begin(),manager->live_buildings_.end(),this);
+    if(it!=manager->live_buildings_.end()){
+        CCLOG("dead building found,erase it");
+        manager->live_buildings_.erase(it);
+    }
+    else{
+        CCLOG("dead building unfound");
+    }
     for(auto s:subscribers){
         s->DoAllMyActions();
     }
 
-    auto it = find(manager->live_buildings_.begin(),manager->live_buildings_.end(),this);
-    if(it!=manager->live_buildings_.end()) manager->live_buildings_.erase(it);
     this->removeFromParent();
 }

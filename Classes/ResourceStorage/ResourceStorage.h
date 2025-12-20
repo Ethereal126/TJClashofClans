@@ -18,7 +18,7 @@ public:
     virtual ~ResourceStorage();
 
     // 创建方法
-    static ResourceStorage* Create(const std::string& name, int base, std::pair<int, int> position,
+    static ResourceStorage* Create(const std::string& name, int base, cocos2d::Vec2 position,
         const std::string& texture, const std::string& resourceType);
 
     // 初始化声明
@@ -65,7 +65,7 @@ public:
     virtual void ShowInfo() const override;
 
 protected:
-    ResourceStorage(const std::string& name, int base, std::pair<int, int> position,
+    ResourceStorage(const std::string& name, int base, cocos2d::Vec2 position,
         const std::string& texture, const std::string& resourceType);
 
     // 初始化方法
@@ -111,7 +111,7 @@ public:
     virtual ~ProductionBuilding();
 
     // 创建方法
-    static ProductionBuilding* Create(const std::string& name, int base, std::pair<int, int> position,
+    static ProductionBuilding* Create(const std::string& name, int base, cocos2d::Vec2 position,
         const std::string& texture, const std::string& resourceType);
 
     // 初始化声明
@@ -137,7 +137,7 @@ public:
     virtual void ShowInfo() const override;
 
 protected:
-    ProductionBuilding(const std::string& name, int base, std::pair<int, int> position,
+    ProductionBuilding(const std::string& name, int base, cocos2d::Vec2 position,
         const std::string& texture, const std::string& resourceType);
 
     // 初始化生产系统
@@ -164,7 +164,7 @@ private:
  */
 class ElixirStorage : public ProductionBuilding {
 public:
-    static ElixirStorage* Create(std::string name, int base, std::pair<int, int> position);
+    static ElixirStorage* Create(std::string name, int base, cocos2d::Vec2 position);
 
     virtual ~ElixirStorage();
 
@@ -189,7 +189,7 @@ public:
     int GetNextCapacity() const;
 
 protected:
-    ElixirStorage(const std::string& name, int base, std::pair<int, int> position);
+    ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position);
 
     // 初始化圣水特有组件
     virtual void InitElixirSpecificComponents();
@@ -211,7 +211,7 @@ private:
  */
 class GoldStorage : public ProductionBuilding {
 public:
-    static GoldStorage* Create(std::string name, int base, std::pair<int, int> position);
+    static GoldStorage* Create(std::string name, int base, cocos2d::Vec2 position);
 
     virtual ~GoldStorage();
 
@@ -244,7 +244,7 @@ public:
     float GetNextProtectionPercentage() const;
 
 protected:
-    GoldStorage(const std::string& name, int base, std::pair<int, int> position);
+    GoldStorage(const std::string& name, int base, cocos2d::Vec2 position);
 
     // 初始化金币特有组件
     virtual void InitGoldSpecificComponents();
@@ -283,7 +283,7 @@ public:
     };
 
     // 创建方法声明
-    static Barracks* Create(const std::string& name, int base, std::pair<int, int> position);
+    static Barracks* Create(const std::string& name, int base, cocos2d::Vec2 position);
     
     virtual ~Barracks();
 
@@ -345,7 +345,7 @@ public:
     int GetNextTrainingSpeed() const;
 
 protected:
-    Barracks(const std::string& name, int base, std::pair<int, int> position);
+    Barracks(const std::string& name, int base, cocos2d::Vec2 position);
 
     // 训练完成回调
     void OnTrainingComplete(const std::string& troopType, int count);

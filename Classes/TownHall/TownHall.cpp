@@ -3,19 +3,18 @@
 //
 
 #include "TownHall.h"
-#include "Soldier/Soldier.h"
 #include <cmath>
 USING_NS_CC;
 
 static std::vector<SoldierTemplate> soldier_templates = {
     SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldier/Barbarian.png",
-                    45, 8, 1.0f, 0.4f, 1.0f, 1, 25, 20),
+                    50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
     SoldierTemplate(SoldierType::kArcher, "Archer","Soldier/Archer.png",
-                    20, 7, 0.8f, 3.5f, 1.0f, 1, 50, 25),
+                    25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
     SoldierTemplate(SoldierType::kBomber, "Bomber","Soldier/Bomber.png",
-                    20, 6, 1.2f, 0.4f, 1.0f, 2, 1000, 60),
+                    20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
     SoldierTemplate(SoldierType::kGiant, "Giant","Soldier/Giant.png",
-                    300, 22, 0.6f, 1.0f, 2.0f, 5, 500, 120)
+                    500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
 
 // ==================== TownHall 实现 ====================

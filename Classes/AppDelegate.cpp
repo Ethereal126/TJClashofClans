@@ -23,9 +23,9 @@
  ****************************************************************************/
 
 #include "AppDelegate.h"
-#include "HelloWorldScene.h"
 #include "MainScene.h"
 #include "Combat/CombatAll.h"
+#include "TownHall/TownHall.h"
 
 
 // #define USE_AUDIO_ENGINE 1
@@ -122,21 +122,24 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto scene = MainScene::createScene(20,20,-1);
     director->runWithScene(scene);
     auto map = scene->getMap();
-    auto building_template = new WallBuilding("WallBuilding",1,300,100,10,10,2,2,{5,5});
-    building_template->texture_ = "buildings/building_1.png";
-    auto attack_building_template = new AttackBuilding("AttackBuilding",40,{5,10},"tt",3,9,40);
-    attack_building_template->texture_ = "buildings/building_1.png";
+    std::string texture= "buildings/building_1.png";;
+    auto building_template = new WallBuilding("WallBuilding",5,{5,5},texture);
+    auto attack_building_template = new AttackBuilding("AttackBuilding",5,{5,15},texture,3,9,40);
 
 
-    map->placeBuilding(building_template,5,20);
-    map->placeBuilding(attack_building_template,5,10);
+    map->PushBuilding(building_template);
+    map->PushBuilding(attack_building_template);
     CombatManager::Create(map);
     auto manager = CombatManager::GetInstance();
-    auto soldier_template1 = new Soldier(SoldierType::kGiant, 100, 100, 1, 3, 1);
-    auto soldier_template2 = new Soldier(SoldierType::kBomber, 100, 100, 1, 3, 1);
+    auto giant = TownHall::GetSoldierTemplate(SoldierType::kGiant)->Create();
+    auto bomber = TownHall::GetSoldierTemplate(SoldierType::kBomber)->Create();
+    auto archer = TownHall::GetSoldierTemplate(SoldierType::kArcher)->Create();
+    auto barbarian = TownHall::GetSoldierTemplate(SoldierType::kBarbarian)->Create();
     manager->StartCombat();
-    manager->SendSoldier(soldier_template1,cocos2d::Vec2(10,10));
-    manager->SendSoldier(soldier_template2,cocos2d::Vec2(10,10));
+    manager->SendSoldier(giant,cocos2d::Vec2(10,10));
+    manager->SendSoldier(bomber,cocos2d::Vec2(1,1));
+    manager->SendSoldier(archer,cocos2d::Vec2(1,2));
+    manager->SendSoldier(barbarian,cocos2d::Vec2(12,12));
 
     return true;
 }

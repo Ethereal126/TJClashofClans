@@ -16,12 +16,12 @@ enum class SoldierType {
     kGiant       // 巨人
 };
 
-//TODO:完善此类实现，使其真正满足Soldier所需具备的完整能力
 class Soldier {
 public:
     // 构造函数
-    Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, double attack_delay);
+    Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, float attack_delay);
     std::string building_preference_;
+    float size_;
     
     // 获取士兵类型
     SoldierType GetSoldierType() const;

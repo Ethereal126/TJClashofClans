@@ -154,7 +154,7 @@ void CombatManager::Update(float dt) {
 }
 
 //在接收到交互指令后，将士兵加入到战斗中；
-void CombatManager::SendSoldier(Soldier* soldier_template, cocos2d::Vec2 spawn_pos) {
+void CombatManager::SendSoldier(const Soldier* soldier_template, cocos2d::Vec2 spawn_pos) {
     if (state_ != CombatState::kFighting){
         CCLOG("SendSoldier() when not fighting");
         return;

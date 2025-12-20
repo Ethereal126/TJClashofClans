@@ -278,19 +278,17 @@ public:
  * 继承自Building类，表示一个攻击塔建筑。
  */
 class AttackBuilding : public Building {
-private:
-    float Range_;  // 攻击范围
-
 public:
-    float attack_interval_;
-    float attack_damage_;
+    float attack_interval_,attack_range_;
+    int attack_damage_;
+
 
     /**
      * @brief 构造函数
      * 初始化攻击塔的名称、基准数值、位置、纹理以及攻击范围。
      */
     AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture,
-                   float range,float attack_interval,float attack_damage);
+                   float attack_interval,int attack_damage,float attack_range);
 
     /**
      * @brief 创建攻击建筑实例
@@ -303,7 +301,7 @@ public:
      */
     static AttackBuilding* Create(const std::string& name, int base,
         cocos2d::Vec2 position,
-        const std::string& texture, float range,float attack_interval,float attack_damage);
+        const std::string& texture, float attack_interval,int attack_damage,float attack_range);
 
     /**
      * @brief 显示攻击塔信息
@@ -316,18 +314,6 @@ public:
      * @return true 表示建筑活跃，false 表示建筑被摧毁
      */
     bool IsActive() const { return GetHealth() > 0; }
-
-    /**
-     * @brief 获取攻击范围
-     * @return 攻击范围（格子数）
-     */
-    float GetAttackRange() const { return Range_; }
-
-    /**
-     * @brief 设置攻击范围
-     * @param range 新的攻击范围
-     */
-    void SetAttackRange(int range) { Range_ = range; }
 };
 
 /**
