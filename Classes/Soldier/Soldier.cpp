@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by duby0 on 2025/12/7.
 //
 
@@ -12,19 +12,19 @@ Soldier::Soldier(SoldierType type, int health, int damage, float move_speed, flo
     // 根据士兵类型设置默认名称
     switch (type_) {
         case SoldierType::kBarbarian:
-            name_ = "Barbarian";
+            name = "Barbarian";
             break;
         case SoldierType::kArcher:
-            name_ = "Archer";
+            name = "Archer";
             break;
         case SoldierType::kBomber:
-            name_ = "Bomber";
+            name = "Bomber";
             break;
         case SoldierType::kGiant:
-            name_ = "Giant";
+            name = "Giant";
             break;
         default:
-            name_ = "Unknown Soldier";
+            name = "Unknown Soldier";
             break;
     }
 }
@@ -98,11 +98,11 @@ void Soldier::SetAttackDelay(double attack_delay)
 // 获取士兵名称
 std::string Soldier::GetName() const
 {
-    return name_;
+    return name;
 }
 
 // 设置士兵名称
 void Soldier::SetName(std::string soldier_name)
 {
-    name_ = std::move(soldier_name);
+    name = std::move(soldier_name);
 }

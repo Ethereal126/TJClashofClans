@@ -1,4 +1,4 @@
-﻿//
+//
 // Created by Faith_Oriest on 2025/12/1.
 //
 
@@ -8,7 +8,7 @@
 
 #include <string>
 #include "cocos2d.h"
-#include "Soldier/Soldier.h"
+
 /**
  * @brief Building类
  * 基类，所有建筑物都会继承自该类。
@@ -278,19 +278,17 @@ public:
  * 继承自Building类，表示一个攻击塔建筑。
  */
 class AttackBuilding : public Building {
-private:
-    float Range_;  // 攻击范围
-
 public:
     float attack_interval_;
-    float attack_damage_;
+    int attack_damage_;
+    float attack_range_;
 
     /**
      * @brief 构造函数
      * 初始化攻击塔的名称、基准数值、位置、纹理以及攻击范围。
      */
     AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture,
-                   float range,float attack_interval,float attack_damage);
+                   float attack_interval,int attack_damage,float attack_range_);
 
     /**
      * @brief 创建攻击建筑实例
@@ -303,7 +301,7 @@ public:
      */
     static AttackBuilding* Create(const std::string& name, int base,
         cocos2d::Vec2 position,
-        const std::string& texture, float range,float attack_interval,float attack_damage);
+        const std::string& texture, float attack_interval,int attack_damage,float attack_range);
 
     /**
      * @brief 显示攻击塔信息
@@ -316,92 +314,26 @@ public:
      * @return true 表示建筑活跃，false 表示建筑被摧毁
      */
     bool IsActive() const { return GetHealth() > 0; }
-
-    /**
-     * @brief 获取攻击范围
-     * @return 攻击范围（格子数）
-     */
-    float GetAttackRange() const { return Range_; }
-
-    /**
-     * @brief 设置攻击范围
-     * @param range 新的攻击范围
-     */
-    void SetAttackRange(int range) { Range_ = range; }
 };
 
 /**
  * @brief WallBuilding类
  * 继承自Building类，表示墙体建筑。
- * 部落冲突中的基础墙体，主要用于阻挡敌方单位前进。
+ * napper: 尽管好像不需要做什么额外实现，但是为了炸弹兵对墙体的特殊索敌逻辑，最好还是拆成单独类。
  */
 class WallBuilding : public Building {
-public:
-    /**
-     * @brief 构造函数
-     * 初始化墙体建筑的属性
-     */
-    WallBuilding(std::string name, int base, cocos2d::Vec2 position,
-        std::string texture);
 
-    /**
-     * @brief 创建墙体实例
-     * @param name 建筑名称
-     * @param base 基准数值
-     * @param position 位置坐标
-     * @param texture 纹理路径
-     * @return 创建的WallBuilding指针，失败返回nullptr
-     */
-    static WallBuilding* Create(const std::string& name, int base,
-        cocos2d::Vec2 position,
-        const std::string& texture);
-
-    /**
-     * @brief 重写升级方法
-     * 墙体升级时更新纹理和属性
-     */
-    virtual void Upgrade() override;
-
-    /**
-     * @brief 检查建筑是否活跃
-     * @return true 表示墙体活跃，false 表示墙体被摧毁
-     */
-    bool IsActive() const { return GetHealth() > 0; }
-
-    /**
-     * @brief 显示墙体信息
-     * 在基类显示信息基础上，附加墙体特有属性
-     */
-    virtual void ShowInfo() const override;
 };
 
 /**
  * @brief TrainingBuilding类
- * 继承自Building类，表示训练营建筑，用于直接训练士兵。
- * 训练前检查TownHall的军队容量，训练完成后将士兵添加到TownHall。
+ * 继承自Building类，表示训练营建筑，用于训练士兵。
  */
 class TrainingBuilding : public Building {
 protected:
-    // ==================== 训练相关属性 ====================
-    int training_capacity_;                     // 同时训练的最大士兵数量（按人口计算）
-    int training_speed_;                        // 训练速度（每秒减少的训练时间）
-
-    // ==================== 训练队列相关 ====================
-    struct TrainingItem {
-        SoldierType soldier_type;               // 正在训练的士兵类型
-        int count;                              // 训练数量
-        int remaining_time;                     // 剩余训练时间（秒）
-        int total_time;                         // 总训练时间（秒）
-
-        TrainingItem(SoldierType type, int cnt, int time)
-            : soldier_type(type), count(cnt), remaining_time(time), total_time(time) {
-        }
-    };
-
-    std::vector<TrainingItem> training_queue_;  // 训练队列
-    float training_timer_;                      // 训练计时器（用于每秒更新）
-    std::vector<SoldierType> available_soldier_types_;  // 可训练的士兵类型列表
-    std::vector<std::string> available_unit_names_;
+    int training_capacity_;     // 同时训练的最大士兵数量
+    int training_speed_;        // 训练速度（单位：秒/每兵）
+    std::vector<std::string> available_units_;  // 可训练的单位类型列表
 
 public:
     /**
@@ -411,8 +343,8 @@ public:
      * @param base 基准数值（用于计算生命值、防御等）
      * @param position 建筑位置坐标
      * @param texture 建筑纹理路径
-     * @param capacity 训练容量（人口）
-     * @param speed 训练速度（秒/每人口）
+     * @param capacity 训练容量
+     * @param speed 训练速度（秒/每兵）
      */
     TrainingBuilding(std::string name, int base, cocos2d::Vec2 position,
         std::string texture, int capacity, int speed);
@@ -438,42 +370,47 @@ public:
         const std::string& texture, int capacity, int speed);
 
     /**
+     * @brief 添加可训练单位
+     * @param unit_type 要添加的士兵类型
+     */
+    void AddAvailableUnit(const std::string& unit_type);
+
+    /**
+     * @brief 获取可训练单位列表
+     * @return 可训练单位列表
+     */
+    std::vector<std::string>& GetAvailableUnits();
+
+    /**
      * @brief 开始训练士兵
-     * @param soldier_type 要训练的士兵类型
+     * @param unit_type 要训练的士兵类型
      * @param count 训练数量
      * @return 是否成功开始训练
      */
-    virtual bool StartTraining(SoldierType soldier_type, int count);
+    virtual bool StartTraining(const std::string& unit_type, int count);
 
     /**
-     * @brief 获取可用单位名称列表
-     * @return 可用单位名称列表
+     * @brief 取消训练
+     * @param unit_type 要取消的士兵类型
+     * @param count 取消数量
      */
-    const std::vector<std::string>& GetAvailableUnitNames() const { return available_unit_names_; }
+    virtual void CancelTraining(const std::string& unit_type, int count);
 
     /**
-     * @brief 添加可用单位名称
-     * @param name 单位名称
+     * @brief 获取当前训练队列信息
+     * @return 训练队列中各类士兵的数量映射
      */
-    void AddAvailableUnitName(const std::string& name) { available_unit_names_.push_back(name); }
+    std::map<std::string, int> GetTrainingQueue() const;
 
     /**
-     * @brief 检查并处理训练完成的士兵
-     * 需要每帧调用，返回训练完成的士兵数量
-     * @return 本次训练完成的士兵数量
+     * @brief 检查是否有训练完成
+     * @return 完成训练的士兵类型和数量
      */
-    virtual int ProcessCompletedTraining();
-
-    /**
-     * @brief 更新训练进度
-     * 需要在游戏主循环中每帧调用
-     * @param delta_time 距离上一帧的时间（秒）
-     */
-    virtual void UpdateTrainingProgress(float delta_time);
+    std::pair<std::string, int> CheckCompletedTraining();
 
     /**
      * @brief 升级训练营
-     * 重写基类升级方法，提升训练容量和速度，并解锁新的士兵类型
+     * 重写基类升级方法，提升训练容量和速度
      */
     virtual void Upgrade() override;
 
@@ -485,56 +422,20 @@ public:
 
     /**
      * @brief 获取训练容量
-     * @return 同时训练的最大人口数
+     * @return 同时训练的最大士兵数量
      */
-    int GetTrainingCapacity() const { return 1; };
+    int GetTrainingCapacity() const;
 
     /**
      * @brief 获取训练速度
-     * @return 训练速度（秒/每人口）
+     * @return 训练速度（秒/每兵）
      */
-    int GetTrainingSpeed() const { return 1; };
+    int GetTrainingSpeed() const;
 
     /**
-     * @brief 计算训练指定数量士兵所需时间
-     * @param soldier_type 士兵类型
-     * @param count 数量
-     * @return 所需时间（秒）
+     * @brief 获取可训练单位列表
+     * @return 可训练单位类型的常量引用
      */
-    int CalculateTrainingTime(SoldierType soldier_type, int count) const;
-
-    /**
-     * @brief 计算训练指定数量士兵所需资源
-     * @param soldier_type 士兵类型
-     * @param count 数量
-     * @return 所需资源（金币，圣水）
-     */
-    std::pair<int, int> CalculateTrainingCost(SoldierType soldier_type, int count) const;
-
-    /**
-     * @brief 检查训练队列是否已满（按人口）
-     * @return 如果训练队列人口已达到容量上限，返回true
-     */
-    bool IsTrainingQueueFull() const;
-
-    /**
-     * @brief 获取训练队列当前占用的人口
-     * @return 占用人口数
-     */
-    int GetTrainingQueuePopulation() const;
-
-    /**
-     * @brief 检查是否可训练指定类型的士兵
-     * @param soldier_type 士兵类型
-     * @return 如果可训练返回true
-     */
-    bool CanTrainSoldierType(SoldierType soldier_type) const;
-
-    /**
-     * @brief 检查训练营是否活跃
-     * @return true 表示训练营活跃，false 表示训练营被摧毁
-     */
-    bool IsActive() const { return GetHealth() > 0; }
-
+    const std::vector<std::string>& GetAvailableUnits() const;
 };
 #endif // __BUILDING_H__

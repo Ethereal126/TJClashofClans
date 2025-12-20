@@ -4,7 +4,6 @@
 
 #include <iostream>
 #include "Building/Building.h"
-#include "TownHall/TownHall.h"
 
 // ==================== Building 基类函数的实现 ====================
 
@@ -271,84 +270,6 @@ void SourceBuilding::ShowInfo() const {
     cocos2d::log("资源生产速率: %d 点/秒", production_rate_);
 }
 
-// ==================== WallBuilding 成员函数的实现 ====================
-
-/**
- * @brief WallBuilding 构造函数
- * 初始化墙体的生命、防御、建造时间和成本
- */
-WallBuilding::WallBuilding(std::string name, int base, cocos2d::Vec2 position,
-    std::string texture)
-    : Building(name, 1, 15 * base, 2 * base,  // 墙体生命值较高，防御值较高
-        base * 2, base * 150, 1, 1, position) {  // 墙体占用1x1格子
-
-    this->setTexture(texture);
-    this->setColor(cocos2d::Color3B(180, 180, 180)); // 灰色墙体
-}
-
-/**
- * @brief 创建墙体实例
- */
-WallBuilding* WallBuilding::Create(const std::string& name, int base,
-    cocos2d::Vec2 position,
-    const std::string& texture) {
-    auto wall = new (std::nothrow) WallBuilding(name, base, position, texture);
-
-    if (wall) {
-        if (wall->initWithFile(texture)) {
-            wall->autorelease();
-
-            // 设置墙体锚点为底部中心，方便放置
-            wall->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
-
-            cocos2d::log("创建城墙: %s (位置: %.1f,%.1f)",
-                name.c_str(), position.x, position.y);
-            return wall;
-        }
-        delete wall;
-    }
-
-    cocos2d::log("创建城墙失败: %s", name.c_str());
-    return nullptr;
-}
-
-/**
- * @brief 墙体升级
- * 墙体升级时更新纹理和属性
- */
-void WallBuilding::WallBuilding::Upgrade() {
-    if (is_upgrading_) {
-        cocos2d::log("城墙 %s 正在升级中，请等待升级完成", name_.c_str());
-        return;
-    }
-
-    // 调用基类升级
-    Building::Upgrade();
-
-    // 更新墙体纹理（假设命名规则为 "wall_levelX.png"）
-    std::string new_texture = "Walls/wall_level" + std::to_string(level_) + ".png";
-    this->setTexture(new_texture);
-
-    // 根据等级改变颜色（可选视觉效果）
-    if (level_ >= 8) {
-        this->setColor(cocos2d::Color3B(255, 215, 0)); // 金色
-    }
-    else if (level_ >= 5) {
-        this->setColor(cocos2d::Color3B(192, 192, 192)); // 银色
-    }
-
-    cocos2d::log("城墙升级到等级 %d，血量: %d/%d，防御: %d",
-        level_, health_, GetMaxHealth(), defense_);
-}
-
-/**
- * @brief 显示墙体信息
- */
-void WallBuilding::ShowInfo() const {
-    Building::ShowInfo();
-    cocos2d::log("墙体升级进度: %d", level_);
-}
-
 // ==================== AttackBuilding 成员函数的实现 ====================
 
 /**
@@ -356,10 +277,10 @@ void WallBuilding::ShowInfo() const {
  * 初始化攻击建筑的生命、防御、建造时间和成本，并设置攻击范围与纹理。
  */
 AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture,
-                               float range,float attack_interval,float attack_damage)
+                               float attack_interval,int attack_damage,float attack_range)
     : Building(name, 1, 6 * base, base,
         base * 2, base * 500, 2, 2, position),
-    Range_(range),attack_interval_(attack_interval),attack_damage_(attack_damage) {
+    attack_interval_(attack_interval),attack_damage_(attack_damage) ,attack_range_(attack_range){
     this->setTexture(texture);
 }
 
@@ -369,9 +290,10 @@ AttackBuilding::AttackBuilding(std::string name, int base, cocos2d::Vec2 positio
  */
 AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
     cocos2d::Vec2 position,
-    const std::string& texture, float range,float attack_interval,float attack_damage) {
+    const std::string& texture, float attack_interval,int attack_damage,float attack_range) {
     // 使用nothrow避免分配失败时抛出异常
-    auto building = new (std::nothrow) AttackBuilding(name, base, position, texture, range,attack_interval,attack_damage);
+    auto building = new (std::nothrow) AttackBuilding(name, base, position, texture,
+                                                      attack_interval,attack_damage,attack_range);
 
     if (building) {
         if (building->initWithFile(texture)) {
@@ -410,8 +332,8 @@ AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
                 building->setColor(cocos2d::Color3B(150, 150, 200)); // 淡蓝色
             }
 
-            cocos2d::log("创建攻击建筑: %s (范围: %d, 位置: %.1f,%.1f)",
-                name.c_str(), range, position.x, position.y);
+            cocos2d::log("创建攻击建筑: %s (范围: %f, 位置: %.1f,%.1f)",
+                name.c_str(), attack_range, position.x, position.y);
             return building;
         }
 
@@ -429,7 +351,7 @@ AttackBuilding* AttackBuilding::Create(const std::string& name, int base,
  */
 void AttackBuilding::ShowInfo() const {
     Building::ShowInfo();
-    cocos2d::log("攻击范围: %d 格", Range_);
+    cocos2d::log("攻击范围: %d 格", attack_range_);
 }
 
 // ==================== TrainingBuilding 成员函数的实现 ====================
@@ -443,11 +365,10 @@ TrainingBuilding::TrainingBuilding(std::string name, int base, cocos2d::Vec2 pos
     : Building(name, 1, 8 * base, 2 * base,
         base * 3, base * 400, 3, 3, position),
     training_capacity_(capacity),
-    training_speed_(speed),
-    training_timer_(0.0f) {
+    training_speed_(speed) {
 
-    // 初始化默认可训练士兵类型
-    available_soldier_types_ = { SoldierType::kBarbarian, SoldierType::kArcher };
+    // 初始化可训练单位列表（根据等级解锁不同单位）
+    available_units_ = { "Barbarian", "Archer" };
 
     // 设置训练营的纹理
     this->setTexture(texture);
@@ -455,6 +376,7 @@ TrainingBuilding::TrainingBuilding(std::string name, int base, cocos2d::Vec2 pos
 
 /**
  * @brief 初始化
+ * @return 是否成功初始化
  */
 bool TrainingBuilding::Init() {
     // 基类初始化
@@ -471,6 +393,13 @@ bool TrainingBuilding::Init() {
 
 /**
  * @brief 创建训练营实例
+ * 初始化训练营的名称、基准数值、位置、纹理以及训练属性。
+ * @param name 建筑名称
+ * @param base 基准数值（用于计算生命值、防御等）
+ * @param position 建筑位置坐标
+ * @param texture 建筑纹理路径
+ * @param capacity 训练容量
+ * @param speed 训练速度（秒/每兵）
  */
 TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
     cocos2d::Vec2 position,
@@ -482,7 +411,7 @@ TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
             // 标记为自动释放
             building->autorelease();
 
-            cocos2d::log("创建训练营: %s (容量: %d人口, 速度: %d, 位置: %.1f,%.1f)",
+            cocos2d::log("创建训练营: %s (容量: %d, 速度: %d, 位置: %.1f,%.1f)",
                 name.c_str(), capacity, speed, position.x, position.y);
             return building;
         }
@@ -496,236 +425,133 @@ TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
 }
 
 /**
+ * @brief 添加可训练单位
+ * @param unit_type 要添加的士兵类型
+ */
+void TrainingBuilding::AddAvailableUnit(const std::string& unit_type) {
+    available_units_.push_back(unit_type);
+}
+
+/**
+ * @brief 获取可训练单位列表
+ * @return 可训练单位列表
+ */
+std::vector<std::string>& TrainingBuilding::GetAvailableUnits() {
+    return available_units_;
+}
+
+/**
  * @brief 开始训练士兵
  */
-bool TrainingBuilding::StartTraining(SoldierType soldier_type, int count) {
-    if (!IsActive()) {
-        cocos2d::log("错误: 训练营已被摧毁，无法训练");
+bool TrainingBuilding::StartTraining(const std::string& unit_type, int count) {
+    // 检查单位类型是否可训练
+    if (std::find(available_units_.begin(), available_units_.end(), unit_type) == available_units_.end()) {
+        cocos2d::log("错误: 无法训练单位类型 %s", unit_type.c_str());
         return false;
     }
 
-    // 检查士兵类型是否可训练
-    if (!CanTrainSoldierType(soldier_type)) {
-        cocos2d::log("错误: 无法训练士兵类型 %d", static_cast<int>(soldier_type));
-        return false;
+    // 检查训练容量
+    int current_training = 0;
+    for (const auto& unit : available_units_) {
+        // 这里需要访问训练队列，假设有一个私有成员 training_queue_
+        // current_training += training_queue_[unit];
     }
 
-    // 获取士兵模板
-    const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(soldier_type);
-    if (!tmpl) {
-        cocos2d::log("错误: 未找到士兵模板");
-        return false;
-    }
-
-    // 计算所需人口
-    int required_population = tmpl->housing_space_ * count;
-
-    // 检查训练队列容量
-    if (GetTrainingQueuePopulation() + required_population > training_capacity_) {
+    if (current_training + count > training_capacity_) {
         cocos2d::log("错误: 训练容量不足 (当前: %d, 需要: %d, 容量: %d)",
-            GetTrainingQueuePopulation(), required_population, training_capacity_);
+            current_training, count, training_capacity_);
         return false;
     }
 
-    // 检查军队容量（通过TownHall）
-    TownHall* town_hall = TownHall::GetInstance();
-    if (!town_hall || !town_hall->CanAddSoldier(required_population)) {
-        cocos2d::log("错误: 军队容量不足");
-        return false;
-    }
-
-    // 计算训练所需资源
-    auto [gold_cost, elixir_cost] = CalculateTrainingCost(soldier_type, count);
-
-    // 检查资源是否足够
-    if (!town_hall->SpendGold(gold_cost) || !town_hall->SpendElixir(elixir_cost)) {
-        cocos2d::log("错误: 资源不足，需要金币: %d, 圣水: %d", gold_cost, elixir_cost);
-        return false;
-    }
-
-    // 计算训练时间
-    int training_time = CalculateTrainingTime(soldier_type, count);
-
-    // 添加到训练队列
-    training_queue_.emplace_back(soldier_type, count, training_time);
-
-    cocos2d::log("开始训练 %d 个 %s，需要 %d 秒，消耗金币: %d，圣水: %d",
-        count, tmpl->name_.c_str(), training_time, gold_cost, elixir_cost);
-
+    // 开始训练逻辑
+    cocos2d::log("开始训练 %d 个 %s", count, unit_type.c_str());
     return true;
 }
 
 /**
- * @brief 更新训练进度
+ * @brief 取消训练
  */
-void TrainingBuilding::UpdateTrainingProgress(float delta_time) {
-    if (!IsActive() || training_queue_.empty()) {
-        return;
-    }
-
-    training_timer_ += delta_time;
-
-    // 每秒更新一次训练队列
-    if (training_timer_ >= 1.0f) {
-        training_timer_ = 0.0f;
-
-        // 减少每个训练项目的剩余时间
-        for (auto& item : training_queue_) {
-            if (item.remaining_time > 0) {
-                item.remaining_time--;
-            }
-        }
-
-        // 处理训练完成的士兵
-        ProcessCompletedTraining();
-    }
+void TrainingBuilding::CancelTraining(const std::string& unit_type, int count) {
+    cocos2d::log("取消训练 %d 个 %s", count, unit_type.c_str());
+    // 实际实现需要更新训练队列
 }
 
 /**
- * @brief 处理训练完成的士兵
+ * @brief 获取当前训练队列信息
  */
-int TrainingBuilding::ProcessCompletedTraining() {
-    int completed_count = 0;
-
-    // 遍历训练队列，检查是否有训练完成的
-    for (auto it = training_queue_.begin(); it != training_queue_.end(); ) {
-        if (it->remaining_time <= 0) {
-            // 训练完成，创建士兵并添加到TownHall
-            const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(it->soldier_type);
-            if (tmpl) {
-                for (int i = 0; i < it->count; ++i) {
-                    // 创建士兵
-                    Soldier* soldier = tmpl->Create();
-
-                    // 添加到TownHall
-                    TownHall* town_hall = TownHall::GetInstance();
-                    if (town_hall) {
-                        town_hall->AddTrainedSoldier(soldier);
-                    }
-                    else {
-                        delete soldier; // TownHall不存在，删除士兵
-                    }
-                }
-
-                completed_count += it->count;
-                cocos2d::log("训练完成: %d 个 %s", it->count, tmpl->name_.c_str());
-            }
-
-            // 从队列中移除
-            it = training_queue_.erase(it);
-        }
-        else {
-            ++it;
-        }
-    }
-
-    return completed_count;
+std::map<std::string, int> TrainingBuilding::GetTrainingQueue() const {
+    std::map<std::string, int> queue;
+    // 返回训练队列的拷贝
+    // 实际实现需要返回 training_queue_ 的拷贝
+    return queue;
 }
 
 /**
- * @brief 计算训练时间
+ * @brief 检查是否有训练完成
  */
-int TrainingBuilding::CalculateTrainingTime(SoldierType soldier_type, int count) const {
-    const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(soldier_type);
-    if (!tmpl) return 0;
-
-    // 训练时间 = 单个士兵训练时间 × 数量 / 训练速度
-    // 注意：这里假设训练速度是倍数，实际可能需要调整公式
-    return (tmpl->training_time_ * count) / training_speed_;
-}
-
-/**
- * @brief 计算训练所需资源
- */
-std::pair<int, int> TrainingBuilding::CalculateTrainingCost(SoldierType soldier_type, int count) const {
-    const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(soldier_type);
-    if (!tmpl) return { 0, 0 };
-
-    // 这里简单处理：所有士兵都用金币训练
-    // 实际上部落冲突中不同士兵消耗不同资源，你可以根据需要扩展
-    return { tmpl->training_cost_ * count, 0 };
-}
-
-/**
- * @brief 检查训练队列是否已满
- */
-bool TrainingBuilding::IsTrainingQueueFull() const {
-    return GetTrainingQueuePopulation() >= training_capacity_;
-}
-
-/**
- * @brief 获取训练队列当前占用的人口
- */
-int TrainingBuilding::GetTrainingQueuePopulation() const {
-    int population = 0;
-    for (const auto& item : training_queue_) {
-        const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(item.soldier_type);
-        if (tmpl) {
-            population += tmpl->housing_space_ * item.count;
-        }
-    }
-    return population;
-}
-
-/**
- * @brief 检查是否可训练指定类型的士兵
- */
-bool TrainingBuilding::CanTrainSoldierType(SoldierType soldier_type) const {
-    for (SoldierType type : available_soldier_types_) {
-        if (type == soldier_type) {
-            return true;
-        }
-    }
-    return false;
+std::pair<std::string, int> TrainingBuilding::CheckCompletedTraining() {
+    // 检查训练计时器，返回完成的单位
+    // 实际实现需要检查训练时间是否达到
+    return std::make_pair("", 0);
 }
 
 /**
  * @brief 升级训练营
+ * 重写基类升级方法，提升训练容量和速度
  */
 void TrainingBuilding::Upgrade() {
-    if (!IsActive()) {
-        cocos2d::log("训练营已被摧毁，无法升级");
-        return;
-    }
-
     // 先调用基类的升级
     Building::Upgrade();
 
     // 训练营特有的升级逻辑
-    training_capacity_ += 5;  // 每级增加5个人口容量
+    training_capacity_ += 5;  // 每级增加5个训练容量
     training_speed_ = static_cast<int>(training_speed_ * 0.9);  // 训练速度提升10%
 
-    // 根据等级解锁新兵种
-    if (level_ >= 3 && !CanTrainSoldierType(SoldierType::kGiant)) {
-        available_soldier_types_.push_back(SoldierType::kGiant);
-        cocos2d::log("解锁新兵种: 巨人(Giant)");
+    // 根据等级解锁新单位
+    if (level_ >= 3 && std::find(available_units_.begin(), available_units_.end(), "Giant") == available_units_.end()) {
+        available_units_.push_back("Giant");
+        cocos2d::log("解锁新单位: Giant");
     }
-    if (level_ >= 5 && !CanTrainSoldierType(SoldierType::kBomber)) {
-        available_soldier_types_.push_back(SoldierType::kBomber);
-        cocos2d::log("解锁新兵种: 炸弹人(Bomber)");
+    if (level_ >= 5 && std::find(available_units_.begin(), available_units_.end(), "Wizard") == available_units_.end()) {
+        available_units_.push_back("Wizard");
+        cocos2d::log("解锁新单位: Wizard");
     }
 
     cocos2d::log("训练营升级到 %d 级", level_);
-    cocos2d::log("训练容量: %d 人口, 训练速度: %d 秒/每人口", training_capacity_, training_speed_);
+    cocos2d::log("训练容量: %d, 训练速度: %d 秒/每兵", training_capacity_, training_speed_);
 }
 
 /**
- * @brief 显示训练营信息
+ * @brief 输出 TrainingBuilding 详细信息
+ * 调用基类 ShowInfo 再额外输出训练相关属性。
  */
 void TrainingBuilding::ShowInfo() const {
     Building::ShowInfo();
-    cocos2d::log("训练容量: %d 人口", training_capacity_);
-    cocos2d::log("训练速度: %d 秒/每人口", training_speed_);
-    cocos2d::log("可训练兵种: ");
-    for (const auto& type : available_soldier_types_) {
-        const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(type);
-        if (tmpl) {
-            cocos2d::log("  - %s (人口: %d, 训练时间: %d秒, 费用: %d金币)",
-                tmpl->name_.c_str(), tmpl->housing_space_, tmpl->training_time_, tmpl->training_cost_);
-        }
+    cocos2d::log("训练容量: %d 个单位", training_capacity_);
+    cocos2d::log("训练速度: %d 秒/每兵", training_speed_);
+    cocos2d::log("可训练单位: ");
+    for (const auto& unit : available_units_) {
+        cocos2d::log("  - %s", unit.c_str());
     }
-    cocos2d::log("训练队列: %d个项目，占用人口: %d/%d",
-        static_cast<int>(training_queue_.size()), GetTrainingQueuePopulation(), training_capacity_);
 }
 
-// ... 其他辅助函数的实现 ...
+/**
+ * @brief 获取训练容量
+ */
+int TrainingBuilding::GetTrainingCapacity() const {
+    return training_capacity_;
+}
+
+/**
+ * @brief 获取训练速度
+ */
+int TrainingBuilding::GetTrainingSpeed() const {
+    return training_speed_;
+}
+
+/**
+ * @brief 获取可训练单位列表
+ */
+const std::vector<std::string>& TrainingBuilding::GetAvailableUnits() const {
+    return available_units_;
+}

@@ -4,7 +4,6 @@
 
 #include "ResourceStorage/ResourceStorage.h"
 #include "TownHall/TownHall.h"
-#include "Soldier/Soldier.h"
 #include "cocos2d.h"
 #include <string>
 #include <cmath>
@@ -22,7 +21,7 @@ ResourceStorage::~ResourceStorage() {
     if (progressBar_) progressBar_->removeFromParent();
 }
 
-ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec2 position,
+ResourceStorage::ResourceStorage(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType)
     : Building(name, 1, base * 8, base, 0, base * 10, 3, 3, position)
     , resourceType_(resourceType)
@@ -36,7 +35,7 @@ ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec
     , particleEffect_(nullptr) {
 }
 
-ResourceStorage* ResourceStorage::Create(const std::string& name, int base, cocos2d::Vec2 position,
+ResourceStorage* ResourceStorage::Create(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType) {
     auto storage = new (std::nothrow) ResourceStorage(name, base, position, texture, resourceType);
     if (storage && storage->Init()) {
@@ -296,14 +295,14 @@ ProductionBuilding::~ProductionBuilding() {
     }
 }
 
-ProductionBuilding::ProductionBuilding(const std::string& name, int base, cocos2d::Vec2 position,
+ProductionBuilding::ProductionBuilding(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType)
     : ResourceStorage(name, base, position, texture, resourceType)
     , productionRate_(base * 10)
     , productionTimer_(0.0f) {
 }
 
-ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, cocos2d::Vec2 position,
+ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, std::pair<int, int> position,
     const std::string& texture, const std::string& resourceType) {
     auto building = new (std::nothrow) ProductionBuilding(name, base, position, texture, resourceType);
     if (building && building->Init()) {
@@ -347,6 +346,10 @@ void ProductionBuilding::CollectResources() {
 
     // 播放收集动画
     PlayStorageAnimation();
+}
+
+int ProductionBuilding::GetProductionRate() const {
+    return productionRate_;
 }
 
 void ProductionBuilding::UpgradeProductionRate(int additionalRate) {
@@ -429,7 +432,7 @@ void ProductionBuilding::OnProductionUpdate(float deltaTime) {
 
 // ==================== ElixirStorage 实现 ====================
 
-ElixirStorage* ElixirStorage::Create(std::string name, int base, cocos2d::Vec2 position) {
+ElixirStorage* ElixirStorage::Create(std::string name, int base, std::pair<int, int> position) {
     auto storage = new (std::nothrow) ElixirStorage(name, base, position);
     if (storage && storage->Init()) {
         storage->autorelease();
@@ -442,7 +445,7 @@ ElixirStorage* ElixirStorage::Create(std::string name, int base, cocos2d::Vec2 p
 ElixirStorage::~ElixirStorage() {
 }
 
-ElixirStorage::ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position)
+ElixirStorage::ElixirStorage(const std::string& name, int base, std::pair<int, int> position)
     : ProductionBuilding(name, base, position, "textures/elixir_storage.png", "Elixir")
     , collectionRadius_(100.0f)
     , elixirColor_(Color4F(0.8f, 0.2f, 0.8f, 1.0f)) {  // 紫色
@@ -463,6 +466,9 @@ void ElixirStorage::SetCollectionRadius(float radius) {
     collectionRadius_ = radius;
 }
 
+float ElixirStorage::GetCollectionRadius() const {
+    return collectionRadius_;
+}
 
 void ElixirStorage::PlayCollectionAnimation(const Vec2& targetPosition) {
     // 创建圣水收集动画
@@ -558,7 +564,7 @@ void ElixirStorage::InitElixirSpecificComponents() {
 
 // ==================== GoldStorage 实现 ====================
 
-GoldStorage* GoldStorage::Create(std::string name, int base, cocos2d::Vec2 position) {
+GoldStorage* GoldStorage::Create(std::string name, int base, std::pair<int, int> position) {
     auto storage = new (std::nothrow) GoldStorage(name, base, position);
     if (storage && storage->Init()) {
         storage->autorelease();
@@ -573,7 +579,7 @@ GoldStorage::~GoldStorage() {
     if (shieldEffect_) shieldEffect_->removeFromParent();
 }
 
-GoldStorage::GoldStorage(const std::string& name, int base, cocos2d::Vec2 position)
+GoldStorage::GoldStorage(const std::string& name, int base, std::pair<int, int> position)
     : ProductionBuilding(name, base, position, "textures/gold_storage.png", "Gold")
     , isVaultProtected_(false)
     , protectionPercentage_(0.3f)
@@ -603,8 +609,16 @@ void GoldStorage::ActivateProtection(bool active) {
     }
 }
 
+bool GoldStorage::IsVaultProtected() const {
+    return isVaultProtected_;
+}
+
 void GoldStorage::UpgradeProtection(float additionalPercentage) {
     protectionPercentage_ = std::min(protectionPercentage_ + additionalPercentage, 0.8f);
+}
+
+float GoldStorage::GetProtectionPercentage() const {
+    return protectionPercentage_;
 }
 
 int GoldStorage::CalculateRaidLoss(int attemptedSteal) const {
@@ -750,17 +764,7 @@ void GoldStorage::InitGoldSpecificComponents() {
 
 // ==================== Barracks 实现 ====================
 
-static std::string SoldierTypeToString(SoldierType type) {
-    switch (type) {
-    case SoldierType::kBarbarian: return "Barbarian";
-    case SoldierType::kArcher: return "Archer";
-    case SoldierType::kBomber: return "Bomber";
-    case SoldierType::kGiant: return "Giant";
-    default: return "Unknown";
-    }
-}
-
-Barracks* Barracks::Create(const std::string& name, int base, cocos2d::Vec2 position) {
+Barracks* Barracks::Create(const std::string& name, int base, std::pair<int, int> position) {
     auto barracks = new (std::nothrow) Barracks(name, base, position);
     if (barracks && barracks->Init()) {
         barracks->autorelease();
@@ -780,7 +784,7 @@ Barracks::~Barracks() {
     }
 }
 
-Barracks::Barracks(const std::string& name, int base, cocos2d::Vec2 position)
+Barracks::Barracks(const std::string& name, int base, std::pair<int, int> position)
     : TrainingBuilding(name, base, position, "textures/barracks.png", 5, 30) {
     // 初始化默认兵种
     availableTroops_.push_back("Barbarian");
@@ -797,20 +801,16 @@ bool Barracks::Init() {
     }
 
     // 设置建筑尺寸和位置
-    setContentSize(cocos2d::Size(width_ * 32, length_ * 32));
-    setAnchorPoint(cocos2d::Vec2(0.5f, 0.5f));
+    if (!TrainingBuilding::Init()) {
+        return false;
+    }
 
-    // 初始化可用兵种列表
-    availableTroops_.clear();
-    availableTroops_.push_back("Barbarian");
-    availableTroops_.push_back("Archer");
-
-    // 将兵种添加到基类列表（如果需要）
-    AddAvailableUnitName("Barbarian");
-    AddAvailableUnitName("Archer");
+    // 初始化默认兵种（使用基类的方法）
+    AddAvailableUnit("Barbarian");
+    AddAvailableUnit("Archer");
 
     // 初始化兵种图标
-    for (const auto& troop : availableTroops_) {
+    for (const auto& troop : GetAvailableUnits()) {
         std::string iconPath = "icons/" + troop + "_icon.png";
         auto icon = CreateTroopIcon(troop, iconPath);
         if (icon) {
@@ -832,7 +832,7 @@ bool Barracks::Init() {
 
 bool Barracks::UnlockTroopType(const std::string& troopType, const std::string& iconPath) {
     // 检查是否已经解锁
-    const auto& availableUnits = GetAvailableUnitNames();
+    const auto& availableUnits = GetAvailableUnits();
     for (const auto& troop : availableUnits) {
         if (troop == troopType) {
             return false;  // 已经解锁
@@ -859,52 +859,71 @@ bool Barracks::UnlockTroopType(const std::string& troopType, const std::string& 
 
 void Barracks::AddAvailableUnit(const std::string& unit_type) {
     // 直接访问基类的 available_units_
-    available_unit_names_.push_back(unit_type);
+    available_units_.push_back(unit_type);
 }
 
 bool Barracks::IsTroopAvailable(const std::string& troopType) const {
-    // 先检查自己的列表
     for (const auto& troop : availableTroops_) {
         if (troop == troopType) {
             return true;
         }
     }
-
-    // 再检查从基类继承的列表
-    const auto& baseUnits = GetAvailableUnitNames();
-    for (const auto& unit : baseUnits) {
-        if (unit == troopType) {
-            return true;
-        }
-    }
-
     return false;
 }
 
-std::vector<std::string> Barracks::GetAvailableTroopTypes() const {
-    std::vector<std::string> allTroops = availableTroops_;
+bool Barracks::StartTraining(const std::string& unitType, int count) {
+    // 先调用基类方法
+    if (!TrainingBuilding::StartTraining(unitType, count)) {
+        return false;
+    }
 
-    // 合并基类的可用单位
-    const auto& baseUnits = GetAvailableUnitNames();
-    for (const auto& unit : baseUnits) {
-        // 避免重复添加
-        if (std::find(allTroops.begin(), allTroops.end(), unit) == allTroops.end()) {
-            allTroops.push_back(unit);
+    // 添加到训练队列
+    for (int i = 0; i < count; ++i) {
+        Sprite* icon = nullptr;
+        auto it = troopIcons_.find(unitType);
+        if (it != troopIcons_.end()) {
+            icon = Sprite::createWithTexture(it->second->getTexture());
+            if (icon) {
+                icon->setScale(0.5f);
+                addChild(icon, 10);
+            }
+        }
+
+        TrainingUnit unit(unitType, GetTrainingSpeed(), icon);
+        trainingQueue_.push_back(unit);
+    }
+
+    // 播放训练开始动画
+    PlayTrainingStartAnimation(unitType);
+
+    // 更新UI
+    UpdateUI();
+
+    return true;
+}
+
+void Barracks::CancelTraining(const std::string& unitType, int count) {
+    // 先调用基类方法
+    TrainingBuilding::CancelTraining(unitType, count);
+
+    // 从训练队列中移除
+    int removed = 0;
+    for (auto it = trainingQueue_.begin(); it != trainingQueue_.end(); ) {
+        if (removed >= count) break;
+
+        if (it->troopType == unitType) {
+            if (it->icon) {
+                it->icon->removeFromParent();
+            }
+            it = trainingQueue_.erase(it);
+            removed++;
+        }
+        else {
+            ++it;
         }
     }
 
-    return allTroops;
-}
-
-std::vector<std::string> Barracks::GetAvailableSoldierNames() const {
-    std::vector<std::string> soldierNames;
-
-    // 将 SoldierType 枚举转换为字符串
-    for (const auto& soldierType : available_soldier_types_) {
-        soldierNames.push_back(SoldierTypeToString(soldierType));
-    }
-
-    return soldierNames;
+    UpdateUI();
 }
 
 void Barracks::UpgradeTroopCapacity(const std::string& troopType, int additionalCapacity) {
@@ -946,6 +965,10 @@ int Barracks::GetTrainedTroopCount(const std::string& troopType) const {
 int Barracks::GetTroopCapacity(const std::string& troopType) const {
     auto it = troopCapacity_.find(troopType);
     return (it != troopCapacity_.end()) ? it->second : 0;
+}
+
+const std::vector<std::string>& Barracks::GetAvailableTroops() const {
+    return availableTroops_;
 }
 
 void Barracks::UpdateUI() {
