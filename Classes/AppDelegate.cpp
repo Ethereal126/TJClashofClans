@@ -23,7 +23,6 @@
  ****************************************************************************/
 
 #include "AppDelegate.h"
-#include "HelloWorldScene.h"
 #include "MainScene.h"
 #include "Combat/CombatAll.h"
 #include "TownHall/TownHall.h"
@@ -123,16 +122,24 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto scene = MainScene::createScene();
     director->runWithScene(scene);
     auto map = scene->getMap();
-    auto building_template = new Building("test",1,300,100,10,10,2,2,{5,5});
-    building_template->texture_ = "buildings/building_1.png";
-    map->placeBuilding(building_template,5,5);
+    std::string texture= "buildings/building_1.png";;
+    auto building_template = new WallBuilding("WallBuilding",5,{5,5},texture);
+    auto attack_building_template = new AttackBuilding("AttackBuilding",5,{5,15},texture,3,9,40);
+
+
+    map->PushBuilding(building_template);
+    map->PushBuilding(attack_building_template);
     CombatManager::Create(map);
-    auto p = map->getMapSize();
-    CCLOG("%d,%d",p.first,p.second);
     auto manager = CombatManager::GetInstance();
-    auto soldier_template = new Soldier(SoldierType::kBarbarian, 100, 100, 1, 1, 1);
+    auto giant = TownHall::GetSoldierTemplate(SoldierType::kGiant)->Create();
+    auto bomber = TownHall::GetSoldierTemplate(SoldierType::kBomber)->Create();
+    auto archer = TownHall::GetSoldierTemplate(SoldierType::kArcher)->Create();
+    auto barbarian = TownHall::GetSoldierTemplate(SoldierType::kBarbarian)->Create();
     manager->StartCombat();
-    manager->SendSoldier(soldier_template,cocos2d::Vec2(2,2));
+    manager->SendSoldier(giant,cocos2d::Vec2(10,10));
+    manager->SendSoldier(bomber,cocos2d::Vec2(1,1));
+    manager->SendSoldier(archer,cocos2d::Vec2(1,2));
+    manager->SendSoldier(barbarian,cocos2d::Vec2(12,12));
 
     return true;
 }

@@ -93,8 +93,8 @@ list(APPEND GAME_SOURCE
     Classes/Combat/Combat.cpp
     Classes/Soldier/Soldier.cpp
     Classes/TownHall/TownHall.cpp
-    # Classes/ResourceStorage/ResourceStorage.cpp
     Classes/UIManager/UIManager.cpp
+    Classes/ResourceStorage/ResourceStorage.cpp
 )
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
@@ -109,7 +109,9 @@ list(APPEND GAME_HEADER
    Classes/Combat/CombatAll.h
    Classes/Soldier/Soldier.h
    Classes/BattleScene.h
-   Classes/TownHall/TownHall.h  
+   Classes/TownHall/TownHall.h
+   Classes/ResourceStorage/ResourceStorage.h
+
 )
 
 if(ANDROID)

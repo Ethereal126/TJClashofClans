@@ -126,6 +126,9 @@ public:
     // 返回是否成功放置
     bool confirmPlacement();
 
+    //napper:辅助测试使用
+    void PushBuilding(Building* b){_buildings.push_back(b);}
+
 protected:
     MapManager();
     virtual ~MapManager();
@@ -165,7 +168,6 @@ private:
 
     // 维护一个所有建筑的列表，方便遍历
     std::vector<Building*> _buildings;
-    std::vector<Building*> _buildings_except_for_wall;
 
     // ========== 放置模式相关成员 ==========
     bool _isPlacementMode = false;              // 是否处于放置模式

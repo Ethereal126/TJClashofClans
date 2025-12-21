@@ -14,6 +14,7 @@ class BuildingInCombat : public cocos2d::Sprite{
 public:
     cocos2d::Vec2 position_;
     std::vector<SoldierInCombat*> subscribers;
+    const Building* building_template_;
     // 构造函数
     static BuildingInCombat* Create(Building* building_template,MapManager* map);
     // 析构函数
@@ -25,25 +26,23 @@ public:
     // 被攻击函数
     virtual void TakeDamage(int damage);
 
-    // 判断是否存活
-    virtual bool IsAlive() const;
-
     void Die();
 
     int GetCurrentHealth() const{return current_health_;};
 private:
     int current_health_;
-    Building* building_template_;
-    bool is_alive_;
     MapManager* map_;
 };
 
 class AttackBuildingInCombat : public BuildingInCombat{
 public:
+    static AttackBuildingInCombat* Create(const Building* building_template, MapManager* map);
+    bool Init(const Building* building_template,MapManager* map) override;
     void StartAttack();
 private:
-    AttackBuilding* building_template_;
     SoldierInCombat* current_target_;
+    int attack_damage_;
+    float attack_range_,attack_interval_;
 
     void DealDamageToTarget();
     void ChooseTarget();

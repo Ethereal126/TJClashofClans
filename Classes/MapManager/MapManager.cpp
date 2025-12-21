@@ -224,9 +224,6 @@ bool MapManager::placeBuilding(Building* building, int gridX, int gridY) {
 
     updateBuildingGrids(building, gridX, gridY, true);
     _buildings.push_back(building);
-    if(typeid(*building)!=typeid(WallBuilding)){
-        _buildings_except_for_wall.push_back(building);
-    }
     return true;
 }
 
@@ -240,12 +237,6 @@ bool MapManager::removeBuilding(int gridX, int gridY) {
 
     auto it = std::find(_buildings.begin(), _buildings.end(), b);
     if (it != _buildings.end()) _buildings.erase(it);
-
-    if(typeid(*b)!=typeid(WallBuilding)){
-        auto itt = std::find(_buildings_except_for_wall.begin(), _buildings_except_for_wall.end(), b);
-        if (itt != _buildings_except_for_wall.end()) _buildings_except_for_wall.erase(itt);
-    }
-
     return true;
 }
 
@@ -452,11 +443,6 @@ bool MapManager::confirmPlacement() {
     // 注册到格子系统
     updateBuildingGrids(_pendingBuilding, _placementGridX, _placementGridY, true);
     _buildings.push_back(_pendingBuilding);
-
-    // 检查是否为墙（根据你的实际类型判断）
-    if (typeid(*_pendingBuilding) != typeid(WallBuilding)) {
-        _buildings_except_for_wall.push_back(_pendingBuilding);
-    }
 
     //TownHall* townHall = TownHall::GetInstance();
     //townHall->SpendGold(_pendingBuildingCost);
