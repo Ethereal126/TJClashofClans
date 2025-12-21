@@ -47,6 +47,8 @@ bool UIManager::init(Scene* rootScene) {
         return false;
     }
 
+    closeAllPanels();
+
     _rootScene = rootScene;
     _callbacks.clear();
     
@@ -74,6 +76,8 @@ void UIManager::showPanel(UIPanelType panelType, UILayer layer, bool modal) {
     // 创建新面板
     Node* panel = createPanel(panelType);
     if (panel) {
+        panel->setCascadeOpacityEnabled(true);
+        panel->setCascadeColorEnabled(true);
         _panels[panelType] = panel;
         addPanelToScene(panel, layer, modal);
         playShowAnimation(panel);
@@ -168,7 +172,7 @@ Node* UIManager::createLoadingScreen() {
     panel->setPosition(_visibleOrigin);
 
     // 背景图片
-    auto bg = Sprite::create("..../Resource/loading_bg.png"); 
+    auto bg = Sprite::create("loading_bg.png"); 
     if (bg) {
         bg->setPosition(_visibleSize / 2);
         // 缩放背景图以覆盖整个屏幕
@@ -190,15 +194,14 @@ Node* UIManager::createLoadingScreen() {
     progressBg->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height * 0.25f));
     panel->addChild(progressBg, 1);
 
-    // 进度条
-    _loadingProgressBar = LoadingBar::create();
-    _loadingProgressBar->setScale9Enabled(true);
-    _loadingProgressBar->setCapInsets(Rect(0, 0, 1, 1));
-    _loadingProgressBar->setContentSize(Size(396 * _scaleFactor, 26 * _scaleFactor));    
-    _loadingProgressBar->setDirection(LoadingBar::Direction::LEFT);
-    _loadingProgressBar->setPercent(0);
-    _loadingProgressBar->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height * 0.25f));
-    panel->addChild(_loadingProgressBar, 2);
+    // 进度条 (使用 LayerColor 确保即使没有资源也能显示)
+    float barWidth = 396 * _scaleFactor;
+    float barHeight = 26 * _scaleFactor;
+    auto progressBar = LayerColor::create(Color4B(0, 255, 100, 255), 1, barHeight);
+    progressBar->setAnchorPoint(Vec2(0, 0.5f));
+    progressBar->setPosition(Vec2(_visibleSize.width / 2 - barWidth / 2, _visibleSize.height * 0.25f - barHeight / 2));
+    panel->addChild(progressBar, 2);
+    _loadingProgressBar = progressBar;
 
     // 加载提示文字
     auto loadingLabel = Label::createWithTTF("Loading...", "fonts/arial.ttf", 24 * _scaleFactor);
@@ -212,11 +215,27 @@ Node* UIManager::createLoadingScreen() {
 
 void UIManager::showLoadingScreen() {
     showPanel(UIPanelType::LoadingScreen, UILayer::Loading, true);
+
+    auto node = getPanel(UIPanelType::LoadingScreen);
+    if (node) {
+        float* progress = new float(0.0f);
+        // 每 0.05 秒更新一次
+        node->schedule([this, progress, node](float dt) {
+            *progress += 0.035f; 
+            this->updateLoadingProgress(*progress);            
+            if (*progress >= 1.0f) {
+                delete progress;
+                node->unschedule("fake_loading");
+                this->hideLoadingScreen(); // 100% 后自动进入游戏
+            }
+        }, 0.05f, "fake_loading");
+    }
 }
 
 void UIManager::updateLoadingProgress(float progress) {
     if (_loadingProgressBar) {
-        _loadingProgressBar->setPercent(progress * 100);
+        float barWidth = 396 * _scaleFactor;
+        _loadingProgressBar->setContentSize(Size(std::max(1.0f, barWidth * progress), 26 * _scaleFactor));
     }
 }
 
@@ -231,6 +250,8 @@ Node* UIManager::createGameHUD() {
     auto panel = Node::create();
     panel->setContentSize(_visibleSize);
     panel->setPosition(_visibleOrigin);
+    panel->setCascadeOpacityEnabled(true);
+    panel->setCascadeColorEnabled(true);
 
     // ===== 顶部资源栏 =====
     auto resourceBar = createResourceBar();
@@ -239,46 +260,43 @@ Node* UIManager::createGameHUD() {
     }
 
     // ===== 右侧按钮栏 =====
-    float buttonSize = 60 * _scaleFactor;
-    float buttonMargin = 20 * _scaleFactor;
+    float buttonSize = 80 * _scaleFactor; // 设定为你想要的尺寸（比如从60降到45）
+    float buttonMargin = 15 * _scaleFactor;
     float rightX = _visibleSize.width - buttonSize / 2 - buttonMargin;
-    float startY = _visibleSize.height * 0.6f;
+    float startY = _visibleSize.height * 0.7f;
+
+    auto createHUDButton = [this, buttonSize](const std::string& normal, const std::string& pressed, const std::string& title) {
+        auto btn = Button::create(normal, pressed);
+        if (btn->getVirtualRenderer()) {
+            // 如果图片加载成功，通过缩放达到目标大小
+            float scale = buttonSize / btn->getContentSize().width;
+            btn->setScale(scale);
+        } else {
+            // 如果没有图片，使用带文字的 fallback 按钮
+            btn = Button::create();
+            btn->setTitleText(title);
+            btn->setTitleFontSize(14 * _scaleFactor);
+            btn->setContentSize(Size(buttonSize, buttonSize));
+            btn->setScale9Enabled(true);
+            btn->setColor(Color3B(100, 100, 120));
+        }
+        return btn;
+    };
 
     // 设置按钮
-    auto settingsBtn = Button::create("..../Resource/UI/btn_settings.png", "..../Resource/UI/btn_settings_pressed.png"); 
-    if (!settingsBtn->getVirtualRenderer()) {
-        settingsBtn = Button::create();
-        settingsBtn->setTitleText("Settings");
-        settingsBtn->setTitleFontSize(14 * _scaleFactor);
-        settingsBtn->setContentSize(Size(buttonSize, buttonSize));
-        settingsBtn->setScale9Enabled(true);
-    }
+    auto settingsBtn = createHUDButton("UI/btn_settings.png", "UI/btn_settings_pressed.png", "Settings");
     settingsBtn->setPosition(Vec2(rightX, startY));
     settingsBtn->addClickEventListener([this](Ref* sender) {showPanel(UIPanelType::Settings, UILayer::Dialog, true);});
     panel->addChild(settingsBtn, 1);
 
     // 商店按钮
-    auto shopBtn = Button::create("..../Resource/UI/btn_shop.png", "..../Resource/UI/btn_shop_pressed.png"); 
-    if (!shopBtn->getVirtualRenderer()) {
-        shopBtn = Button::create();
-        shopBtn->setTitleText("Shop");
-        shopBtn->setTitleFontSize(14 * _scaleFactor);
-        shopBtn->setContentSize(Size(buttonSize, buttonSize));
-        shopBtn->setScale9Enabled(true);
-    }
-    shopBtn->setPosition(Vec2(rightX, startY - buttonSize - buttonMargin));
+    auto shopBtn = createHUDButton("UI/btn_shop.png", "UI/btn_shop_pressed.png", "Shop");
+    shopBtn->setPosition(Vec2(rightX, startY - (buttonSize + buttonMargin)));
     shopBtn->addClickEventListener([this](Ref* sender) {showShop();});
     panel->addChild(shopBtn, 1);
 
     // 进攻按钮
-    auto attackBtn = Button::create("..../Resource/UI/btn_attack.png", "..../Resource/UI/btn_attack_pressed.png"); 
-    if (!attackBtn->getVirtualRenderer()) {
-        attackBtn = Button::create();
-        attackBtn->setTitleText("Attack");
-        attackBtn->setTitleFontSize(14 * _scaleFactor);
-        attackBtn->setContentSize(Size(buttonSize, buttonSize));
-        attackBtn->setScale9Enabled(true);
-    }
+    auto attackBtn = createHUDButton("UI/btn_attack.png", "UI/btn_attack_pressed.png", "Attack");
     attackBtn->setPosition(Vec2(rightX, startY - 2 * (buttonSize + buttonMargin)));
     attackBtn->addClickEventListener([this](Ref* sender) {showMapSelection();});
     panel->addChild(attackBtn, 1);
@@ -291,9 +309,9 @@ Node* UIManager::createResourceBar() {
     auto bar = Node::create();
 
     // 尺寸定义
-    float barWidth = 200 * _scaleFactor;      // 资源条固定宽度
-    float barHeight = 28 * _scaleFactor;      // 资源条高度
-    float iconSize = 40 * _scaleFactor;       // 图标大小
+    float barWidth = 220 * _scaleFactor;      // 资源条固定宽度
+    float barHeight = 35 * _scaleFactor;      // 资源条高度
+    float iconSize = 60 * _scaleFactor;       // 图标大小
     float margin = 10 * _scaleFactor;         // 边距
     float rowSpacing = 8 * _scaleFactor;      // 行间距
 
@@ -301,6 +319,8 @@ Node* UIManager::createResourceBar() {
     float totalWidth = barWidth + iconSize + margin;
     float totalHeight = barHeight * 2 + rowSpacing;
     bar->setContentSize(Size(totalWidth, totalHeight));
+    bar->setCascadeOpacityEnabled(true);
+    bar->setCascadeColorEnabled(true);
 
     // 位置：右上角
     bar->setPosition(Vec2(_visibleSize.width - totalWidth - margin,
@@ -331,18 +351,23 @@ Node* UIManager::createResourceBar() {
     goldFill->setName("goldFill");
 
     // 金币数量文字（覆盖在资源条上，右对齐）
-    _goldLabel = Label::createWithTTF(std::to_string(currentGold), "fonts/arial.ttf", 18 * _scaleFactor);
-    _goldLabel->setPosition(Vec2(barWidth - 10 * _scaleFactor, goldRowY + barHeight / 2));
-    _goldLabel->setAnchorPoint(Vec2(1.0f, 0.5f)); // 右对齐
-    _goldLabel->setColor(Color3B::WHITE);
-    _goldLabel->enableOutline(Color4B::BLACK, 2);
-    bar->addChild(_goldLabel, 2);
+    _goldLabel = Label::createWithTTF(std::to_string(currentGold), "fonts/arial.ttf", 22 * _scaleFactor); // 增大字体
+    if (_goldLabel) {
+        _goldLabel->setPosition(Vec2(barWidth - 15 * _scaleFactor, goldRowY + barHeight / 2));
+        _goldLabel->setAnchorPoint(Vec2(1.0f, 0.5f));
+        _goldLabel->setColor(Color3B::WHITE);
+        _goldLabel->enableOutline(Color4B::BLACK, 2);
+        bar->addChild(_goldLabel, 2);
+    }
 
     // 金币图标（在资源条右侧外部）
-    auto goldIcon = Sprite::create("..../Resource/UI/icon_gold.png");
-    if (goldIcon) {
-        goldIcon->setScale(iconSize / goldIcon->getContentSize().width);
+    auto goldIcon = Sprite::create("UI/icon_gold.png");
+    if (!goldIcon) {
+        goldIcon = Sprite::create();
+        goldIcon->setTextureRect(Rect(0, 0, iconSize, iconSize));
+		goldIcon->setColor(Color3B::YELLOW);        
     }
+    goldIcon->setScale(iconSize / goldIcon->getContentSize().width);
     goldIcon->setPosition(Vec2(barWidth + margin + iconSize / 2, goldRowY + barHeight / 2));
     bar->addChild(goldIcon, 1);
 
@@ -364,18 +389,22 @@ Node* UIManager::createResourceBar() {
     elixirFill->setName("elixirFill");
 
     // 圣水数量文字（覆盖在资源条上，右对齐）
-    _elixirLabel = Label::createWithTTF(std::to_string(currentElixir), "fonts/arial.ttf", 18 * _scaleFactor);
-    _elixirLabel->setPosition(Vec2(barWidth - 10 * _scaleFactor, elixirRowY + barHeight / 2));
-    _elixirLabel->setAnchorPoint(Vec2(1.0f, 0.5f)); // 右对齐
-    _elixirLabel->setColor(Color3B::WHITE);
-    _elixirLabel->enableOutline(Color4B::BLACK, 2);
-    bar->addChild(_elixirLabel, 2);
+    _elixirLabel = Label::createWithTTF(std::to_string(currentElixir), "fonts/arial.ttf", 22 * _scaleFactor); // 增大字体
+    if (_elixirLabel) {
+        _elixirLabel->setPosition(Vec2(barWidth - 15 * _scaleFactor, elixirRowY + barHeight / 2));
+        _elixirLabel->setAnchorPoint(Vec2(1.0f, 0.5f));
+        _elixirLabel->setColor(Color3B::WHITE);
+        _elixirLabel->enableOutline(Color4B::BLACK, 2);
+        bar->addChild(_elixirLabel, 2);
+    }
 
     // 圣水图标（在资源条右侧外部）
-    auto elixirIcon = Sprite::create("..../Resource/UI/icon_elixir.png");
-    if (elixirIcon) {
-        elixirIcon->setScale(iconSize / elixirIcon->getContentSize().width);
+    auto elixirIcon = Sprite::create("UI/icon_elixir.png");
+    if (!elixirIcon) {
+        elixirIcon = Sprite::create();
+		elixirIcon->setTextureRect(Rect(0, 0, iconSize, iconSize));        
     }
+    elixirIcon->setScale(iconSize / elixirIcon->getContentSize().width);
     elixirIcon->setPosition(Vec2(barWidth + margin + iconSize / 2, elixirRowY + barHeight / 2));
     bar->addChild(elixirIcon, 1);
 
@@ -423,11 +452,15 @@ Node* UIManager::createSettings() {
     panel->addChild(title, 1);
 
     // 关闭按钮
-    auto closeBtn = createCloseButton([this]() {
-        hidePanel(UIPanelType::Settings, true);
-        });
-    closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
-    panel->addChild(closeBtn, 2);
+    auto closeBtn = createCloseButton([this]() { hidePanel(UIPanelType::Settings, true); });
+    if (closeBtn) {
+        closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
+        // 如果有图片，也给它缩放一下防止太大
+        if (closeBtn->getVirtualRenderer()) {
+            closeBtn->setScale(30 * _scaleFactor / closeBtn->getContentSize().width);
+        }
+        panel->addChild(closeBtn, 2);
+    }
 
 	AudioManager* audioManager = AudioManager::getInstance();
 
@@ -440,11 +473,12 @@ Node* UIManager::createSettings() {
     panel->addChild(musicLabel, 1);
 
     auto musicSlider = Slider::create();
-    musicSlider->loadBarTexture("..../Resource/UI/slider_bg.png"); // 这里需要替换为实际滑块背景图片
-    musicSlider->loadProgressBarTexture("..../Resource/UI/slider_progress.png"); // 这里需要替换为实际滑块进度图片
-    musicSlider->loadSlidBallTextures("..../Resource/UI/slider_ball.png"); // 这里需要替换为实际滑块按钮图片
+    musicSlider->loadBarTexture("UI/slider_bg.png"); 
+    musicSlider->loadProgressBarTexture("UI/slider_progress.png"); 
+    musicSlider->loadSlidBallTextures("UI/slider_ball.png"); 
     musicSlider->setPosition(Vec2(panelSize.width - 120 * _scaleFactor, sliderY));
     musicSlider->setPercent(audioManager->getMusicVolume() * 100);
+    musicSlider->setScale(0.2f);
     musicSlider->addEventListener([](Ref* sender, Slider::EventType type) {
         if (type == Slider::EventType::ON_PERCENTAGE_CHANGED) {
             auto slider = dynamic_cast<Slider*>(sender);
@@ -464,11 +498,12 @@ Node* UIManager::createSettings() {
     panel->addChild(sfxLabel, 1);
 
     auto sfxSlider = Slider::create();
-    sfxSlider->loadBarTexture("..../Resource/UI/slider_bg.png"); // 这里需要替换为实际滑块背景图片
-    sfxSlider->loadProgressBarTexture("..../Resource/UI/slider_progress.png"); // 这里需要替换为实际滑块进度图片
-    sfxSlider->loadSlidBallTextures("..../Resource/UI/slider_ball.png"); // 这里需要替换为实际滑块按钮图片
+    sfxSlider->loadBarTexture("UI/slider_bg.png"); 
+    sfxSlider->loadProgressBarTexture("UI/slider_progress.png"); 
+    sfxSlider->loadSlidBallTextures("UI/slider_ball.png"); 
     sfxSlider->setPosition(Vec2(panelSize.width - 120 * _scaleFactor, sfxSliderY));
     sfxSlider->setPercent(audioManager->getSoundEffectVolume() * 100);
+    sfxSlider->setScale(0.2f);
     sfxSlider->addEventListener([](Ref* sender, Slider::EventType type) {
         if (type == Slider::EventType::ON_PERCENTAGE_CHANGED) {
             auto slider = dynamic_cast<Slider*>(sender);
@@ -508,11 +543,15 @@ Node* UIManager::createShop() {
     panel->addChild(title, 1);
 
     // 关闭按钮
-    auto closeBtn = createCloseButton([this]() {
-        hidePanel(UIPanelType::Shop, true);
-        });
-    closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
-    panel->addChild(closeBtn, 2);
+    auto closeBtn = createCloseButton([this]() { hidePanel(UIPanelType::Shop, true); });
+    if (closeBtn) {
+        closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
+        // 如果有图片，也给它缩放一下防止太大
+        if (closeBtn->getVirtualRenderer()) {
+            closeBtn->setScale(30 * _scaleFactor / closeBtn->getContentSize().width);
+        }
+        panel->addChild(closeBtn, 2);
+    }
 
     // 滚动视图
     auto scrollView = ScrollView::create();
@@ -614,6 +653,8 @@ void UIManager::showShop() {
 // ==================== 地图选择面板 ====================
 Node* UIManager::createMapSelection() {
     auto panel = Node::create();
+    panel->setCascadeOpacityEnabled(true);
+    panel->setCascadeColorEnabled(true);
 
     // 面板大小
     Size panelSize(700 * _scaleFactor, 500 * _scaleFactor);
@@ -622,7 +663,7 @@ Node* UIManager::createMapSelection() {
         (_visibleSize.height - panelSize.height) / 2 + _visibleOrigin.y));
 
     // 背景（地图图片）
-    auto bg = Sprite::create("..../Resource/UI/map_selection_bg.png"); // 这里需要替换为实际的地图选择背景图
+    auto bg = Sprite::create("UI/map_selection_bg.png");
     if (bg) {
         bg->setPosition(Vec2(panelSize.width / 2, panelSize.height / 2));
         float scaleX = panelSize.width / bg->getContentSize().width;
@@ -640,19 +681,23 @@ Node* UIManager::createMapSelection() {
     border->drawRect(Vec2(0, 0), Vec2(panelSize.width, panelSize.height), Color4F::WHITE);
     panel->addChild(border, 1);
 
+    // 显式添加关闭按钮
+    auto closeBtn = createCloseButton([this]() { hidePanel(UIPanelType::MapSelection, true); });
+    if (closeBtn) {
+        closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
+        // 如果有图片，也给它缩放一下防止太大
+        if (closeBtn->getVirtualRenderer()) {
+            closeBtn->setScale(30 * _scaleFactor / closeBtn->getContentSize().width);
+        }
+        panel->addChild(closeBtn, 2);
+    }
+
     // 标题
     auto title = Label::createWithTTF("Select Battle Map", "fonts/arial.ttf", 28 * _scaleFactor);
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 30 * _scaleFactor));
     title->setColor(Color3B::WHITE);
     title->enableOutline(Color4B::BLACK, 2);
     panel->addChild(title, 1);
-
-    // 关闭按钮
-    auto closeBtn = createCloseButton([this]() {
-        hidePanel(UIPanelType::MapSelection, true);
-        });
-    closeBtn->setPosition(Vec2(panelSize.width - 25 * _scaleFactor, panelSize.height - 25 * _scaleFactor));
-    panel->addChild(closeBtn, 2);
 
     // 绘制连接线
     auto pathLine = DrawNode::create();
@@ -662,21 +707,23 @@ Node* UIManager::createMapSelection() {
     panel->addChild(pathLine, 1);
 
     // 地图节点1
-    auto node1 = Button::create("..../Resource/UI/map_node.png", "..../Resource/UI/map_node_pressed.png"); // 这里需要替换为实际节点图片
-    if (!node1->getVirtualRenderer()) {
+    auto node1 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); 
+    float targetNodeSize = 55 * _scaleFactor; // 设定目标显示大小    
+    if (node1->getVirtualRenderer()) {
+        node1->setScale(targetNodeSize / node1->getContentSize().width);
+    } else {
         node1 = Button::create();
         auto circle1 = DrawNode::create();
-        circle1->drawSolidCircle(Vec2::ZERO, 40 * _scaleFactor, 0, 32, Color4F(0.2f, 0.6f, 0.2f, 1));
-        circle1->drawCircle(Vec2::ZERO, 40 * _scaleFactor, 0, 32, false, Color4F::WHITE);
+        circle1->drawSolidCircle(Vec2::ZERO, targetNodeSize/2, 0, 32, Color4F(0.2f, 0.6f, 0.2f, 1));
+        circle1->drawCircle(Vec2::ZERO, targetNodeSize/2, 0, 32, false, Color4F::WHITE);
         node1->addChild(circle1, -1);
-        node1->setContentSize(Size(80 * _scaleFactor, 80 * _scaleFactor));
+        node1->setContentSize(Size(targetNodeSize, targetNodeSize));
     }
     node1->setPosition(node1Pos);
     node1->addClickEventListener([this](Ref* sender) {
         playMapSelectAnimation(0, [this]() {
             hidePanel(UIPanelType::MapSelection, true);
             showBattleLoading("Loading Battle Map 1...");
-            // 这里需要替换为加载战斗场景的逻辑
             triggerUIEvent("OnBattleStart_Map1");
             });
         });
@@ -688,21 +735,22 @@ Node* UIManager::createMapSelection() {
     panel->addChild(node1Label, 1);
 
     // 地图节点2
-    auto node2 = Button::create("..../Resource/UI/map_node.png", "..../Resource/UI/map_node_pressed.png"); // 这里需要替换为实际节点图片
-    if (!node2->getVirtualRenderer()) {
+    auto node2 = Button::create("UI/map_node.png", "UI/map_node_pressed.png"); 
+    if (node2->getVirtualRenderer()) {
+        node2->setScale(targetNodeSize / node2->getContentSize().width);
+    } else {
         node2 = Button::create();
         auto circle2 = DrawNode::create();
-        circle2->drawSolidCircle(Vec2::ZERO, 40 * _scaleFactor, 0, 32, Color4F(0.6f, 0.2f, 0.2f, 1));
-        circle2->drawCircle(Vec2::ZERO, 40 * _scaleFactor, 0, 32, false, Color4F::WHITE);
+        circle2->drawSolidCircle(Vec2::ZERO, targetNodeSize/2, 0, 32, Color4F(0.6f, 0.2f, 0.2f, 1));
+        circle2->drawCircle(Vec2::ZERO, targetNodeSize/2, 0, 32, false, Color4F::WHITE);
         node2->addChild(circle2, -1);
-        node2->setContentSize(Size(80 * _scaleFactor, 80 * _scaleFactor));
+        node2->setContentSize(Size(targetNodeSize, targetNodeSize));
     }
     node2->setPosition(node2Pos);
     node2->addClickEventListener([this](Ref* sender) {
         playMapSelectAnimation(1, [this]() {
             hidePanel(UIPanelType::MapSelection, true);
             showBattleLoading("Loading Battle Map 2...");
-            // 这里需要替换为加载战斗场景的逻辑
             triggerUIEvent("OnBattleStart_Map2");
             });
         });
@@ -792,7 +840,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     float centerY = panelHeight / 2;
 
     // 信息按钮
-    auto infoBtn = Button::create("..../Resource/UI/btn_info.png", "..../Resource/UI/btn_info_pressed.png"); // 这里需要替换为实际按钮图片
+    auto infoBtn = Button::create("UI/btn_info.png", "UI/btn_info_pressed.png"); 
     if (!infoBtn->getVirtualRenderer()) {
         infoBtn = Button::create();
         infoBtn->setTitleText("Info");
@@ -810,7 +858,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     currentX += buttonSize + buttonMargin;
 
     // 升级按钮
-    auto upgradeBtn = Button::create("..../Resource/UI/btn_upgrade.png", "..../Resource/UI/btn_upgrade_pressed.png");
+    auto upgradeBtn = Button::create("UI/btn_upgrade.png", "UI/btn_upgrade_pressed.png");
     if (!upgradeBtn->getVirtualRenderer()) {
         upgradeBtn = Button::create();
         upgradeBtn->setTitleText("Up");
@@ -842,7 +890,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
 
     // 训练按钮（仅军营）
     if (category == BuildingCategory::Military) {
-        auto trainBtn = Button::create("..../Resource/UI/btn_train.png", "..../Resource/UI/btn_train_pressed.png"); // 这里需要替换为实际按钮图片
+        auto trainBtn = Button::create("UI/btn_train.png", "UI/btn_train_pressed.png"); // 这里需要替换为实际按钮图片
         if (!trainBtn->getVirtualRenderer()) {
             trainBtn = Button::create();
             trainBtn->setTitleText("Train");
@@ -938,7 +986,6 @@ Node* UIManager::createBuildingInfo(Building* building) {
     float lineHeight = 30 * _scaleFactor;
     float startY = panelSize.height - 80 * _scaleFactor;
 
-    // 获取建筑属性 - 这里需要替换为实际的building方法调用
     int level = building->GetLevel();
     int health = building->GetHealth();
     int maxHealth = building->GetMaxHealth();
@@ -961,11 +1008,6 @@ Node* UIManager::createBuildingInfo(Building* building) {
     defenseLabel->setAnchorPoint(Vec2(0, 0.5f));
     defenseLabel->setColor(Color3B(100, 100, 255));
     panel->addChild(defenseLabel, 1);
-
-    // 这里可以根据建筑类型添加更多属性
-    // 例如资源建筑的容量、生产速度
-    // 攻击建筑的伤害、攻击范围等
-    // 需要根据 BuildingCategory 或建筑子类来判断
 
     return panel;
 }
@@ -1033,7 +1075,6 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
     float lineHeight = 28 * _scaleFactor;
     float startY = panelSize.height - 80 * _scaleFactor;
 
-    // 获取当前和升级后属性 - 这里需要替换为实际的building方法调用
     int currentLevel = building->GetLevel();
     int nextLevel = currentLevel + 1;
     int currentHealth = building->GetMaxHealth();
@@ -2155,6 +2196,11 @@ void UIManager::showConfirmDialog(const std::string& title, const std::string& c
     contentLabel->setAlignment(TextHAlignment::CENTER);
     panel->addChild(contentLabel, 1);
 
+    // 添加模态层
+    auto modalLayer = createModalLayer();
+    _rootScene->addChild(modalLayer, static_cast<int>(UILayer::Dialog) - 1);
+    _rootScene->addChild(panel, static_cast<int>(UILayer::Dialog));
+
     // 确认按钮
     auto confirmBtn = Button::create();
     confirmBtn->setTitleText("Confirm");
@@ -2162,8 +2208,9 @@ void UIManager::showConfirmDialog(const std::string& title, const std::string& c
     confirmBtn->setContentSize(Size(100 * _scaleFactor, 40 * _scaleFactor));
     confirmBtn->setScale9Enabled(true);
     confirmBtn->setPosition(Vec2(panelSize.width / 2 - 60 * _scaleFactor, 40 * _scaleFactor));
-    confirmBtn->addClickEventListener([this, panel, onConfirm](Ref* sender) {
+    confirmBtn->addClickEventListener([this, panel, modalLayer, onConfirm](Ref* sender) {
         panel->removeFromParent();
+        modalLayer->removeFromParent();
         if (onConfirm) onConfirm();
         });
     panel->addChild(confirmBtn, 1);
@@ -2175,23 +2222,17 @@ void UIManager::showConfirmDialog(const std::string& title, const std::string& c
     cancelBtn->setContentSize(Size(100 * _scaleFactor, 40 * _scaleFactor));
     cancelBtn->setScale9Enabled(true);
     cancelBtn->setPosition(Vec2(panelSize.width / 2 + 60 * _scaleFactor, 40 * _scaleFactor));
-    cancelBtn->addClickEventListener([this, panel, onCancel](Ref* sender) {
+    cancelBtn->addClickEventListener([this, panel, modalLayer, onCancel](Ref* sender) {
         panel->removeFromParent();
+        modalLayer->removeFromParent();
         if (onCancel) onCancel();
         });
     panel->addChild(cancelBtn, 1);
 
-    // 添加模态层
-    auto modalLayer = createModalLayer();
-    _rootScene->addChild(modalLayer, static_cast<int>(UILayer::Dialog) - 1);
-    _rootScene->addChild(panel, static_cast<int>(UILayer::Dialog));
-
     // 点击模态层关闭对话框
     auto touchListener = EventListenerTouchOneByOne::create();
     touchListener->setSwallowTouches(true);
-    touchListener->onTouchBegan = [](Touch* touch, Event* event) -> bool {
-        return true;
-        };
+    touchListener->onTouchBegan = [](Touch* touch, Event* event) -> bool {return true;};
     Director::getInstance()->getEventDispatcher()->addEventListenerWithSceneGraphPriority(touchListener, modalLayer);
 
     playShowAnimation(panel);
@@ -2227,6 +2268,11 @@ void UIManager::showInfoDialog(const std::string& title, const std::string& cont
     contentLabel->setAlignment(TextHAlignment::CENTER);
     panel->addChild(contentLabel, 1);
 
+    // 添加模态层
+    auto modalLayer = createModalLayer();
+    _rootScene->addChild(modalLayer, static_cast<int>(UILayer::Dialog) - 1);
+    _rootScene->addChild(panel, static_cast<int>(UILayer::Dialog));
+
     // 确定按钮
     auto okBtn = Button::create();
     okBtn->setTitleText("OK");
@@ -2234,17 +2280,11 @@ void UIManager::showInfoDialog(const std::string& title, const std::string& cont
     okBtn->setContentSize(Size(100 * _scaleFactor, 40 * _scaleFactor));
     okBtn->setScale9Enabled(true);
     okBtn->setPosition(Vec2(panelSize.width / 2, 40 * _scaleFactor));
-    okBtn->addClickEventListener([panel](Ref* sender) {
+    okBtn->addClickEventListener([panel, modalLayer](Ref* sender) {
         panel->removeFromParent();
-        auto scene = MainScene::createScene();
-        Director::getInstance()->replaceScene(TransitionFade::create(0.8f, scene));
+        modalLayer->removeFromParent();
         });
     panel->addChild(okBtn, 1);
-
-    // 添加模态层
-    auto modalLayer = createModalLayer();
-    _rootScene->addChild(modalLayer, static_cast<int>(UILayer::Dialog) - 1);
-    _rootScene->addChild(panel, static_cast<int>(UILayer::Dialog));
 
     playShowAnimation(panel);
 }
@@ -2286,7 +2326,7 @@ void UIManager::hideBattleLoading() {
 
 // ==================== 通用关闭按钮 ====================
 Button* UIManager::createCloseButton(const std::function<void()>& onClose) {
-    auto closeBtn = Button::create("UI/btn_close.png", "UI/btn_close_pressed.png"); // 这里需要替换为实际关闭按钮图片
+    auto closeBtn = Button::create("UI/btn_close.png", "UI/btn_close_pressed.png"); 
     if (!closeBtn->getVirtualRenderer()) {
         closeBtn = Button::create();
         closeBtn->setTitleText("X");

@@ -85,20 +85,21 @@ endif()
 # add cross-platforms source files and header files 
 list(APPEND GAME_SOURCE
     Classes/AppDelegate.cpp
-    Classes/HelloWorldScene.cpp
     Classes/MapManager/MapManager.cpp
     Classes/Building/Building.cpp
     Classes/Combat/SoldierInCombat.cpp
     Classes/Combat/BuildingInCombat.cpp
+    Classes/AudioManager/AudioManager.cpp
+    Classes/BattleScene.cpp
     Classes/Combat/Combat.cpp
     Classes/Soldier/Soldier.cpp
     Classes/TownHall/TownHall.cpp
     Classes/UIManager/UIManager.cpp
+    Classes/MainScene.cpp
     Classes/ResourceStorage/ResourceStorage.cpp
 )
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
-   Classes/HelloWorldScene.h
    Classes/MapManager/MapManager.h
    Classes/Building/Building.h
    Classes/UIManager/UIManager.h
