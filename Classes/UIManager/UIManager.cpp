@@ -1825,7 +1825,7 @@ bool UIManager::deploySoldierAt(const cocos2d::Vec2& screenPos) {
 	auto soldier_template = TownHall::GetInstance()->GetSoldierCategory();
 	Soldier* soldier = nullptr;
     for (const auto& tmpl : soldier_template) {
-        if (tmpl.name == _selectedTroopName) {
+        if (tmpl.name_ == _selectedTroopName) {
             soldier = tmpl.createFunc();
         }
     }

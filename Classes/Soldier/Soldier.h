@@ -86,7 +86,7 @@ struct SoldierTemplate {
     int training_time_;  // 训练时间（秒）
 
     // 工厂函数，用于创建士兵
-    std::function<Soldier* ()> factory_;
+    std::function<Soldier* ()> createFunc;
 
     // 获取士兵属性的函数（可选，如果需要的话）
     std::function<int()> get_health_func_;
@@ -105,7 +105,7 @@ struct SoldierTemplate {
         std::function<float()> get_attack_delay = nullptr)
         : type_(t), name_(std::move(n)), icon_path_(std::move(p)),
         housing_space_(hs), training_cost_(tc), training_time_(tt),
-        factory_(std::move(factory)),
+        createFunc(std::move(factory)),
         get_health_func_(get_health), get_damage_func_(get_damage),
         get_move_speed_func_(get_move_speed), get_attack_range_func_(get_attack_range),
         get_attack_delay_func_(get_attack_delay) {
@@ -118,7 +118,7 @@ struct SoldierTemplate {
         housing_space_(hs), training_cost_(tc), training_time_(tt) {
 
         // 创建工厂函数，使用传入的属性值
-        factory_ = [t, hp, dmg, ms, ar, ad]() -> Soldier* {
+        createFunc = [t, hp, dmg, ms, ar, ad]() -> Soldier* {
             return new Soldier(t, hp, dmg, ms, ar, ad);
             };
 
@@ -132,7 +132,7 @@ struct SoldierTemplate {
 
     // 创建士兵的工厂函数
     Soldier* Create() const {
-        return factory_ ? factory_() : nullptr;
+        return createFunc ? createFunc() : nullptr;
     }
 
     // 获取属性的辅助函数
