@@ -13,19 +13,27 @@ Soldier::Soldier(SoldierType type, int health, int damage, float move_speed, flo
     switch (type_) {
         case SoldierType::kBarbarian:
             name_ = "Barbarian";
+            attack_frame_num = 8;
+            walk_frame_num = 8;
             size_=2.5f;
             break;
         case SoldierType::kArcher:
             name_ = "Archer";
+            attack_frame_num = 4;
+            walk_frame_num = 8;
             size_=2.0f;
             break;
         case SoldierType::kBomber:
             name_ = "Bomber";
+            attack_frame_num = 0;
+            walk_frame_num = 6;
             building_preference_ = "WallBuilding";
             size_=1.5f;
             break;
         case SoldierType::kGiant:
             name_ = "Giant";
+            attack_frame_num = 8;
+            walk_frame_num = 12;
             building_preference_ = "AttackBuilding";
             size_=4.0f;
             break;

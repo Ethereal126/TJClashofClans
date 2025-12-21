@@ -13,7 +13,8 @@ enum class SoldierType {
     kBarbarian,  // 野蛮人
     kArcher,     // 弓箭手
     kBomber,     // 炸弹人
-    kGiant       // 巨人
+    kGiant,       // 巨人
+    kSoldierTypes
 };
 
 class Soldier {
@@ -21,10 +22,11 @@ public:
     // 构造函数
     Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, float attack_delay);
     std::string building_preference_;
+    int walk_frame_num,attack_frame_num;
     float size_;
     
     // 获取士兵类型
-    SoldierType GetSoldierType() const;
+    [[nodiscard]] SoldierType GetSoldierType() const;
     
     // 获取士兵生命值
     int GetHealth() const;

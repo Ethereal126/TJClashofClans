@@ -7,8 +7,9 @@
 #include <unordered_set>
 
 
-bool SoldierInCombat::is_animation_loaded_ = false;
+bool SoldierInCombat::is_animation_loaded_[];
 
+const std::string SoldierInCombat::direction_names[4] = {"up", "down", "left", "right"};
 // -------------------------- 工厂方法实现 --------------------------
 SoldierInCombat* SoldierInCombat::Create(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
     auto soldier = new (std::nothrow) SoldierInCombat();
@@ -44,9 +45,8 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     current_health_ = soldier_template->GetHealth();
     current_target_ = nullptr;
 
-    if (!is_animation_loaded_) {
+    if (!is_animation_loaded_[static_cast<int>(this->soldier_template_->GetSoldierType())]) {
         LoadSoldierAnimations();
-        is_animation_loaded_ = true;
     }
 
     // 4. 设置初始状态
@@ -58,7 +58,7 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     }
     this->setPosition(map_->vecToWorld(spawn_pos));
     map_->addChild(this);
-    this->setScale(soldier_template->size_);  // 调整大小（根据实际资源修改）
+    this->setScale(0.5f);  // 调整大小（根据实际资源修改）
 
     this->DoAllMyActions();
 
@@ -74,56 +74,78 @@ void SoldierInCombat::TakeDamage(int damage) {
 }
 
 
-// -------------------------- 动画加载（4方向6帧+死亡7帧） --------------------------
-void SoldierInCombat::LoadSoldierAnimations() {
+void SoldierInCombat::LoadSoldierAnimations() const {
+    auto name = this->soldier_template_->GetName();
     auto frame_cache = cocos2d::SpriteFrameCache::getInstance();
     // 1. 加载动画资源plist（需将所有士兵动画帧打包为soldier_anim.plist+png，放在Resources目录）
-    frame_cache->addSpriteFramesWithFile("soldier_anim.plist", "soldier_anim.png");
+    std::string plist_name = "Soldiers/"+name+"/anims.plist";
+    std::string png_name = "Soldiers/"+name+"/anims.png";
+    frame_cache->addSpriteFramesWithFile(plist_name, png_name);
+    CCLOG("call load soldier animations of %s",name.c_str());
 
-    // 2. 4方向移动动画（每方向6帧）
-    const std::string direction_names[] = {"up", "down", "left", "right"};
+    // 2. 4方向移动动画（每方向8帧）
     for (const auto& dir_name : direction_names) {
         cocos2d::Vector<cocos2d::SpriteFrame*> move_frames;
-        for (int i = 0; i <= 5; ++i) {
-            std::string frame_name =  "Walk_"+ dir_name + "-" +std::to_string(i) + ".png";
+        std::string anim_name = name+"walk" ;
+        anim_name += dir_name;
+        for (int i = 1; i <= this->soldier_template_->walk_frame_num; ++i) {
+            std::string frame_name =  anim_name + std::to_string(i) + ".png";
             auto frame = frame_cache->getSpriteFrameByName(frame_name);
             if (frame) move_frames.pushBack(frame);
         }
-        // 动画缓存：自动释放，全游戏共享
-        auto move_anim = cocos2d::Animation::createWithSpriteFrames(move_frames, 0.1f); // 0.1秒/帧
-        cocos2d::AnimationCache::getInstance()->addAnimation(move_anim, "Soldier_Move_" + dir_name);
+        if(!move_frames.empty()) {
+            auto move_anim = cocos2d::Animation::createWithSpriteFrames(move_frames, 0.1f); // 0.1秒/帧
+            cocos2d::AnimationCache::getInstance()->addAnimation(move_anim, anim_name);
+        }
     }
 
-    // 3. 死亡动画（7帧）
-    cocos2d::Vector<cocos2d::SpriteFrame*> death_frames;
-    for (int i = 0; i <= 6; ++i) { // 严格按要求：死亡6帧
-        std::string frame_name =  "Death-"+ std::to_string(i) +".png";
-        auto frame = frame_cache->getSpriteFrameByName(frame_name);
-        if (frame) death_frames.pushBack(frame);
+    // 3. 攻击动画（8帧）
+    for (const auto& dir_name : direction_names) {
+        cocos2d::Vector<cocos2d::SpriteFrame*> attack_frames;
+        std::string anim_name = name+"attack" ;
+        anim_name += dir_name;
+        for (int i = 1; i <= this->soldier_template_->attack_frame_num; ++i) {
+            std::string frame_name = anim_name + std::to_string(i) + ".png";
+            auto frame = frame_cache->getSpriteFrameByName(frame_name);
+            if (frame) attack_frames.pushBack(frame);
+        }
+        if(!attack_frames.empty()) {
+            auto attack_anim = cocos2d::Animation::createWithSpriteFrames(attack_frames, 0.1f);
+            cocos2d::AnimationCache::getInstance()->addAnimation(attack_anim, anim_name);
+        }
     }
-    auto death_anim = cocos2d::Animation::createWithSpriteFrames(death_frames, 0.15f);
-    cocos2d::AnimationCache::getInstance()->addAnimation(death_anim, "Soldier_Death");
+
+    is_animation_loaded_[static_cast<int>(this->soldier_template_->GetSoldierType())] = true;
 }
 
-
-
 // -------------------------- 4方向判断（核心：根据移动向量） --------------------------
-enum class MoveDirection :int{
+enum class Direction : int{
     UP = 0,
     DOWN = 1,
     LEFT = 2,
     RIGHT = 3
 };
-MoveDirection GetMoveDirection(const cocos2d::Vec2& move_delta){
-    CCLOG("move_delta:%f,%f",move_delta.x,move_delta.y);
-    if (move_delta.isZero()) return MoveDirection::DOWN; // 默认方向
-    float abs_x = abs(move_delta.x);
-    float abs_y = abs(move_delta.y);
-    // x分量占比大→左右方向；y分量占比大→上下方向
+Direction SetDirection(SoldierInCombat* s,const cocos2d::Vec2& delta){
+    if (delta.isZero()) return Direction::DOWN; // 默认方向
+    float abs_x = abs(delta.x),abs_y = abs(delta.y);
     if (abs_x > abs_y) {
-        return move_delta.x > 0 ? MoveDirection::RIGHT : MoveDirection::LEFT;
+        if(delta.x > 0) {
+            s->setFlippedX(false);
+            return Direction::UP;
+        }
+        else{
+            s->setFlippedX(true);
+           return Direction::DOWN;
+        }
     } else {
-        return move_delta.y > 0 ? MoveDirection::LEFT : MoveDirection::RIGHT;
+        if(delta.y>0){
+            s->setFlippedX(true);
+            return Direction::UP;
+        }
+        else{
+            s->setFlippedX(false);
+            return Direction::DOWN;
+        }
     }
 }
 
@@ -141,11 +163,10 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
 
 
     // 3. 获取对应方向的动画
-    MoveDirection dir = GetMoveDirection(move_delta);
-    CCLOG("direction : %d",static_cast<int>(dir));
-    const std::string direction_names[] = {"up", "down", "left", "right"};
-    std::string dir_name = direction_names[static_cast<int>(dir)];
-    auto move_anim = cocos2d::AnimationCache::getInstance()->getAnimation( "Soldier_Move_" + dir_name);
+    Direction dir = SetDirection(this,move_delta);
+    std::string dir_name = direction_names[static_cast<int>(dir)],soldier_name = this->soldier_template_->GetName();
+    auto move_anim = cocos2d::AnimationCache::getInstance()->getAnimation( soldier_name +"walk" + dir_name);
+
     float anim_duration = move_anim ? move_anim->getDuration() : 0.1f; // 兜底值
     // 计算动画需要循环的次数（移动总时长 / 单段动画时长）
     int anim_repeat_count = static_cast<int>(move_time / anim_duration);
@@ -156,7 +177,7 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
 
     // 4. 构建“延迟+检测”的循环动作（每0.1秒检测一次）
     auto check_target = cocos2d::CallFunc::create([this]() {
-        this->UpdatePositionAndCheckTargetAlive();
+        this->UpdatePosition();
     });
     // 单轮检测：延迟0.1秒 → 执行检测
     auto single_check_loop = cocos2d::Sequence::create(
@@ -215,18 +236,23 @@ void SoldierInCombat::Die() {
     this->runAction(death_sequence);
 }
 
-void SoldierInCombat::Attack() {
+void SoldierInCombat::Attack(cocos2d::Vec2 pos) {
+    auto delta = current_target_->position_-pos;
+    Direction dir = SetDirection(this,delta);
+    std::string dir_name = direction_names[static_cast<int>(dir)],soldier_name = this->soldier_template_->GetName();
+    auto attack_anim = cocos2d::AnimationCache::getInstance()->getAnimation( soldier_name+"attack"+dir_name);
+
+    auto animate = cocos2d::Animate::create(attack_anim);
     auto single_attack = cocos2d::CallFunc::create([this]() {
-        this->UpdatePositionAndCheckTargetAlive();
         this->DealDamageToTarget();
     });
-    // 单轮检测：延迟0.1秒 → 执行检测
-    auto single_check_loop = cocos2d::Sequence::create(
-            cocos2d::DelayTime::create(this->soldier_template_->GetAttackDelay()),
+    auto anim_and_delay = cocos2d::Sequence::create(
+            animate,
             single_attack,
+            cocos2d::DelayTime::create(this->soldier_template_->GetAttackDelay()-animate->getDuration()),
             nullptr
     );
-    auto repeat_attack = cocos2d::RepeatForever::create(single_check_loop);
+    auto repeat_attack = cocos2d::RepeatForever::create(anim_and_delay);
     this->runAction(repeat_attack);
 }
 
@@ -243,7 +269,7 @@ void SoldierInCombat::DealDamageToTarget() {
     }
 }
 
-void SoldierInCombat::UpdatePositionAndCheckTargetAlive() {
+void SoldierInCombat::UpdatePosition() {
     this->position_=map_->worldToVec(this->getPosition());
 }
 
@@ -271,7 +297,8 @@ class PathFinder {
 public:
     explicit PathFinder(MapManager* map):map_(map){};
     // A*寻路入口：返回从start到end的格子路径（若失败则返回空）
-    std::vector<cocos2d::Vec2> FindPath(const cocos2d::Vec2& start_tile,const cocos2d::Vec2& end_tile,float soldier_range_);
+    std::vector<cocos2d::Vec2> FindPath(cocos2d::Vec2 start_tile,cocos2d::Vec2 end_tile,
+                                        float soldier_range_,int building_width,int building_length);
 
 private:
     // 生成8个方向的邻居格子
@@ -289,13 +316,30 @@ float PathFinder::ManhattanDistance(const cocos2d::Vec2& a, const::cocos2d::Vec2
 }
 
 // -------------------------- A*寻路入口 --------------------------
-std::vector<cocos2d::Vec2> PathFinder::FindPath(const cocos2d::Vec2& start_tile, const cocos2d::Vec2& end_tile, const float soldier_range) {
-    CCLOG("Finding Path from (%f,%f) to (%f,%f)",start_tile.x,start_tile.y,end_tile.x,end_tile.y);
+std::vector<cocos2d::Vec2> PathFinder::FindPath(cocos2d::Vec2 start_tile,cocos2d::Vec2 end_tile, float soldier_range,
+                                                int building_width,int building_length) {
     // 1. 初始化OpenList（小根堆，按F值排序）、ClosedList（哈希表，避免重复）
     std::priority_queue<AStarNode, std::vector<AStarNode>, std::greater<>> open_list;
     std::unordered_set<cocos2d::Vec2, Vec2Hash> closed_list;
     // node_map：存储所有节点的详细信息（坐标→节点，避免指针拷贝）
     std::unordered_map<cocos2d::Vec2, AStarNode, Vec2Hash> node_map;
+
+
+    if(building_width!=1 || building_length!=1){
+        std::vector<cocos2d::Vec2> candidates;
+        int x_min = end_tile.x,y_min = end_tile.y,x_max = end_tile.x+building_width,y_max = end_tile.y+building_length;
+        // 1. 下边
+        for (int x = x_min; x <= x_max; x += 1) candidates.emplace_back(x, y_min);
+        // 2. 上边
+        for (int x = x_min; x <= x_max; x += 1) candidates.emplace_back(x, y_max);
+        // 3. 右边
+        for (int y = y_min + 1; y < y_max; y += 1) candidates.emplace_back(x_max, y);
+        // 4. 左边
+        for (int y = y_min + 1; y < y_max; y += 1) candidates.emplace_back(x_min, y);
+        end_tile = *std::min_element(candidates.begin(),candidates.end(),[start_tile](auto a,auto b){
+            return start_tile.distance(a)<start_tile.distance(b);
+        });
+    }
 
     // 2. 起点入队
     AStarNode start_node(start_tile);
@@ -361,13 +405,10 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(const cocos2d::Vec2& start_tile,
 }
 
 void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
-    CCLOG("current path:");
     if(path.empty()){
         CCLOG("empty path");
     }
-    for(auto it:path){
-        CCLOG("(%f,%f)",it.x,it.y);
-    }
+
     for(auto ptr = path.begin();ptr != path.end();ptr++){
         if(!map_->IsGridAvailable(*ptr)){
             auto new_target = *ptr;
@@ -409,6 +450,25 @@ void SoldierInCombat::SimplifyPath(std::vector<cocos2d::Vec2>& path){
     }
 }
 
+void LogVec2(const cocos2d::Vec2& pos,std::string& s){
+    s +="(";
+    s += std::to_string(pos.x);
+    s += ",";
+    s += std::to_string(pos.y);
+    s +=")";
+}
+void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2>& path){
+    std::string s = soldier_template_->GetName() + " find path:";
+    for(auto i : path){
+        LogVec2(i,s);
+    }
+    s+=" target:";
+    auto target = current_target_->position_;
+    LogVec2(target,s);
+    auto up_right = target+cocos2d::Vec2(current_target_->building_template_->GetWidth()-1,current_target_->building_template_->GetLength()-1);
+    LogVec2(up_right,s);
+    CCLOG("%s",s.c_str());
+}
 BuildingInCombat* SoldierInCombat::GetNextTarget() {
     auto buildings = CombatManager::GetInstance()->live_buildings_;
     if(buildings.empty()) return nullptr;
@@ -436,16 +496,18 @@ BuildingInCombat* SoldierInCombat::GetNextTarget() {
 
 void SoldierInCombat::MoveToTargetAndStartAttack() {
     PathFinder pf(map_);
+    auto width = current_target_->building_template_->GetWidth(),length = current_target_->building_template_->GetLength();
     auto path = pf.FindPath(this->position_, current_target_->position_,
-                            this->soldier_template_->GetAttackRange());
+                            this->soldier_template_->GetAttackRange(),width,length);
     RedirectPath(path);
     SimplifyPath(path);
+    LogPath(path);
     cocos2d::Vector<cocos2d::FiniteTimeAction*> moves;
     for(int i=1;i<path.size();i++){
         moves.pushBack(CreateStraightMoveAction(path[i-1],path[i]));
     }
-    auto start_attack = cocos2d::CallFunc::create([this]() {
-        this->Attack();
+    auto start_attack = cocos2d::CallFunc::create([this,path]() {
+        this->Attack(path.back());
     });
     moves.pushBack(start_attack);
     cocos2d::Sequence* seq = cocos2d::Sequence::create(moves);
