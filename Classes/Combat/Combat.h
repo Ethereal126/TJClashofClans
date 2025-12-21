@@ -40,7 +40,7 @@ public:
     static CombatManager* GetInstance();// 获取单例（已初始化则直接返回）
 
     //在接收到交互指令后，将士兵加入到战斗中；
-    void SendSoldier(Soldier* soldier_template,cocos2d::Vec2 spawn_pos);
+    void SendSoldier(const Soldier* soldier_template,cocos2d::Vec2 spawn_pos);
 
     bool IsCombatEnd();
     void StartCombat();

@@ -30,10 +30,10 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
         return false;
     }
 
-    is_alive_ = true;
+    this->building_template_ = building_template;
     current_health_ = building_template->GetHealth();
 
-    if(!this->initWithFile(building_template->texture_)){
+    if(!this->initWithTexture(building_template->getTexture())){
         CCLOG("BuildingInCombat init failed: init texture failure!");
         return false;
     }
@@ -41,7 +41,7 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     map_ = map;
     // 只有在map_不为nullptr时才调用addChild
     if (map_ != nullptr) {
-        map_->addChild(this);
+        map_->addChild(this,1);
     }
     else{
         CCLOG("BuildingInCombat init failed: get map failure!");
@@ -64,11 +64,41 @@ void BuildingInCombat::TakeDamage(int damage) {
     }
 }
 
+AttackBuildingInCombat* AttackBuildingInCombat::Create(const Building* building_template, MapManager* map) {
+    auto soldier = new (std::nothrow) AttackBuildingInCombat();
+    if (soldier && soldier->Init(building_template, map)) {
+        soldier->autorelease();  // Cocos2d-x自动内存管理
+        return soldier;
+    }
+    CC_SAFE_DELETE(soldier);
+    return nullptr;
+}
+
+bool AttackBuildingInCombat::Init(const Building *building_template, MapManager *map) {
+    if(!BuildingInCombat::Init(building_template,map)){
+        CCLOG("attack building father init failure");
+        return false;
+    }
+
+    auto attack_building_template = dynamic_cast<const AttackBuilding*>(building_template);
+    if(!attack_building_template){
+        CCLOG("AttackBuildingInCombat Init Failure : unexpected invalid template");
+        return false;
+    }
+    else{
+        this->attack_damage_ = attack_building_template->attack_damage_;
+        this->attack_interval_ = attack_building_template->attack_interval_;
+        this->attack_range_ = attack_building_template->attack_range_;
+    }
+
+    return true;
+}
+
 void AttackBuildingInCombat::DealDamageToTarget() {
     if (current_target_ && current_target_->is_alive_) {
-        current_target_->TakeDamage(this->building_template_->attack_damage_);  // 调用建筑的受伤害方法
+        current_target_->TakeDamage(attack_damage_);  // 调用建筑的受伤害方法
     }
-    CCLOG("current target health:%d",current_target_->GetCurrentHealth());
+    CCLOG("current soldier health:%d",current_target_->GetCurrentHealth());
 }
 
 void AttackBuildingInCombat::StartAttack() {
@@ -78,7 +108,7 @@ void AttackBuildingInCombat::StartAttack() {
     });
     // 单轮检测：延迟0.1秒 → 执行检测
     auto single_check_loop = cocos2d::Sequence::create(
-            cocos2d::DelayTime::create(this->building_template_->attack_interval_),
+            cocos2d::DelayTime::create(attack_interval_),
             single_attack,
             nullptr
     );
@@ -89,11 +119,12 @@ void AttackBuildingInCombat::StartAttack() {
 void AttackBuildingInCombat::ChooseTarget(){
     if(current_target_!= nullptr && current_target_->is_alive_) return;
     auto soldiers = CombatManager::GetInstance()->live_soldiers;
+    if(soldiers.empty()) CCLOG("no target for building");
     SoldierInCombat* target = *std::min_element(soldiers.begin(),soldiers.end(),
                                                  [&](SoldierInCombat* a,SoldierInCombat* b){
                                                      return this->position_.distance(a->position_)<this->position_.distance(b->position_);
                                                  });
-    if(this->position_.distance(target->position_)<=this->building_template_->GetAttackRange()){
+    if(this->position_.distance(target->position_)<=attack_range_){
         current_target_ = target;
     }
     else{
@@ -101,32 +132,32 @@ void AttackBuildingInCombat::ChooseTarget(){
     }
 }
 
-bool BuildingInCombat::IsAlive() const {
-    return is_alive_;
-}
-
 void BuildingInCombat::Die() {
-    if (!is_alive_) return;
-    is_alive_ = false;
-
     for(auto s:subscribers){
         s->stopAllActions();  // 目标死亡，停止当前攻击动作
+        s->current_target_ = nullptr;
     }
 
     auto manager = CombatManager::GetInstance();
     manager->num_of_live_buildings--;
     CCLOG("live buildings:%d",manager->num_of_live_buildings);
     if(manager->IsCombatEnd()){
-        CCLOG("ending combat");
+        CCLOG("call EndCombat() from building");
         manager->EndCombat();
         return;
     }
 
+    auto it = find(manager->live_buildings_.begin(),manager->live_buildings_.end(),this);
+    if(it!=manager->live_buildings_.end()){
+        CCLOG("dead building found,erase it");
+        manager->live_buildings_.erase(it);
+    }
+    else{
+        CCLOG("dead building unfound");
+    }
     for(auto s:subscribers){
         s->DoAllMyActions();
     }
 
-    auto it = find(manager->live_buildings_.begin(),manager->live_buildings_.end(),this);
-    if(it!=manager->live_buildings_.end()) manager->live_buildings_.erase(it);
     this->removeFromParent();
 }

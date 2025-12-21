@@ -16,12 +16,13 @@ class BuildingInCombat;
 class SoldierInCombat : public cocos2d::Sprite{
 public:
     cocos2d::Vec2 position_;
+    const Soldier* soldier_template_;
     MapManager* map_;
     bool is_alive_;
 
-    static SoldierInCombat* Create(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map);
+    static SoldierInCombat* Create(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map);
     // 初始化函数
-    bool Init(Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map);
+    bool Init(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map);
     // 被攻击函数
     void TakeDamage(int damage);
 
@@ -34,7 +35,6 @@ public:
     int GetCurrentHealth() const{return current_health_;};
 protected:
     int current_health_;
-    Soldier* soldier_template_;
 
     ~SoldierInCombat() override;
     void MoveToTargetAndStartAttack();
