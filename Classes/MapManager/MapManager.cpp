@@ -737,7 +737,7 @@ bool MapManager::loadFromJSONObject(const rapidjson::Value& mapData) {
 
             // Find matching template
             for (const auto& t : templates) {
-                if (t.name == type) {
+                if (t.name_ == type) {
                     Building* building = t.createFunc();
                     if (building) {
                         // Set level (assuming UpgradeToLevel exists or calling Upgrade multiple times)
