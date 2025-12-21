@@ -47,6 +47,7 @@ public:
     void PauseCombat();
     void ResumeCombat();
     void EndCombat();
+
 protected:
     // 禁止外部直接构造/析构，仅通过 Create/Destroy 管理
     CombatManager() = default;

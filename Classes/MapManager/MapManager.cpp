@@ -701,7 +701,6 @@ void MapManager::clearMap() {
         }
     }
     _buildings.clear();
-    _buildings_except_for_wall.clear();
 
     // Remove all obstacles
     for (int x = 0; x < _width; ++x) {

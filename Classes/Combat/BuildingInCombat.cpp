@@ -41,7 +41,7 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     map_ = map;
     // 只有在map_不为nullptr时才调用addChild
     if (map_ != nullptr) {
-        map_->addChild(this,1);
+        map_->addChild(this,0);
     }
     else{
         CCLOG("BuildingInCombat init failed: get map failure!");

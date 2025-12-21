@@ -123,8 +123,8 @@ bool AppDelegate::applicationDidFinishLaunching() {
     director->runWithScene(scene);
     auto map = scene->getMap();
     std::string texture= "buildings/building_1.png";;
-    auto building_template = new WallBuilding("WallBuilding",5,{5,5},texture);
-    auto attack_building_template = new AttackBuilding("AttackBuilding",5,{5,15},texture,3,9,40);
+    auto building_template = new WallBuilding("WallBuilding",40,{5,5},texture);
+    auto attack_building_template = new AttackBuilding("AttackBuilding",40,{5,15},texture,3,9,40);
 
 
     map->PushBuilding(building_template);
@@ -132,12 +132,10 @@ bool AppDelegate::applicationDidFinishLaunching() {
     CombatManager::Create(map);
     auto manager = CombatManager::GetInstance();
     auto giant = TownHall::GetSoldierTemplate(SoldierType::kGiant)->Create();
-    auto bomber = TownHall::GetSoldierTemplate(SoldierType::kBomber)->Create();
     auto archer = TownHall::GetSoldierTemplate(SoldierType::kArcher)->Create();
     auto barbarian = TownHall::GetSoldierTemplate(SoldierType::kBarbarian)->Create();
     manager->StartCombat();
     manager->SendSoldier(giant,cocos2d::Vec2(10,10));
-    manager->SendSoldier(bomber,cocos2d::Vec2(1,1));
     manager->SendSoldier(archer,cocos2d::Vec2(1,2));
     manager->SendSoldier(barbarian,cocos2d::Vec2(12,12));
 
