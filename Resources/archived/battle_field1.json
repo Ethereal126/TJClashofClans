@@ -1,0 +1,20 @@
+{
+  "level_info": {
+    "id": 1,
+    "name": "Goblin Outpost",
+    "reward_gold": 1000,
+    "reward_elixir": 800
+  },
+  "map_layout": {
+    "width": 20,
+    "length": 20,
+    "buildings": [
+      { "type": "TownHall", "x": 8, "y": 8, "level": 1 },
+      { "type": "Cannon", "x": 8, "y": 12, "level": 1 },
+      { "type": "GoldStorage", "x": 12, "y": 8, "level": 1 }
+    ],
+    "obstacles": [
+      { "type": "Bones", "x": 2, "y": 2 }
+    ]
+  }
+}

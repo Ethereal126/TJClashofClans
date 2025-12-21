@@ -48,6 +48,8 @@ bool UIManager::init(Scene* rootScene) {
     }
 
     _rootScene = rootScene;
+    _callbacks.clear();
+    
     _visibleSize = Director::getInstance()->getVisibleSize();
     _visibleOrigin = Director::getInstance()->getVisibleOrigin();
 
@@ -1191,6 +1193,7 @@ Node* UIManager::createArmyTraining(Building* building) {
         auto it = _tempArmyConfig.find(tmpl.name_);
         if (it != _tempArmyConfig.end()) {
             _tempCurrentPopulation += it->second * tmpl.housing_space_;
+
         }
         else {
             _tempArmyConfig[tmpl.name_] = 0;
@@ -1818,8 +1821,15 @@ bool UIManager::deploySoldierAt(const cocos2d::Vec2& screenPos) {
         return false;
     }
 
-    // 调用 Combat 创建士兵（无返回值）
-    Combat::GetInstance().DeploySoldier(_selectedTroopName, vecPos);
+    // 调用 Combat 创建士兵
+	auto soldier_template = TownHall::GetInstance()->GetSoldierCategory();
+	Soldier* soldier = nullptr;
+    for (const auto& tmpl : soldier_template) {
+        if (tmpl.name == _selectedTroopName) {
+            soldier = tmpl.createFunc();
+        }
+    }
+    CombatManager::GetInstance()->SendSoldier(soldier, vecPos);
 
     // 更新 UI 数量
     updateBattleTroopCount(_selectedTroopName, remaining - 1);
@@ -1919,7 +1929,7 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent) {
             _battleTroopNames.clear();
 
             // 返回主场景
-            auto mainScene = MainScene::create();
+            auto mainScene = MainScene::createScene();
             Director::getInstance()->replaceScene(mainScene);
             });
         });

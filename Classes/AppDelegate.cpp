@@ -119,7 +119,7 @@ bool AppDelegate::applicationDidFinishLaunching() {
     //int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
     //CCLOG("testResult:%d", testResult);
 
-    auto scene = MainScene::createScene(20,20,-1);
+    auto scene = MainScene::createScene();
     director->runWithScene(scene);
     auto map = scene->getMap();
     std::string texture= "buildings/building_1.png";;

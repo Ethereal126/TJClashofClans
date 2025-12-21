@@ -1,0 +1,21 @@
+{
+  "level_info": {
+    "id": 2,
+    "name": "The Twin Towers",
+    "reward_gold": 2500,
+    "reward_elixir": 2000
+  },
+  "map_layout": {
+    "width": 25,
+    "length": 25,
+    "buildings": [
+      { "type": "TownHall", "x": 11, "y": 11, "level": 2 },
+      { "type": "ArcherTower", "x": 11, "y": 15, "level": 2 },
+      { "type": "ArcherTower", "x": 11, "y": 7, "level": 2 },
+      { "type": "GoldStorage", "x": 15, "y": 11, "level": 2 },
+      { "type": "ElixirStorage", "x": 7, "y": 11, "level": 2 },
+      { "type": "Wall", "x": 10, "y": 10, "level": 3 }
+    ],
+    "obstacles": []
+  }
+}

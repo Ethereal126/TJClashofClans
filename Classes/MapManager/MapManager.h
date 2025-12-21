@@ -8,6 +8,9 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include "json/document.h"
+#include "json/writer.h"
+#include "json/stringbuffer.h"
 
 // 地图格子状态枚举
 enum class GridState {
@@ -101,6 +104,9 @@ public:
     void removeObstacle(int gridX, int gridY);
 
     // ========== 地图数据读取与保存 ==========
+    // 从 JSON 对象加载地图数据
+    bool loadFromJSONObject(const rapidjson::Value& mapData);
+    
     // 从配置文件加载地图数据
     bool loadMapData(const std::string& filePath);
 
@@ -177,7 +183,10 @@ private:
     bool _canPlaceAtCurrentPos = false;         // 当前位置是否可放置
 
     cocos2d::EventListenerTouchOneByOne* _placementTouchListener = nullptr;  // 放置模式触摸监听器
+    cocos2d::EventListenerTouchOneByOne* _inputListener = nullptr;
 
+    void setupInputListener();
+    
     // 放置模式内部方法
     void setupPlacementTouchListener();         // 设置触摸监听
     void removePlacementTouchListener();        // 移除触摸监听
@@ -186,6 +195,9 @@ private:
     void createPlacementUI();                   // 创建确认/取消按钮
     void removePlacementUI();                   // 移除UI
     void updateConfirmButtonState();            // 更新确认按钮状态
+
+    // 清理地图所有建筑和障碍物
+    void clearMap();
 
 };
 

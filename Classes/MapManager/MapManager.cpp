@@ -1,12 +1,18 @@
 ﻿#include "MapManager.h"
-//#include "TownHall/TownHall.h"
-//#include "UIManager/UIManager.h"
+#include "TownHall/TownHall.h"
+#include "UIManager/UIManager.h"
 #include <algorithm>
 #include <cmath>
 
 MapManager::MapManager():_width(0),_length(0),_gridSize(0),_terrainType(TerrainType::Home){}
 
 MapManager::~MapManager() {
+
+    // 移除输入监听
+    if (_inputListener) {
+        _eventDispatcher->removeEventListener(_inputListener);
+        _inputListener = nullptr;
+    }
     // 先移除批处理地面节点
     if (_groundBatch) {
         _groundBatch->removeFromParent();
@@ -79,9 +85,10 @@ bool MapManager::init(int width, int length, int gridSize, TerrainType terrainTy
         float windowCenterY = origin.y + visibleSize.height / 7.0f;
         this->setPosition(windowCenterX, windowCenterY);
     }
-
     // 初始化网格数据并创建地面 tile（initGrids 会调用 rebuildGroundTiles）
     initGrids();
+    // 设置输入监听
+    setupInputListener();
     return true;
 }
 
@@ -631,6 +638,49 @@ void MapManager::setupPlacementTouchListener() {
         ->addEventListenerWithSceneGraphPriority(_placementTouchListener, this);
 }
 
+void MapManager::setupInputListener() {
+    // 只有在主村庄地图才设置输入监听器
+    if (_inputListener || _terrainType != TerrainType::Home) return;
+
+    _inputListener = cocos2d::EventListenerTouchOneByOne::create();
+    _inputListener->setSwallowTouches(false); // 不吞噬触摸，允许穿透
+
+    _inputListener->onTouchBegan = [this](cocos2d::Touch* touch, cocos2d::Event*) -> bool {
+        if (_isPlacementMode) return false;
+
+        cocos2d::Vec2 nodePos = this->convertToNodeSpace(touch->getLocation());
+        auto gridIdx = worldToGrid(nodePos);
+
+        if (isValidGrid(gridIdx.first, gridIdx.second)) {
+            Building* b = getBuildingAt(gridIdx.first, gridIdx.second);
+            if (b) {
+                // 确定建筑类型
+                BuildingCategory cat = BuildingCategory::Normal;
+                std::string name = b->GetName();
+                if (name.find("Town Hall") != std::string::npos) cat = BuildingCategory::Normal;
+                else if (name.find("Gold") != std::string::npos || name.find("Elixir") != std::string::npos) cat = BuildingCategory::Resource;
+                else if (name.find("Barrack") != std::string::npos || name.find("Camp") != std::string::npos) cat = BuildingCategory::Military;
+                else if (name.find("Cannon") != std::string::npos || name.find("Tower") != std::string::npos || name.find("Wall") != std::string::npos) cat = BuildingCategory::Defense;
+
+                // 显示操作面板（转换位置到屏幕坐标）
+                cocos2d::Vec2 screenPos = this->convertToWorldSpace(b->getPosition());
+                UIManager::getInstance()->showBuildingOptions(screenPos, cat, b);
+                return true;
+            }
+            else {
+                // 点击空地，隐藏面板
+                UIManager::getInstance()->hidePanel(UIPanelType::BuildingOptions);
+                UIManager::getInstance()->hidePanel(UIPanelType::BuildingInfo);
+                UIManager::getInstance()->hidePanel(UIPanelType::BuildingUpgrade);
+                UIManager::getInstance()->hidePanel(UIPanelType::ArmyTraining);
+            }
+        }
+        return false;
+    };
+
+    _eventDispatcher->addEventListenerWithSceneGraphPriority(_inputListener, this);
+}
+
 void MapManager::removePlacementTouchListener() {
     if (_placementTouchListener) {
         cocos2d::Director::getInstance()->getEventDispatcher()
@@ -640,16 +690,159 @@ void MapManager::removePlacementTouchListener() {
 }
 
 
-bool MapManager::saveMapData(const std::string& filePath) const {
-    // 占位实现：后续确定 JSON/二进制协议后填充
-    cocos2d::log("MapManager::saveMapData(%s) - stub", filePath.c_str());
+void MapManager::clearMap() {
+    // Remove all buildings
+    auto buildingsCopy = _buildings;
+    for (auto b : buildingsCopy) {
+        if (b) {
+            updateBuildingGrids(b, (int)b->getPosition().x, (int)b->getPosition().y, false); // This is wrong, need grid pos
+            // Better: just clear the vectors and remove children
+            b->removeFromParent();
+        }
+    }
+    _buildings.clear();
+    _buildings_except_for_wall.clear();
+
+    // Remove all obstacles
+    for (int x = 0; x < _width; ++x) {
+        for (int y = 0; y < _length; ++y) {
+            if (_gridObstacles[x][y]) {
+                _gridObstacles[x][y]->removeFromParent();
+                _gridObstacles[x][y] = nullptr;
+            }
+            _gridBuildings[x][y] = nullptr;
+            _gridStates[x][y] = GridState::Empty;
+        }
+    }
+}
+
+bool MapManager::loadFromJSONObject(const rapidjson::Value& mapData) {
+    if (!mapData.IsObject()) return false;
+
+    clearMap();
+
+    // 1. Load Buildings
+    if (mapData.HasMember("buildings") && mapData["buildings"].IsArray()) {
+        const auto& buildingsJson = mapData["buildings"];
+        auto templates = TownHall::GetAllBuildingTemplates();
+
+        for (rapidjson::SizeType i = 0; i < buildingsJson.Size(); i++) {
+            const auto& bJson = buildingsJson[i];
+            if (!bJson.HasMember("type") || !bJson.HasMember("x") || !bJson.HasMember("y")) continue;
+
+            std::string type = bJson["type"].GetString();
+            int gx = bJson["x"].GetInt();
+            int gy = bJson["y"].GetInt();
+            int level = bJson.HasMember("level") ? bJson["level"].GetInt() : 1;
+
+            // Find matching template
+            for (const auto& t : templates) {
+                if (t.name == type) {
+                    Building* building = t.createFunc();
+                    if (building) {
+                        // Set level (assuming UpgradeToLevel exists or calling Upgrade multiple times)
+                        for(int l = 1; l < level; ++l) building->Upgrade();
+                        
+                        if (!placeBuilding(building, gx, gy)) {
+                            building->release(); // Failed to place
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    // 2. Load Obstacles
+    if (mapData.HasMember("obstacles") && mapData["obstacles"].IsArray()) {
+        const auto& obstaclesJson = mapData["obstacles"];
+        for (rapidjson::SizeType i = 0; i < obstaclesJson.Size(); i++) {
+            const auto& oJson = obstaclesJson[i];
+            if (oJson.HasMember("x") && oJson.HasMember("y")) {
+                placeObstacle(oJson["x"].GetInt(), oJson["y"].GetInt());
+            }
+        }
+    }
+
     return true;
 }
 
 bool MapManager::loadMapData(const std::string& filePath) {
-    // 占位实现：清空并重置
-    cocos2d::log("MapManager::loadMapData(%s) - stub", filePath.c_str());
-    initGrids();
-    // TODO: 解析文件并重建状态与建筑
-    return true;
+    std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(filePath);
+    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) return false;
+
+    std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
+    rapidjson::Document doc;
+    doc.Parse(content.c_str());
+
+    if (doc.HasParseError()) return false;
+
+    // If it's the full save file, the map layout is under "map_layout"
+    if (doc.HasMember("map_layout")) {
+        return loadFromJSONObject(doc["map_layout"]);
+    }
+    
+    return loadFromJSONObject(doc);
+}
+
+bool MapManager::saveMapData(const std::string& filePath) const {
+    rapidjson::Document doc;
+    
+    const std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(filePath);
+    if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        const std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
+        doc.Parse(content.c_str());
+        if (doc.HasParseError() || !doc.IsObject()) {
+            doc.SetObject();
+        }
+    } else {
+        doc.SetObject();
+    }
+
+    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+
+    rapidjson::Value mapLayout(rapidjson::kObjectType);
+    mapLayout.AddMember("width", _width, allocator);
+    mapLayout.AddMember("length", _length, allocator);
+    mapLayout.AddMember("grid_size", _gridSize, allocator);
+
+    rapidjson::Value buildingsArray(rapidjson::kArrayType);
+    for (auto b : _buildings) {
+        rapidjson::Value bObj(rapidjson::kObjectType);
+        bObj.AddMember("type", rapidjson::Value(b->GetName().c_str(), allocator).Move(), allocator);
+
+        auto gridPos = worldToGrid(b->getPosition());
+        bObj.AddMember("x", gridPos.first, allocator);
+        bObj.AddMember("y", gridPos.second, allocator);
+        bObj.AddMember("level", b->GetLevel(), allocator);
+
+        buildingsArray.PushBack(bObj, allocator);
+    }
+    mapLayout.AddMember("buildings", buildingsArray, allocator);
+
+    rapidjson::Value obstaclesArray(rapidjson::kArrayType);
+    for (int x = 0; x < _width; ++x) {
+        for (int y = 0; y < _length; ++y) {
+            if (_gridStates[x][y] == GridState::Obstacle) {
+                rapidjson::Value oObj(rapidjson::kObjectType);
+                oObj.AddMember("type", rapidjson::Value("Obstacle", allocator).Move(), allocator);
+                oObj.AddMember("x", x, allocator);
+                oObj.AddMember("y", y, allocator);
+                obstaclesArray.PushBack(oObj, allocator);
+            }
+        }
+    }
+    mapLayout.AddMember("obstacles", obstaclesArray, allocator);
+
+    if (doc.HasMember("map_layout")) {
+        doc.RemoveMember("map_layout");
+    }
+    doc.AddMember("map_layout", mapLayout, allocator);
+
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+
+    return cocos2d::FileUtils::getInstance()->writeStringToFile(buffer.GetString(), filePath);
+
 }
