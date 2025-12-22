@@ -7,13 +7,13 @@
 USING_NS_CC;
 
 static std::vector<SoldierTemplate> soldier_templates = {
-    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldier/Barbarian.png",
+    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldiers/Barbarian/Barbarianwalkright1.png",
                     50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
-    SoldierTemplate(SoldierType::kArcher, "Archer","Soldier/Archer.png",
+    SoldierTemplate(SoldierType::kArcher, "Archer","Soldiers/Archer/Archerattackdown1.png",
                     25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
-    SoldierTemplate(SoldierType::kBomber, "Bomber","Soldier/Bomber.png",
+    SoldierTemplate(SoldierType::kBomber, "Bomber","Soldiers/Giant/Giantattackdown1.png",
                     20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
-    SoldierTemplate(SoldierType::kGiant, "Giant","Soldier/Giant.png",
+    SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
                     500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
 
@@ -25,7 +25,7 @@ static std::vector<SoldierTemplate> soldier_templates = {
 TownHall* TownHall::instance_ = nullptr;
 
 TownHall* TownHall::GetInstance() {
-    InitializeInstance("大本营", 1, {0,0}, "TownHall/TownHall.png");
+    InitializeInstance("大本营", 1, {0,0}, "buildings/TownHall1.png");
     return instance_;
 }
 
@@ -157,8 +157,8 @@ void TownHall::Upgrade() {
     // 播放升级特效
     PlayUpgradeEffect();
 
-    // 更新纹理（假设纹理命名规则为 "townhall_levelX.png"）
-    std::string new_texture = "TownHall/townhall_level" + std::to_string(level_) + ".png";
+    // 更新纹理（假设纹理命名规则为 "buildings/TownHallX.png"）
+    std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
     this->setTexture(new_texture);
 
     cocos2d::log("%s 升级到等级 %d，金币池上限: %d，圣水池上限: %d，金矿上限: %d，圣水收集器上限: %d，训练营上限: %d，军队容量: %d",
@@ -347,7 +347,6 @@ void TownHall::AddWall(WallBuilding* wall) {
     if (IsWallCapacityFull()) {
         cocos2d::log("已达到城墙上限 %d/%d，无法添加更多城墙",
             GetCurrentWallCount(), wall_capacity_);
-        PlayFullCapacityAnimation();
         return;
     }
 
@@ -558,7 +557,6 @@ int TownHall::AddGold(int amount) {
 
     if (current_total >= max_capacity) {
         cocos2d::log("金币池已达上限，无法存入更多金币");
-        PlayFullCapacityAnimation();
         return 0;
     }
 
@@ -594,7 +592,6 @@ bool TownHall::SpendGold(int amount) {
     int total_gold = GetTotalGoldFromStorages();
     if (total_gold < amount) {
         cocos2d::log("金币不足，需要: %d，现有: %d", amount, total_gold);
-        PlayNotEnoughAnimation();
         return false;
     }
 
@@ -627,7 +624,6 @@ int TownHall::AddElixir(int amount) {
 
     if (current_total >= max_capacity) {
         cocos2d::log("圣水池已达上限，无法存入更多圣水");
-        PlayFullCapacityAnimation();
         return 0;
     }
 
@@ -661,7 +657,6 @@ bool TownHall::SpendElixir(int amount) {
     int total_elixir = GetTotalElixirFromStorages();
     if (total_elixir < amount) {
         cocos2d::log("圣水不足，需要: %d，现有: %d", amount, total_elixir);
-        PlayNotEnoughAnimation();
         return false;
     }
 
@@ -881,22 +876,6 @@ void TownHall::PlayUpgradeEffect() {
 }
 
 void TownHall::PlayDestroyedEffect() {
-    // 播放爆炸粒子特效
-    auto explosion = ParticleSystemQuad::create("particles/explosion.plist");
-    if (explosion) {
-        explosion->setPosition(Vec2::ZERO);
-        explosion->setAutoRemoveOnFinish(true);
-        this->addChild(explosion);
-    }
-
-    // 播放烟雾特效
-    auto smoke = ParticleSystemQuad::create("particles/smoke.plist");
-    if (smoke) {
-        smoke->setPosition(Vec2::ZERO);
-        smoke->setAutoRemoveOnFinish(true);
-        this->addChild(smoke);
-    }
-
     // 播放震动效果
     auto shake_right = MoveBy::create(0.05f, Vec2(10, 0));
     auto shake_left = MoveBy::create(0.05f, Vec2(-20, 0));
@@ -912,45 +891,6 @@ void TownHall::PlayDestroyedEffect() {
     // CocosDenshion::SimpleAudioEngine::getInstance()->playEffect("sounds/destroyed.wav");
 
     cocos2d::log("%s 被摧毁，游戏结束", name_.c_str());
-}
-
-void TownHall::PlayFullCapacityAnimation() {
-    // 播放满容量提示动画
-    auto label = Label::createWithTTF("已满!", "fonts/Marker Felt.ttf", 24);
-    label->setColor(Color3B::RED);
-    label->setPosition(Vec2(0, this->getContentSize().height / 2 + 50));
-    this->addChild(label);
-
-    auto fade_in = FadeIn::create(0.3f);
-    auto fade_out = FadeOut::create(0.7f);
-    auto remove = RemoveSelf::create();
-    auto sequence = Sequence::create(fade_in, fade_out, remove, nullptr);
-    label->runAction(sequence);
-
-    // 播放闪烁效果
-    auto blink = Blink::create(1.0f, 3);
-    this->runAction(blink);
-}
-
-void TownHall::PlayNotEnoughAnimation() {
-    // 播放资源不足提示动画
-    auto label = Label::createWithTTF("资源不足!", "fonts/Marker Felt.ttf", 24);
-    label->setColor(Color3B::RED);
-    label->setPosition(Vec2(0, this->getContentSize().height / 2 + 50));
-    this->addChild(label);
-
-    auto fade_in = FadeIn::create(0.2f);
-    auto fade_out = FadeOut::create(0.8f);
-    auto remove = RemoveSelf::create();
-    auto sequence = Sequence::create(fade_in, fade_out, remove, nullptr);
-    label->runAction(sequence);
-
-    // 播放抖动效果
-    auto shake = MoveBy::create(0.05f, Vec2(5, 0));
-    auto shake_back = MoveBy::create(0.05f, Vec2(-10, 0));
-    auto shake_again = MoveBy::create(0.05f, Vec2(5, 0));
-    auto shake_sequence = Sequence::create(shake, shake_back, shake_again, nullptr);
-    this->runAction(shake_sequence);
 }
 
 void TownHall::ShowInfo() const {
@@ -1000,31 +940,31 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
     // 金矿
     templates.emplace_back(
         "Gold Mine",
-        "ui/icons/gold_mine_icon.png",
+        "buildings/goldmine.png",
         150,  // 成本
         3,    // 宽度
         3,    // 长度
         []() -> Building* {
-            return SourceBuilding::Create("Gold Mine", 1, { 0, 0 }, "textures/gold_mine.png", "Gold");
+            return SourceBuilding::Create("Gold Mine", 1, { 0, 0 }, "buildings/goldmine.png", "Gold");
         }
     );
 
     // 圣水收集器
     templates.emplace_back(
         "Elixir Collector",
-        "ui/icons/elixir_collector_icon.png",
+        "buildings/elixirmine0.png",
         150,
         3,
         3,
         []() -> Building* {
-            return SourceBuilding::Create("Elixir Collector", 1, { 0, 0 }, "textures/elixir_collector.png", "Elixir");
+            return SourceBuilding::Create("Elixir Collector", 1, { 0, 0 }, "buildings/elixirmine0.png", "Elixir");
         }
     );
 
     // 金币储罐
     templates.emplace_back(
         "Gold Storage",
-        "ui/icons/gold_storage_icon.png",
+        "buildings/goldpool1.png",
         300,
         3,
         3,
@@ -1036,7 +976,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
     // 圣水储罐
     templates.emplace_back(
         "Elixir Storage",
-        "ui/icons/elixir_storage_icon.png",
+        "buildings/elixirpool2.png",
         300,
         3,
         3,
@@ -1048,49 +988,49 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
     // 军营
     templates.emplace_back(
         "Barracks",
-        "ui/icons/barracks_icon.png",
+        "buildings/barrack.png",
         200,
         3,
         3,
         []() -> Building* {
-            return Barracks::Create("Barracks", 1, { 0, 0 });
+            return Barracks::Create("Barrack", 1, { 0, 0 });
         }
     );
 
     // 训练营
     templates.emplace_back(
         "Training Camp",
-        "ui/icons/training_camp_icon.png",
+        "buildings/trainingcamp.png",
         500,
         4,
         4,
         []() -> Building* {
             // 调用 TrainingBuilding 的 Create 函数
             return TrainingBuilding::Create("Training Camp", 2, { 0, 0 },
-                "textures/training_camp.png", 10, 20);
+                "buildings/trainingcamp.png", 10, 20);
         }
     );
 
     // 城墙
     templates.emplace_back(
         "Wall",
-        "ui/icons/wall_icon.png",
+        "buildings/wall1.png",
         100,  // 建造成本
         1,    // 宽度
         1,    // 长度
         []() -> Building* {
-            return WallBuilding::Create("Wall", 1, { 0, 0 }, "textures/wall.png");
+            return WallBuilding::Create("Wall", 1, { 0, 0 }, "buildings/wall1.png");
         }
     );
 
     templates.emplace_back(
         "Archer Tower",
-        "ui/icons/archer_tower_icon.png",
+        "buildings/archertower.png",
         350,
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "textures/archer_tower.png", 7, 1, 50);
+            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 7, 1, 50);
         }
     );
 
@@ -1103,7 +1043,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kBarbarian,
         "Barbarian",
-        "ui/icons/barbarian_icon.png",
+        "Soldiers/Barbarian/Barbarianwalkright1.png",
         1,    // 人口消耗
         25,   // 训练费用（金币）
         20,   // 训练时间（秒）
@@ -1116,7 +1056,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kArcher,
         "Archer",
-        "ui/icons/archer_icon.png",
+        "Soldiers/Archer/Archerattackdown1.png",
         1,
         50,
         25,
@@ -1129,7 +1069,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kGiant,
         "Giant",
-        "ui/icons/giant_icon.png",
+        "Soldiers/Giant/Giantattackdown1.png",
         5,
         500,
         120,
@@ -1143,7 +1083,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kBomber,
         "Bomber",
-        "ui/icons/wall_breaker_icon.png",
+        "Soldiers/Bomber/Bomberwalkdown1.png",
         2,
         1000,
         60,

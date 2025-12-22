@@ -86,8 +86,8 @@ bool Building::IsAllowedUpgrade() const {
  */
 std::string Building::GetBuildingImagePath() const {
     // 可以根据等级或其他条件返回不同的图片路径
-    // 例如：return "textures/" + name_ + "_level" + std::to_string(level_) + ".png";
-    return "textures/" + name_ + ".png";
+    // 例如：return "buildings/" + name_ + std::to_string(level_) + ".png";
+    return "buildings/" + name_ + ".png";
 }
 
 /**
@@ -325,8 +325,8 @@ void WallBuilding::WallBuilding::Upgrade() {
     // 调用基类升级
     Building::Upgrade();
 
-    // 更新墙体纹理（假设命名规则为 "wall_levelX.png"）
-    std::string new_texture = "Walls/wall_level" + std::to_string(level_) + ".png";
+    // 更新墙体纹理（假设命名规则为 "wallX.png"）
+    std::string new_texture = "buildings/wall" + std::to_string(level_) + ".png";
     this->setTexture(new_texture);
 
     // 根据等级改变颜色（可选视觉效果）
@@ -458,7 +458,7 @@ TrainingBuilding::TrainingBuilding(std::string name, int base, cocos2d::Vec2 pos
  */
 bool TrainingBuilding::Init() {
     // 基类初始化
-    if (!Building::initWithFile("textures/" + name_ + ".png")) {
+    if (!Building::initWithFile("buildings/" + name_ + ".png")) {
         return false;
     }
 

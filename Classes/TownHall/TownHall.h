@@ -341,12 +341,6 @@ public:
     bool HasDamagedWalls() const;
 
     /**
-     * @brief 检查是否有城墙可以升级
-     * @return true 表示有未达到最大等级且未在升级中的城墙
-     */
-    bool HasUpgradableWalls() const;
-
-    /**
      * @brief 批量升级所有可升级的城墙
      * 尝试升级所有未达到最大等级且未在升级中的城墙
      * @return 成功开始升级的城墙数量
@@ -417,9 +411,6 @@ public:
     // ==================== 士兵管理相关 ====================
     std::vector<Soldier*> GetAllTrainedSoldiers() const;
     int GetTotalTrainedSoldierCount() const;
-    int GetTotalSoldierHousingSpace() const;
-    bool CanTrainMoreSoldiers() const;
-    bool IsSoldierTypeAvailable(const std::string& soldierType) const;
 
     // ==================== 士兵管理相关接口 ====================
 
@@ -476,18 +467,6 @@ public:
      * 在大本营生命值降为 0 时触发，例如爆炸特效、震动镜头等。
      */
     void PlayDestroyedEffect();
-
-    /**
-     * @brief 播放资源满特效
-     * 在资源大于资源总容量时触发，例如变红特效、抖动镜头等。
-     */
-    void PlayFullCapacityAnimation();
-
-    /**
-     * @brief 播放资源不足特效
-     * 在资源小于资源需求时触发，例如变红特效、抖动镜头等。
-     */
-    void PlayNotEnoughAnimation();
 
     /**
      * @brief 显示大本营详细信息
