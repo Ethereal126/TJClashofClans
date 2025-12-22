@@ -3,7 +3,10 @@
 //
 
 #include "TownHall.h"
+#include "string"
 #include <cmath>
+#include <fstream>
+#include <sstream>
 USING_NS_CC;
 
 static std::vector<SoldierTemplate> soldier_templates = {
@@ -16,6 +19,194 @@ static std::vector<SoldierTemplate> soldier_templates = {
     SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
                     500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
+
+// ==================== JSON数据读取函数 ====================
+
+/**
+ * @brief 从JSON文件中读取玩家数据
+ * @param file_path JSON文件路径
+ * @param gold 输出参数，读取到的金币数量
+ * @param elixir 输出参数，读取到的圣水数量
+ * @param level 输出参数，读取到的大本营等级
+ * @return 读取成功返回true，失败返回false
+ */
+static bool LoadPlayerDataFromJSON(const std::string& file_path,
+                                   int& gold, int& elixir, int& level) {
+    // 参数验证
+    if (file_path.empty()) {
+        cocos2d::log("错误: JSON文件路径为空");
+        return false;
+    }
+
+    // 使用Cocos2d-x的FileUtils处理资源文件路径
+    std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
+    cocos2d::log("尝试加载JSON文件: %s -> %s", file_path.c_str(), fullPath.c_str());
+    
+    // 如果主路径找不到文件，尝试备用路径
+    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        cocos2d::log("主路径未找到文件，尝试备用路径...");
+        
+        // 尝试的备用路径列表
+        std::vector<std::string> alternativePaths = {
+            "Resources/archived/player_save.json",
+            "Resources/archived/player_save.json",
+            "../Resources/archived/player_save.json",
+            "../../Resources/archived/player_save.json"
+        };
+    }
+
+    // 读取文件内容
+    std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
+    if (content.empty()) {
+        cocos2d::log("错误: JSON文件为空或读取失败: %s", fullPath.c_str());
+        return false;
+    }
+    
+    cocos2d::log("成功读取JSON文件，内容长度: %zu 字节", content.length());
+
+    // 解析JSON数据
+    rapidjson::Document document;
+    if (document.Parse(content.c_str()).HasParseError()) {
+        size_t error_offset = document.GetErrorOffset();
+        cocos2d::log("JSON解析错误，错误位置: %zu", error_offset);
+
+        // 输出错误位置前后的内容用于调试
+        if (error_offset < content.length()) {
+            std::string context = content.substr(std::max(0, (int)error_offset - 20),
+                                               std::min(40, (int)content.length() - (int)error_offset));
+            cocos2d::log("错误上下文: ...%s", context.c_str());
+        }
+        return false;
+    }
+
+    // 检查根对象
+    if (!document.IsObject()) {
+        cocos2d::log("JSON根对象不是有效的对象类型");
+        return false;
+    }
+
+    try {
+        // 读取玩家统计数据
+        if (!document.HasMember("player_stats")) {
+            cocos2d::log("JSON中缺少player_stats字段");
+            return false;
+        }
+
+        if (!document["player_stats"].IsObject()) {
+            cocos2d::log("player_stats不是有效的对象类型");
+            return false;
+        }
+
+        const auto& player_stats = document["player_stats"];
+
+        // 读取金币数据
+        if (player_stats.HasMember("gold")) {
+            if (player_stats["gold"].IsInt()) {
+                gold = player_stats["gold"].GetInt();
+                // 验证金币数值范围
+                if (gold < 0) {
+                    cocos2d::log("警告: 金币数值为负数，已修正为0");
+                    gold = 0;
+                }
+            } else if (player_stats["gold"].IsString()) {
+                // 如果是字符串，尝试转换
+                try {
+                    gold = std::stoi(player_stats["gold"].GetString());
+                    if (gold < 0) {
+                        cocos2d::log("警告: 金币数值为负数，已修正为0");
+                        gold = 0;
+                    }
+                } catch (...) {
+                    cocos2d::log("无法将金币字符串转换为整数，使用默认值0");
+                    gold = 0;
+                }
+            } else {
+                cocos2d::log("金币字段类型无效，使用默认值0");
+                gold = 0;
+            }
+        } else {
+            cocos2d::log("缺少gold字段，使用默认值0");
+            gold = 0;
+        }
+
+        // 读取圣水数据
+        if (player_stats.HasMember("elixir")) {
+            if (player_stats["elixir"].IsInt()) {
+                elixir = player_stats["elixir"].GetInt();
+                // 验证圣水数值范围
+                if (elixir < 0) {
+                    cocos2d::log("警告: 圣水数值为负数，已修正为0");
+                    elixir = 0;
+                }
+            } else if (player_stats["elixir"].IsString()) {
+                // 如果是字符串，尝试转换
+                try {
+                    elixir = std::stoi(player_stats["elixir"].GetString());
+                    if (elixir < 0) {
+                        cocos2d::log("警告: 圣水数值为负数，已修正为0");
+                        elixir = 0;
+                    }
+                } catch (...) {
+                    cocos2d::log("无法将圣水字符串转换为整数，使用默认值0");
+                    elixir = 0;
+                }
+            } else {
+                cocos2d::log("圣水字段类型无效，使用默认值0");
+                elixir = 0;
+            }
+        } else {
+            cocos2d::log("缺少elixir字段，使用默认值0");
+            elixir = 0;
+        }
+
+        // 读取大本营等级数据
+        if (player_stats.HasMember("level")) {
+            if (player_stats["level"].IsInt()) {
+                level = player_stats["level"].GetInt();
+                // 验证等级数值范围
+                if (level <= 0) {
+                    cocos2d::log("警告: 大本营等级小于等于0，已修正为1");
+                    level = 1;
+                } else if (level > 10) {
+                    cocos2d::log("警告: 大本营等级超过最大值10，已修正为10");
+                    level = 10;
+                }
+            } else if (player_stats["level"].IsString()) {
+                // 如果是字符串，尝试转换
+                try {
+                    level = std::stoi(player_stats["level"].GetString());
+                    if (level <= 0) {
+                        cocos2d::log("警告: 大本营等级小于等于0，已修正为1");
+                        level = 1;
+                    } else if (level > 10) {
+                        cocos2d::log("警告: 大本营等级超过最大值10，已修正为10");
+                        level = 10;
+                    }
+                } catch (...) {
+                    cocos2d::log("无法将等级字符串转换为整数，使用默认值1");
+                    level = 1;
+                }
+            } else {
+                cocos2d::log("等级字段类型无效，使用默认值1");
+                level = 1;
+            }
+        } else {
+            cocos2d::log("缺少level字段，使用默认值1");
+            level = 1;
+        }
+
+        cocos2d::log("成功解析JSON数据: 金币=%d, 圣水=%d, 等级=%d", gold, elixir, level);
+        return true;
+    }
+    catch (const std::exception& e) {
+        cocos2d::log("解析JSON数据时发生异常: %s", e.what());
+        return false;
+    }
+    catch (...) {
+        cocos2d::log("解析JSON数据时发生未知异常");
+        return false;
+    }
+}
 
 // ==================== TownHall 实现 ====================
 
@@ -108,8 +299,51 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     , flag_sprite_(nullptr)
     , level_label_(nullptr) {
 
-    // 设置大本营纹理
-    this->setTexture(texture);
+    // 从JSON文件读取玩家数据
+    int json_gold = 0;
+    int json_elixir = 0;
+    int json_level = base; // 使用base作为默认等级
+
+    std::string json_file_path = "archived/player_save.json";
+
+    bool json_load_success = false;
+
+    try {
+        json_load_success = LoadPlayerDataFromJSON(json_file_path, json_gold, json_elixir, json_level);
+
+        if (json_load_success) {
+            // 使用从JSON文件读取的数据
+            level_ = json_level;
+            gold_ = json_gold;
+            elixir_ = json_elixir;
+
+            cocos2d::log("从JSON文件成功初始化大本营数据: 金币=%d, 圣水=%d, 等级=%d",
+                        json_gold, json_elixir, level_);
+
+            // 根据等级更新纹理
+            std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
+            this->setTexture(new_texture);
+        } else {
+            // JSON读取失败，使用默认值
+            cocos2d::log("JSON文件读取失败，使用默认值初始化大本营");
+            level_ = base;
+            this->setTexture(texture);
+        }
+    }
+    catch (const std::exception& e) {
+        // 异常处理
+        cocos2d::log("初始化大本营时发生异常: %s，使用默认值", e.what());
+        level_ = base;
+        this->setTexture(texture);
+    }
+    catch (...) {
+        // 未知异常处理
+        cocos2d::log("初始化大本营时发生未知异常，使用默认值");
+        level_ = base;
+        this->setTexture(texture);
+    }
+
+    // 设置位置
     this->setPosition(position);
 
     // 初始化UI组件
@@ -117,6 +351,9 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
 
     // 构造函数执行完成后标记为已初始化
     is_initialized_ = true;
+
+    cocos2d::log("大本营 %s 初始化完成 - 等级: %d, 金币: %d, 圣水: %d",
+                name.c_str(), level_, gold_, elixir_);
 }
 
 TownHall::~TownHall() {
@@ -969,7 +1206,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return GoldStorage::Create("Gold Storage", 1, { 0, 0 });
+            return GoldStorage::Create("Gold Storage", 1, { 0, 0 },"buildings/goldpool1.png","Gold Storage");
         }
     );
 
@@ -981,7 +1218,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return ElixirStorage::Create("Elixir Storage", 1, { 0, 0 });
+            return ElixirStorage::Create("Elixir Storage", 1, { 0, 0 },"buildings/elixirpool2.png","Elixir Storage");
         }
     );
 

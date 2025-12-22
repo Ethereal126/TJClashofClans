@@ -13,6 +13,21 @@
 #include "Building/Building.h"
 #include "Soldier/Soldier.h"
 #include "ResourceStorage/ResourceStorage.h"
+#include "json/document.h"
+#include "json/writer.h"
+#include "json/stringbuffer.h"
+
+/**
+ * @brief 从JSON文件中读取玩家数据
+ * @param file_path JSON文件路径
+ * @param gold 输出参数，读取到的金币数量
+ * @param elixir 输出参数，读取到的圣水数量
+ * @param level 输出参数，读取到的大本营等级
+ * @return 读取成功返回true，失败返回false
+ */
+    static bool LoadPlayerDataFromJSON(const std::string& file_path,
+        int& gold, int& elixir, int& level);
+
 
 /**
  * @brief TownHall类
@@ -21,6 +36,8 @@
  */
 class TownHall : public Building {
 private:
+    
+
     /**
      * @brief 私有构造函数
      * 使用基准数值 base 初始化大本营的生命、防御、建造时间与成本等属性。
