@@ -163,7 +163,10 @@ private:
  */
 class ElixirStorage : public ProductionBuilding {
 public:
-    static ElixirStorage* Create(std::string name, int base, cocos2d::Vec2 position);
+    static ElixirStorage* Create(const std::string& name, int base,
+        cocos2d::Vec2 position,
+        const std::string& texture,
+        const std::string& resourceType);
 
     virtual ~ElixirStorage();
 
@@ -188,7 +191,7 @@ public:
     int GetNextCapacity() const;
 
 protected:
-    ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position);
+    ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position, const std::string& texture);
 
     // 初始化圣水特有组件
     virtual void InitElixirSpecificComponents();
@@ -210,7 +213,10 @@ private:
  */
 class GoldStorage : public ProductionBuilding {
 public:
-    static GoldStorage* Create(std::string name, int base, cocos2d::Vec2 position);
+    static GoldStorage* Create(const std::string& name, int base,
+        cocos2d::Vec2 position,
+        const std::string& texture,
+        const std::string& resourceType);
 
     virtual ~GoldStorage();
 
@@ -239,10 +245,7 @@ public:
     float GetNextProtectionPercentage() const;
 
 protected:
-    GoldStorage(const std::string& name, int base, cocos2d::Vec2 position);
-
-    // 初始化金币特有组件
-    virtual void InitGoldSpecificComponents();
+    GoldStorage(const std::string& name, int base, cocos2d::Vec2 position, const std::string& texture);
 
     // 成员变量
     bool isVaultProtected_;

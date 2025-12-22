@@ -405,21 +405,48 @@ void ProductionBuilding::OnProductionUpdate(float deltaTime) {
 
 // ==================== ElixirStorage 实现 ====================
 
-ElixirStorage* ElixirStorage::Create(std::string name, int base, cocos2d::Vec2 position) {
-    auto storage = new (std::nothrow) ElixirStorage(name, base, position);
-    if (storage && storage->Init()) {
-        storage->autorelease();
-        return storage;
+ElixirStorage* ElixirStorage::Create(const std::string& name, int base,
+    cocos2d::Vec2 position,
+    const std::string& texture,
+    const std::string& resourceType) {
+    // 使用nothrow避免分配失败时抛出异常
+    auto storage = new (std::nothrow) ElixirStorage(name, base, position, texture);
+
+    if (storage) {
+        // 初始化纹理和资源类型
+        if (storage->Init()) {
+            // 标记为自动释放（Cocos2d-x的内存管理机制）
+            storage->autorelease();
+
+            // 设置资源类型相关属性
+            if (resourceType == "Gold") {
+                storage->setColor(cocos2d::Color3B::YELLOW);
+            }
+            else if (resourceType == "Elixir") {
+                storage->setColor(cocos2d::Color3B(200, 100, 255)); // 紫色
+                // 圣水储罐特有的初始化
+                storage->SetCollectionRadius(100.0f + base * 10.0f);  // 根据等级设置收集半径
+            }
+
+            cocos2d::log("创建圣水储罐: %s (类型: %s, 位置: %f,%f)",
+                name.c_str(), resourceType.c_str(),
+                position.x, position.y);
+            return storage;
+        }
+
+        // 初始化失败，删除对象
+        delete storage;
     }
-    CC_SAFE_DELETE(storage);
+
+    cocos2d::log("创建圣水储罐失败: %s", name.c_str());
     return nullptr;
 }
 
 ElixirStorage::~ElixirStorage() {
 }
 
-ElixirStorage::ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position)
-    : ProductionBuilding(name, base, position, "buildings/elixirmine.png", "Elixir")
+ElixirStorage::ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position, const std::string& texture)
+    : ProductionBuilding(name, base, position, texture.empty() ? "buildings/elixirmine.png" : texture, "Elixir")
     , collectionRadius_(100.0f)
     , elixirColor_(Color4F(0.8f, 0.2f, 0.8f, 1.0f)) {  // 紫色
 }
@@ -534,13 +561,40 @@ void ElixirStorage::InitElixirSpecificComponents() {
 
 // ==================== GoldStorage 实现 ====================
 
-GoldStorage* GoldStorage::Create(std::string name, int base, cocos2d::Vec2 position) {
-    auto storage = new (std::nothrow) GoldStorage(name, base, position);
-    if (storage && storage->Init()) {
-        storage->autorelease();
-        return storage;
+GoldStorage* GoldStorage::Create(const std::string& name, int base,
+    cocos2d::Vec2 position,
+    const std::string& texture,
+    const std::string& resourceType) {
+    // 使用nothrow避免分配失败时抛出异常
+    auto storage = new (std::nothrow) GoldStorage(name, base, position, texture);
+
+    if (storage) {
+        // 初始化纹理和资源类型
+        if (storage->Init()) {
+            // 标记为自动释放（Cocos2d-x的内存管理机制）
+            storage->autorelease();
+
+            // 设置资源类型相关属性
+            if (resourceType == "Gold") {
+                storage->setColor(cocos2d::Color3B::YELLOW);
+                // 金币储罐特有的初始化
+                storage->ActivateProtection(base >= 3);  // 3级及以上自动激活保护
+            }
+            else if (resourceType == "Elixir") {
+                storage->setColor(cocos2d::Color3B(200, 100, 255)); // 紫色
+            }
+
+            cocos2d::log("创建金币储罐: %s (类型: %s, 位置: %f,%f)",
+                name.c_str(), resourceType.c_str(),
+                position.x, position.y);
+            return storage;
+        }
+
+        // 初始化失败，删除对象
+        delete storage;
     }
-    CC_SAFE_DELETE(storage);
+
+    cocos2d::log("创建金币储罐失败: %s", name.c_str());
     return nullptr;
 }
 
@@ -549,8 +603,8 @@ GoldStorage::~GoldStorage() {
     if (shieldEffect_) shieldEffect_->removeFromParent();
 }
 
-GoldStorage::GoldStorage(const std::string& name, int base, cocos2d::Vec2 position)
-    : ProductionBuilding(name, base, position, "buildings/goldpool1.png", "Gold")
+GoldStorage::GoldStorage(const std::string& name, int base, cocos2d::Vec2 position, const std::string& texture)
+    : ProductionBuilding(name, base, position, texture.empty() ? "buildings/goldpool1.png" : texture, "Gold")
     , isVaultProtected_(false)
     , protectionPercentage_(0.3f)
     , protectionShield_(nullptr)
@@ -561,8 +615,6 @@ bool GoldStorage::Init() {
     if (!ProductionBuilding::Init()) {
         return false;
     }
-
-    InitGoldSpecificComponents();
     StartProduction();
 
     return true;
