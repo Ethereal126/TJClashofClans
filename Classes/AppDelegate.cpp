@@ -134,21 +134,25 @@ bool AppDelegate::applicationDidFinishLaunching() {
     AudioManager::getInstance()->playMusic(false);
     auto map = scene->getMap();
     std::string texture= "buildings/building_1.png";;
-    auto building_template = new WallBuilding("WallBuilding",40,{5,5},texture);
-    auto attack_building_template = new AttackBuilding("AttackBuilding",40,{5,15},texture,3,9,40);
+    //注意：由于typeid检测失常，此处对应命名为"WallBuilding"在目前的实现中是必须的
+    auto wall1 = new WallBuilding("WallBuilding",20,{5,5},texture);
+    auto wall2 = new WallBuilding("WallBuilding",20,{4,5},texture);
+    auto wall3 = new WallBuilding("WallBuilding",20,{6,5},texture);
+    auto wall4 = new WallBuilding("WallBuilding",20,{5,6},texture);
 
 
-    map->PushBuilding(building_template);
-    map->PushBuilding(attack_building_template);
+
+    map->PushBuilding(wall1);
+    map->PushBuilding(wall2);
+    map->PushBuilding(wall3);
+    map->PushBuilding(wall4);
     CombatManager::Create(map);
     auto manager = CombatManager::GetInstance();
     auto giant = TownHall::GetSoldierTemplate(SoldierType::kGiant)->Create();
-    auto archer = TownHall::GetSoldierTemplate(SoldierType::kArcher)->Create();
-    auto barbarian = TownHall::GetSoldierTemplate(SoldierType::kBarbarian)->Create();
+    auto bomber = TownHall::GetSoldierTemplate(SoldierType::kBomber)->Create();
     manager->StartCombat();
-    manager->SendSoldier(giant,cocos2d::Vec2(10,10));
-    manager->SendSoldier(archer,cocos2d::Vec2(1,2));
-    manager->SendSoldier(barbarian,cocos2d::Vec2(12,12));
+    manager->SendSoldier(bomber,cocos2d::Vec2(1,2));
+    manager->SendSoldier(giant,cocos2d::Vec2(15,15));
 
     return true;
 }

@@ -125,28 +125,29 @@ enum class Direction : int{
     LEFT = 2,
     RIGHT = 3
 };
-Direction SetDirection(SoldierInCombat* s,const cocos2d::Vec2& delta){
-    if (delta.isZero()) return Direction::DOWN; // 默认方向
+
+void SetDirection(SoldierInCombat* s,const cocos2d::Vec2& delta){
     float abs_x = abs(delta.x),abs_y = abs(delta.y);
     if (abs_x > abs_y) {
         if(delta.x > 0) {
             s->setFlippedX(false);
-            return Direction::UP;
         }
         else{
             s->setFlippedX(true);
-           return Direction::DOWN;
         }
     } else {
         if(delta.y>0){
             s->setFlippedX(true);
-            return Direction::UP;
         }
         else{
             s->setFlippedX(false);
-            return Direction::DOWN;
         }
     }
+}
+
+Direction GetDirection(const cocos2d::Vec2& delta){
+    if(delta.x>0 || delta.y>0) return Direction::UP;
+    else return Direction::DOWN;
 }
 
 const float kCheckInterval = 0.1f;
@@ -163,7 +164,10 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
 
 
     // 3. 获取对应方向的动画
-    Direction dir = SetDirection(this,move_delta);
+    Direction dir = GetDirection(move_delta);
+    auto set_dir =cocos2d::CallFunc::create([this,dir,move_delta]() {
+        SetDirection(this,move_delta);
+    });
     std::string dir_name = direction_names[static_cast<int>(dir)],soldier_name = this->soldier_template_->GetName();
     auto move_anim = cocos2d::AnimationCache::getInstance()->getAnimation( soldier_name +"walk" + dir_name);
 
@@ -174,6 +178,7 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
 
     // 用Repeat替代RepeatForever，确保动画和移动同步结束
     auto animate = cocos2d::Repeat::create(cocos2d::Animate::create(move_anim), anim_repeat_count);
+    auto whole_animate = cocos2d::Sequence::create(set_dir,animate, nullptr);
 
     // 4. 构建“延迟+检测”的循环动作（每0.1秒检测一次）
     auto check_target = cocos2d::CallFunc::create([this]() {
@@ -191,7 +196,7 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
     check_repeat_count = std::max(check_repeat_count, 1);
     // 循环执行检测
     auto repeat_check = cocos2d::Repeat::create(single_check_loop, check_repeat_count);
-    return cocos2d::Spawn::create(move_to,animate,repeat_check,nullptr);
+    return cocos2d::Spawn::create(move_to,whole_animate,repeat_check,nullptr);
 }
 
 void SoldierInCombat::DoAllMyActions(){
@@ -209,8 +214,6 @@ void SoldierInCombat::Die() {
     is_alive_ = false;
     this->stopAllActions();  // 停止所有当前动作
 
-    auto death_anim = cocos2d::AnimationCache::getInstance()->getAnimation("Soldier_Death");
-    auto animate = cocos2d::Animate::create(death_anim);
     auto remove_self = cocos2d::CallFunc::create([this]() {
         this->removeFromParent();
         auto manager = CombatManager::GetInstance();
@@ -232,21 +235,28 @@ void SoldierInCombat::Die() {
             manager->EndCombat();
         }
     });
-    auto death_sequence = cocos2d::Sequence::create(animate, remove_self, nullptr);
-    this->runAction(death_sequence);
+    this->runAction(remove_self);
 }
 
-void SoldierInCombat::Attack(cocos2d::Vec2 pos) {
+void SoldierInCombat::Attack(const cocos2d::Vec2& pos) {
+    if(this->soldier_template_->GetSoldierType()==SoldierType::kBomber){
+        BomberAttack(pos);
+        return;
+    }
     auto delta = current_target_->position_-pos;
-    Direction dir = SetDirection(this,delta);
+    Direction dir = GetDirection(delta);
+    auto set_dir =cocos2d::CallFunc::create([this,delta]() {
+        SetDirection(this,delta);
+    });
     std::string dir_name = direction_names[static_cast<int>(dir)],soldier_name = this->soldier_template_->GetName();
     auto attack_anim = cocos2d::AnimationCache::getInstance()->getAnimation( soldier_name+"attack"+dir_name);
 
     auto animate = cocos2d::Animate::create(attack_anim);
     auto single_attack = cocos2d::CallFunc::create([this]() {
-        this->DealDamageToTarget();
+        this->DealDamageToBuilding(current_target_);
     });
     auto anim_and_delay = cocos2d::Sequence::create(
+            set_dir,
             animate,
             single_attack,
             cocos2d::DelayTime::create(this->soldier_template_->GetAttackDelay()-animate->getDuration()),
@@ -256,16 +266,45 @@ void SoldierInCombat::Attack(cocos2d::Vec2 pos) {
     this->runAction(repeat_attack);
 }
 
-void SoldierInCombat::DealDamageToTarget() {
-    if (current_target_) {
-        current_target_->TakeDamage(soldier_template_->GetDamage());  // 调用建筑的受伤害方法
-        if(!current_target_) return;
+void SoldierInCombat::BomberAttack(const cocos2d::Vec2& pos) {
+    auto delta = current_target_->position_ - pos;
+    auto animate = cocos2d::CallFunc::create([this, delta,pos]() {
+        cocos2d::DelayTime::create(this->soldier_template_->GetAttackDelay()),
+        DealSplashDamage(pos),
+        Die();
+    });
+    this->runAction(animate);
+}
+void SoldierInCombat::DealDamageToBuilding(BuildingInCombat* target) const {
+    bool ret=false;
+    if (target) {
+        if(this->soldier_template_->GetSoldierType()==SoldierType::kBomber&&
+                target->building_template_->GetName()=="WallBuilding"){
+            ret = target->TakeDamage(soldier_template_->GetDamage()*40);  // 调用建筑的受伤害方法
+        }
+        else{
+            ret = target->TakeDamage(soldier_template_->GetDamage());  // 调用建筑的受伤害方法
+        }
     }
-    auto name = current_target_->building_template_->GetName();
-    CCLOG("%s health:%d",name.c_str(),current_target_->GetCurrentHealth());
-    if(this->soldier_template_->GetSoldierType()==SoldierType::kBomber){
-        CCLOG("bomber kill self");
-        this->Die();
+    if(ret){
+        auto name = target->building_template_->GetName();
+        CCLOG("%s health:%d",name.c_str(),target->GetCurrentHealth());
+    }
+}
+
+void SoldierInCombat::DealSplashDamage(const cocos2d::Vec2& pos){
+    auto surroundings = map_->GetSurroundings(pos);
+    std::unordered_set<Building*> visited;
+    auto buildings_in_combat = CombatManager::GetInstance()->live_buildings_;
+    for(auto it:surroundings){
+        auto building = map_->getBuildingAt(static_cast<int>(it.x),static_cast<int>(it.y));
+        if(building && (visited.find(building)==visited.end())){
+            CCLOG("splash");
+            auto building_in_combat = find_if(buildings_in_combat.begin(),buildings_in_combat.end(),[building](BuildingInCombat* a){
+                return a->building_template_ == building;
+            });
+            if(building_in_combat!=buildings_in_combat.end()) DealDamageToBuilding(*building_in_combat);
+        }
     }
 }
 
@@ -323,6 +362,10 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(cocos2d::Vec2 start_tile,cocos2d
     std::unordered_set<cocos2d::Vec2, Vec2Hash> closed_list;
     // node_map：存储所有节点的详细信息（坐标→节点，避免指针拷贝）
     std::unordered_map<cocos2d::Vec2, AStarNode, Vec2Hash> node_map;
+    start_tile.x = floor(start_tile.x);
+    start_tile.y = floor(start_tile.y);
+    end_tile.x = floor(end_tile.x);
+    end_tile.y = floor(end_tile.y);
 
 
     if(building_width!=1 || building_length!=1){
