@@ -24,7 +24,7 @@ public:
     virtual bool Init(const Building* building_template,MapManager* map);
 
     // 被攻击函数
-    virtual void TakeDamage(int damage);
+    virtual bool TakeDamage(int damage);
 
     void Die();
 

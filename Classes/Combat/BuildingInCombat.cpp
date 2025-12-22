@@ -50,18 +50,21 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
 
     this->position_ = building_template->GetPosition();
     this->setPosition(map->vecToWorld(position_));
-    this->setScale(0.5f);  // 调整大小（根据实际资源修改）
+    this->setScale(0.2f);  // 调整大小（根据实际资源修改）
 
     CCLOG("Building init success");
     return true;
 }
 
-void BuildingInCombat::TakeDamage(int damage) {
+//返回值说明建筑收到伤害后是否仍然存活
+bool BuildingInCombat::TakeDamage(int damage) {
     current_health_ -= damage;
     if (current_health_ <= 0) {
         current_health_ = 0;
         Die();
+        return false;
     }
+    return true;
 }
 
 AttackBuildingInCombat* AttackBuildingInCombat::Create(const Building* building_template, MapManager* map) {
@@ -160,4 +163,5 @@ void BuildingInCombat::Die() {
     }
 
     this->removeFromParent();
+    CCLOG("building finish Die()");
 }
