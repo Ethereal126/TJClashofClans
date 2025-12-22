@@ -26,6 +26,9 @@
 #include "MainScene.h"
 #include "Combat/CombatAll.h"
 #include "TownHall/TownHall.h"
+#include "AudioManager/AudioManager.h"
+#include "MapManager/MapManager.h"
+#include "UIManager/UIManager.h"
 
 
 // #define USE_AUDIO_ENGINE 1
@@ -119,8 +122,16 @@ bool AppDelegate::applicationDidFinishLaunching() {
     //int testResult = RUN_ALL_TESTS(); // 接收测试结果（0=全部通过，非0=有失败）
     //CCLOG("testResult:%d", testResult);
 
-    auto scene = MainScene::createScene();
+    auto scene = MainScene::createScene();    
     director->runWithScene(scene);
+
+     auto ui = UIManager::getInstance();
+     if (ui->getPanel(UIPanelType::GameHUD)) {
+         ui->hidePanel(UIPanelType::GameHUD); // 先隐藏主界面
+     }
+     ui->showLoadingScreen();
+
+    AudioManager::getInstance()->playMusic(false);
     auto map = scene->getMap();
     std::string texture= "buildings/building_1.png";;
     auto building_template = new WallBuilding("WallBuilding",40,{5,5},texture);

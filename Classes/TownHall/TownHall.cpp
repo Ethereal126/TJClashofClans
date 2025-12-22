@@ -25,6 +25,7 @@ static std::vector<SoldierTemplate> soldier_templates = {
 TownHall* TownHall::instance_ = nullptr;
 
 TownHall* TownHall::GetInstance() {
+    InitializeInstance("大本营", 1, {0,0}, "TownHall/TownHall.png");
     return instance_;
 }
 

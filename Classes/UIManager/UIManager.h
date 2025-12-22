@@ -280,7 +280,7 @@ private:
     cocos2d::Label* _elixirLabel;
 
     // 加载界面进度条引用
-    cocos2d::ui::LoadingBar* _loadingProgressBar;
+    cocos2d::Node* _loadingProgressBar;
 
     // 待放置建筑信息（用于传递给MapManager）
     Building* _pendingPlacementBuilding = nullptr;
