@@ -69,7 +69,6 @@ protected:
         const std::string& texture, const std::string& resourceType);
 
     // 初始化方法
-    virtual void InitUIComponents();
     virtual void InitAnimations();
 
     // 回调触发
@@ -229,10 +228,6 @@ public:
 
     // 动画重写
     virtual void PlayStorageAnimation() override;
-
-    // 保护相关动画
-    void PlayProtectionActivationAnimation();
-    void PlayRaidDefenseAnimation();
 
     // 重写建筑方法
     virtual void Upgrade() override;

@@ -48,11 +48,10 @@ ResourceStorage* ResourceStorage::Create(const std::string& name, int base, coco
 }
 
 bool ResourceStorage::Init() {
-    if (!Building::initWithFile("textures/" + GetName() + ".png")) {
+    if (!Building::initWithFile("buildings/" + GetName() + ".png")) {
         return false;
     }
 
-    InitUIComponents();
     InitAnimations();
 
     // 设置建筑尺寸和位置
@@ -202,29 +201,6 @@ void ResourceStorage::ShowInfo() const {
     CCLOG("Capacity: %d", capacity_);
     CCLOG("Current Amount: %d", currentAmount_);
     CCLOG("Fill Percentage: %.1f%%", GetFillPercentage() * 100.0f);
-}
-
-void ResourceStorage::InitUIComponents() {
-    // 创建UI标签
-    uiLabel_ = Label::createWithTTF("", "fonts/Marker Felt.ttf", 16);
-    uiLabel_->setPosition(Vec2(getContentSize().width / 2, -20));
-    uiLabel_->setTextColor(Color4B::WHITE);
-    addChild(uiLabel_, 100);
-
-    // 创建进度条背景
-    auto progressBg = Sprite::create("ui/progress_bg.png");
-    progressBg->setPosition(Vec2(getContentSize().width / 2, -50));
-    addChild(progressBg, 99);
-
-    // 创建进度条
-    auto progressFg = Sprite::create("ui/progress_fg.png");
-    progressBar_ = ProgressTimer::create(progressFg);
-    progressBar_->setType(ProgressTimer::Type::BAR);
-    progressBar_->setMidpoint(Vec2(0, 0.5f));
-    progressBar_->setBarChangeRate(Vec2(1, 0));
-    progressBar_->setPercentage(0);
-    progressBar_->setPosition(Vec2(getContentSize().width / 2, -50));
-    addChild(progressBar_, 100);
 }
 
 void ResourceStorage::InitAnimations() {
@@ -398,7 +374,7 @@ void ProductionBuilding::InitProductionSystem() {
     // 创建收集器
     int collectorCount = GetLevel() + 1;
     for (int i = 0; i < collectorCount; ++i) {
-        auto collector = Sprite::create("textures/collector.png");
+        auto collector = Sprite::create("buildings/elixirmine.png");
         if (collector) {
             float angle = 2 * M_PI * i / collectorCount;
             float radius = 40.0f;
@@ -443,7 +419,7 @@ ElixirStorage::~ElixirStorage() {
 }
 
 ElixirStorage::ElixirStorage(const std::string& name, int base, cocos2d::Vec2 position)
-    : ProductionBuilding(name, base, position, "textures/elixir_storage.png", "Elixir")
+    : ProductionBuilding(name, base, position, "buildings/elixirmine.png", "Elixir")
     , collectionRadius_(100.0f)
     , elixirColor_(Color4F(0.8f, 0.2f, 0.8f, 1.0f)) {  // 紫色
 }
@@ -466,7 +442,7 @@ void ElixirStorage::SetCollectionRadius(float radius) {
 
 void ElixirStorage::PlayCollectionAnimation(const Vec2& targetPosition) {
     // 创建圣水收集动画
-    auto elixirSprite = Sprite::create("particles/elixir_drop.png");
+    auto elixirSprite = Sprite::create("buildings/elixirmine0.png");
     if (!elixirSprite) return;
 
     elixirSprite->setPosition(getPosition());
@@ -539,7 +515,7 @@ int ElixirStorage::GetNextCapacity() const {
 
 void ElixirStorage::InitElixirSpecificComponents() {
     // 添加圣水波纹效果
-    auto ripple = Sprite::create("effects/elixir_ripple.png");
+    auto ripple = Sprite::create("buildings/elixirmine.png");
     if (ripple) {
         ripple->setPosition(getContentSize().width / 2, getContentSize().height / 2);
         ripple->setOpacity(100);
@@ -574,7 +550,7 @@ GoldStorage::~GoldStorage() {
 }
 
 GoldStorage::GoldStorage(const std::string& name, int base, cocos2d::Vec2 position)
-    : ProductionBuilding(name, base, position, "textures/gold_storage.png", "Gold")
+    : ProductionBuilding(name, base, position, "buildings/goldpool1.png", "Gold")
     , isVaultProtected_(false)
     , protectionPercentage_(0.3f)
     , protectionShield_(nullptr)
@@ -595,9 +571,7 @@ bool GoldStorage::Init() {
 void GoldStorage::ActivateProtection(bool active) {
     isVaultProtected_ = active;
 
-    if (isVaultProtected_) {
-        PlayProtectionActivationAnimation();
-    }
+    if (isVaultProtected_) {}
     else if (protectionShield_) {
         protectionShield_->setVisible(false);
     }
@@ -633,47 +607,6 @@ void GoldStorage::PlayStorageAnimation() {
     );
 
     runAction(flash);
-}
-
-void GoldStorage::PlayProtectionActivationAnimation() {
-    if (!protectionShield_) {
-        protectionShield_ = Sprite::create("effects/protection_shield.png");
-        if (protectionShield_) {
-            protectionShield_->setPosition(getContentSize().width / 2, getContentSize().height / 2);
-            protectionShield_->setScale(1.2f);
-            addChild(protectionShield_, 5);
-        }
-    }
-
-    protectionShield_->setVisible(true);
-
-    // 护盾激活动画
-    auto scaleUp = ScaleTo::create(0.2f, 1.5f);
-    auto scaleDown = ScaleTo::create(0.2f, 1.2f);
-    auto fadeIn = FadeIn::create(0.3f);
-    auto spawn = Spawn::create(scaleUp, fadeIn, nullptr);
-    auto sequence = Sequence::create(spawn, scaleDown, nullptr);
-
-    protectionShield_->runAction(sequence);
-}
-
-void GoldStorage::PlayRaidDefenseAnimation() {
-    // 防御效果粒子
-    auto particles = ParticleSystemQuad::create("particles/shield_defense.plist");
-    if (particles) {
-        particles->setPosition(getContentSize().width / 2, getContentSize().height / 2);
-        particles->setAutoRemoveOnFinish(true);
-        addChild(particles, 6);
-    }
-
-    // 震动效果
-    auto shake = Sequence::create(
-        MoveBy::create(0.05f, Vec2(5, 0)),
-        MoveBy::create(0.05f, Vec2(-10, 0)),
-        MoveBy::create(0.05f, Vec2(5, 0)),
-        nullptr
-    );
-    runAction(shake);
 }
 
 void GoldStorage::Upgrade() {
@@ -717,37 +650,6 @@ float GoldStorage::GetNextProtectionPercentage() const {
     return std::min(protectionPercentage_ + 0.1f, 0.8f);
 }
 
-void GoldStorage::InitGoldSpecificComponents() {
-    // 添加金币堆叠视觉效果
-    for (int i = 0; i < 3; ++i) {
-        auto goldPile = Sprite::create("textures/gold_pile.png");
-        if (goldPile) {
-            float offsetX = (i - 1) * 20.0f;
-            float offsetY = i * 5.0f;
-            goldPile->setPosition(getContentSize().width / 2 + offsetX, 20 + offsetY);
-            goldPile->setScale(0.5f);
-            goldPile->setOpacity(150);
-            addChild(goldPile, i);
-        }
-    }
-
-    // 创建剪切节点用于护盾效果
-    shieldEffect_ = ClippingNode::create();
-    if (shieldEffect_) {
-        auto stencil = DrawNode::create();
-        Vec2 vertices[] = {
-            Vec2(-50, -50), Vec2(50, -50),
-            Vec2(50, 50), Vec2(-50, 50)
-        };
-        stencil->drawPolygon(vertices, 4, Color4F::GREEN, 1, Color4F::GREEN);
-
-        shieldEffect_->setStencil(stencil);
-        shieldEffect_->setAlphaThreshold(0.5f);
-        shieldEffect_->setPosition(getContentSize().width / 2, getContentSize().height / 2);
-        addChild(shieldEffect_, 4);
-    }
-}
-
 // ==================== Barracks 实现 ====================
 
 static std::string SoldierTypeToString(SoldierType type) {
@@ -781,7 +683,7 @@ Barracks::~Barracks() {
 }
 
 Barracks::Barracks(const std::string& name, int base, cocos2d::Vec2 position)
-    : TrainingBuilding(name, base, position, "textures/barracks.png", 5, 30) {
+    : TrainingBuilding(name, base, position, "buildings/barrack.png", 5, 30) {
     // 初始化默认兵种
     availableTroops_.push_back("Barbarian");
     availableTroops_.push_back("Archer");
@@ -792,7 +694,7 @@ Barracks::Barracks(const std::string& name, int base, cocos2d::Vec2 position)
 
 bool Barracks::Init() {
     // 直接调用 Building 的初始化方法
-    if (!Sprite::initWithFile("textures/barracks.png")) {
+    if (!Sprite::initWithFile("buildings/barrack.png")) {
         return false;
     }
 
@@ -804,14 +706,17 @@ bool Barracks::Init() {
     availableTroops_.clear();
     availableTroops_.push_back("Barbarian");
     availableTroops_.push_back("Archer");
-
+    availableTroops_.push_back("Giant");
+    availableTroops_.push_back("Bomber");
     // 将兵种添加到基类列表（如果需要）
     AddAvailableUnitName("Barbarian");
     AddAvailableUnitName("Archer");
+    AddAvailableUnitName("Giant");
+    AddAvailableUnitName("Bomber");
 
     // 初始化兵种图标
     for (const auto& troop : availableTroops_) {
-        std::string iconPath = "icons/" + troop + "_icon.png";
+        std::string iconPath = "others/" + troop + ".png";
         auto icon = CreateTroopIcon(troop, iconPath);
         if (icon) {
             troopIcons_[troop] = icon;
@@ -1034,7 +939,7 @@ void Barracks::PlayTrainingCompleteAnimation(const std::string& troopType) {
 void Barracks::PlayTroopDeployAnimation(const Vec2& deployPosition) {
     // 创建士兵部署特效
     for (int i = 0; i < 3; ++i) {
-        auto troopSprite = Sprite::create("effects/troop_spawn.png");
+        auto troopSprite = Sprite::create("others/Barbarian.png");
         if (troopSprite) {
             troopSprite->setPosition(deployPosition);
             troopSprite->setScale(0.5f);
@@ -1063,17 +968,6 @@ void Barracks::Upgrade() {
 
     // 调用基类升级
     TrainingBuilding::Upgrade();
-
-    // 升级时解锁新兵种
-    if (GetLevel() == 2 && !IsTroopAvailable("Giant")) {
-        UnlockTroopType("Giant", "icons/giant_icon.png");
-    }
-    else if (GetLevel() == 3 && !IsTroopAvailable("Wizard")) {
-        UnlockTroopType("Wizard", "icons/wizard_icon.png");
-    }
-    else if (GetLevel() == 4 && !IsTroopAvailable("Dragon")) {
-        UnlockTroopType("Dragon", "icons/dragon_icon.png");
-    }
 
     CCLOG("军营升级完成");
     CCLOG("训练容量: %d -> %d", oldCapacity, GetTrainingCapacity());
