@@ -19,7 +19,7 @@ BattleScene* BattleScene::createScene(int levelId) {
         scene->_map = map;
     }
 
-    auto combatMgr = CombatManager::Create(map);
+    auto combatMgr = CombatManager::InitializeInstance(map);
     scene->addChild(combatMgr);
 
     auto ui = UIManager::getInstance();

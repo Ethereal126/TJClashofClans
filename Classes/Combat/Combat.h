@@ -21,11 +21,6 @@ enum class CombatState {
     kEnded    // 战斗结束
 };
 
-enum class WinnerState{
-    kUndetermined,
-    kOffence, //游戏进攻方
-    kDefence //游戏防守方
-};
 
 //负责统筹管理整个战斗过程，仅包含最基本的需求
 class CombatManager :public cocos2d::Node {
@@ -34,9 +29,9 @@ public:
     std::vector<BuildingInCombat*> live_buildings_;
     std::vector<SoldierInCombat*> live_soldiers;
     int num_of_live_soldiers_ = 0,num_of_live_buildings = 0;
-    WinnerState winner_ = WinnerState::kUndetermined;
+    int stars = 0,destroy_degree_ = 0,buildings_should_count=0,buildings_should_count_destroyed=0;
 
-    static CombatManager* Create(MapManager* map); // 初始化单例（仅第一次调用有效）
+    static CombatManager* InitializeInstance(MapManager* map); // 初始化单例（仅第一次调用有效）
     static CombatManager* GetInstance();// 获取单例（已初始化则直接返回）
 
     //在接收到交互指令后，将士兵加入到战斗中；
@@ -49,7 +44,7 @@ public:
     void EndCombat();
 
 protected:
-    // 禁止外部直接构造/析构，仅通过 Create/Destroy 管理
+    // 禁止外部直接构造/析构，仅通过 InitializeInstance/Destroy 管理
     CombatManager() = default;
     ~CombatManager() override;
     //初始化战场中的建筑，返回初始化结果
@@ -58,7 +53,6 @@ protected:
 private:
     static CombatManager* instance_;
     MapManager* map_ = nullptr;
-    int destroy_degree_ = 0;
     CombatState state_ = CombatState::kWrongInit;
     float combat_time_ = 0.0f;
     const float kMaxCombatTime = 300.0f;

@@ -279,7 +279,7 @@ void SoldierInCombat::DealDamageToBuilding(BuildingInCombat* target) const {
     bool ret=false;
     if (target) {
         if(this->soldier_template_->GetSoldierType()==SoldierType::kBomber&&
-                target->building_template_->GetName()=="WallBuilding"){
+                typeid(*(target->building_template_))==typeid(WallBuilding)){
             ret = target->TakeDamage(soldier_template_->GetDamage()*40);  // 调用建筑的受伤害方法
         }
         else{
@@ -451,9 +451,11 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
     if(path.empty()){
         CCLOG("empty path");
     }
+    LogPath(path);
 
     for(auto ptr = path.begin();ptr != path.end();ptr++){
         if(!map_->IsGridAvailable(*ptr)){
+            CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
             auto new_target = *ptr;
             while(ptr->distance(new_target)<=this->soldier_template_->GetAttackRange()){
                 --ptr;

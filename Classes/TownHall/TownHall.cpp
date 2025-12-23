@@ -223,7 +223,7 @@ TownHall* TownHall::GetInstance() {
 bool TownHall::InitializeInstance(const std::string& name, int base,
     cocos2d::Vec2 position, const std::string& texture) {
     if (instance_ != nullptr) {
-        cocos2d::log("大本营单例已经初始化");
+        cocos2d::log("TownHall call InitializeInstance() after initialized");
         return false;
     }
 
@@ -231,11 +231,11 @@ bool TownHall::InitializeInstance(const std::string& name, int base,
     instance_ = new TownHall(name, base, position, texture);
     if (instance_) {
         instance_->is_initialized_ = true;
-        cocos2d::log("大本营单例初始化成功");
+        cocos2d::log("TownHall singleton initialized successfully");
         return true;
     }
 
-    cocos2d::log("大本营单例初始化失败");
+    cocos2d::log("TownHall singleton initialization failed");
     return false;
 }
 
@@ -1242,7 +1242,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         4,
         4,
         []() -> Building* {
-            // 调用 TrainingBuilding 的 Create 函数
+            // 调用 TrainingBuilding 的 InitializeInstance 函数
             return TrainingBuilding::Create("Training Camp", 2, { 0, 0 },
                 "buildings/trainingcamp.png", 10, 20);
         }

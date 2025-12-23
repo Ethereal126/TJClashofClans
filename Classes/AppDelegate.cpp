@@ -133,8 +133,11 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
     AudioManager::getInstance()->playMusic(false);
     auto map = scene->getMap();
+    ui->enterBattleMode(map);
     std::string texture= "buildings/building_1.png";;
-    //注意：由于typeid检测失常，此处对应命名为"WallBuilding"在目前的实现中是必须的
+    //注意：通过typeid检测，name不造成实际影响
+    auto hall = TownHall::GetInstance();
+    hall->SetMapPosition({10,10});
     auto wall1 = new WallBuilding("WallBuilding",20,{5,5},texture);
     auto wall2 = new WallBuilding("WallBuilding",20,{4,5},texture);
     auto wall3 = new WallBuilding("WallBuilding",20,{6,5},texture);
@@ -142,17 +145,18 @@ bool AppDelegate::applicationDidFinishLaunching() {
 
 
 
+    map->PushBuilding(hall);
     map->PushBuilding(wall1);
     map->PushBuilding(wall2);
     map->PushBuilding(wall3);
     map->PushBuilding(wall4);
-    CombatManager::Create(map);
+    CombatManager::InitializeInstance(map);
     auto manager = CombatManager::GetInstance();
     auto giant = TownHall::GetSoldierTemplate(SoldierType::kGiant)->Create();
     auto bomber = TownHall::GetSoldierTemplate(SoldierType::kBomber)->Create();
     manager->StartCombat();
     manager->SendSoldier(bomber,cocos2d::Vec2(1,2));
-    manager->SendSoldier(giant,cocos2d::Vec2(15,15));
+    manager->SendSoldier(giant,cocos2d::Vec2(20,20));
 
     return true;
 }

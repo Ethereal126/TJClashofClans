@@ -143,6 +143,11 @@ void BuildingInCombat::Die() {
 
     auto manager = CombatManager::GetInstance();
     manager->num_of_live_buildings--;
+    if(IsBuildingShouldCount(building_template_)) manager->buildings_should_count_destroyed++;
+    manager->destroy_degree_ = 100*manager->buildings_should_count_destroyed/manager->buildings_should_count;
+    UIManager::getInstance()->updateDestructionPercent(manager->destroy_degree_);
+    if(typeid(*building_template_)==typeid(TownHall)) manager->stars++;
+
     CCLOG("live buildings:%d",manager->num_of_live_buildings);
     if(manager->IsCombatEnd()){
         CCLOG("call EndCombat() from building");
@@ -164,4 +169,8 @@ void BuildingInCombat::Die() {
 
     this->removeFromParent();
     CCLOG("building finish Die()");
+}
+
+bool BuildingInCombat::IsBuildingShouldCount(const Building* b) {
+    return typeid(*b)!=typeid(WallBuilding);
 }

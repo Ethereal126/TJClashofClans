@@ -175,6 +175,7 @@ bool MapManager::isRangeAvailable(int gridX, int gridY, int width, int length) c
         for (int y = gridY; y < gridY + length; ++y) {
             const GridState st = _gridStates[x][y];
             if (st == GridState::HasBuilding || st == GridState::Obstacle) {
+                CCLOG("(%d,%d) in path not available because of state %d",x,y,int(st));
                 return false;
             }
         }
