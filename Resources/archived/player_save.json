@@ -16,10 +16,6 @@
       { "type": "Barrack", "x": 25, "y": 10, "level": 1 },
       { "type": "ArmyCamp", "x": 25, "y": 20, "level": 1 },
       { "type": "Cannon", "x": 20, "y": 10, "level": 2 }
-    ],
-    "obstacles": [
-      { "type": "Tree", "x": 5, "y": 5 },
-      { "type": "Stone", "x": 35, "y": 35 }
     ]
   }
 }

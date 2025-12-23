@@ -68,16 +68,28 @@ public:
     // 将格子坐标转换为Map节点的本地坐标（如果要获得世界坐标需调用 convertToWorldSpace）
     cocos2d::Vec2 gridToWorld(int gridX, int gridY) const;
 
-    // 将Map节点的本地坐标转换为格子坐标
-    // 如果传入的是世界坐标，外部请先调用 convertToNodeSpace；此处保持接口不做转换
+    void setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int width, int length);
+
+    // 预加载动画资源
+    void preloadAllSoldierAnimations();
+    
+    // 将世界坐标转换为格子坐标
+    // 内部会自动处理 _worldNode 的拖拽和缩放转换
     std::pair<int, int> worldToGrid(const cocos2d::Vec2& worldPos) const;
 
-    // 用于Mock的方法需要声明为virtual
+    // 将节点添加到地图世界容器（支持拖拽和缩放）
+    void addToWorld(cocos2d::Node* node, int zOrder = 0);
+    cocos2d::Node* getWorldNode() const { return _worldNode; }
+
+    // 坐标转换（本地坐标 ↔ 世界坐标）
     virtual cocos2d::Vec2 vecToWorld(cocos2d::Vec2 vecPos) const;
     virtual cocos2d::Vec2 worldToVec(cocos2d::Vec2 worldPos) const;
 
     // 获取指定位置的建筑
     Building* getBuildingAt(int gridX, int gridY) const;
+
+    // 获取当前网格的缩放系数，用于适配建筑和士兵的大小
+    float getGridScaleFactor() const { return _gridScaleX; }
 
     // 获取所有建筑列表
     const std::vector<Building*>& getAllBuildings() const;
@@ -145,6 +157,8 @@ protected:
     // 设置格子状态
     void setGridState(int gridX, int gridY, GridState state);
 
+    void updateYOrder(cocos2d::Node* node);
+
     // 获取格子状态
     GridState getGridState(int gridX, int gridY) const;
 
@@ -159,9 +173,6 @@ private:
 
     // 地图格子状态（二维数组：[x][y]）
     std::vector<std::vector<GridState>> _gridStates;
-
-    // 批处理地面tile节点（单一纹理的批次渲染）
-    cocos2d::SpriteBatchNode* _groundBatch = nullptr;
 
     // 地图上的建筑引用（二维数组：[x][y]），用于快速查找
     std::vector<std::vector<Building*>> _gridBuildings;
@@ -192,6 +203,25 @@ private:
     cocos2d::EventListenerTouchOneByOne* _inputListener = nullptr;
 
     void setupInputListener();
+
+    // ========== 2.0 重构相关成员 ==========
+    cocos2d::Node* _worldNode = nullptr;        // 地图容器节点（所有建筑和底图的父节点）
+    cocos2d::Sprite* _bgSprite = nullptr;       // 大底图
+
+
+    // ========== 坐标校准参数 (你在这里调整) ==========
+    float _gridOffsetX = 0.0f;   // 整体左右偏移
+    float _gridOffsetY = 0.0f;   // 整体上下偏移
+    float _gridScaleX = 1.0f;    // 横向拉伸 (菱形宽度)
+    float _gridScaleY = 1.0f;    // 纵向拉伸 (菱形高度)
+
+    float _currentScale = 1.0f;
+    float _minScale = 0.5f;
+    float _maxScale = 2.0f;
+
+    cocos2d::Vec2 _lastTouchPos;
+    bool _isMapDragging = false;
+    float _dragThreshold = 15.0f;
     
     // 放置模式内部方法
     void setupPlacementTouchListener();         // 设置触摸监听

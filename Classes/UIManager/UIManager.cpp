@@ -791,7 +791,7 @@ void UIManager::playMapSelectAnimation(int mapIndex, const std::function<void()>
 }
 
 // ==================== 建筑操作面板 ====================
-void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory category, Building* building) {
+void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory category, Building* building, Node* parent) {
     _selectedBuilding = building;
 
     // 先隐藏之前的BuildingOptions
@@ -800,7 +800,17 @@ void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory categ
     auto panel = createBuildingOptions(position, category);
     if (panel) {
         _panels[UIPanelType::BuildingOptions] = panel;
-        addPanelToScene(panel, UILayer::HUD, false);
+        if (parent) {
+            // 如果提供了父节点（通常是 MapManager 的 _worldNode），则添加到该节点
+            // 此时 position 应该是相对于该父节点的本地坐标
+            parent->addChild(panel, 1000);
+            
+            // 在父节点空间中，不需要根据屏幕边缘限制位置，直接居中于建筑下方即可
+            panel->setPosition(position.x - panel->getContentSize().width / 2, 
+                             position.y - panel->getContentSize().height - 20 * _scaleFactor);
+        } else {
+            addPanelToScene(panel, UILayer::HUD, false);
+        }
         playShowAnimation(panel);
     }
 }
@@ -808,8 +818,11 @@ void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory categ
 Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory category) {
     auto panel = Node::create();
 
-    int buttonCount = (category == BuildingCategory::Military) ? 3 : 2;
-    float buttonSize = 50 * _scaleFactor;
+    int buttonCount = 2;
+    if (category == BuildingCategory::Military || category == BuildingCategory::Resource) {
+        buttonCount = 3;
+    }    
+    float buttonSize = 100 * _scaleFactor;
     float buttonMargin = 10 * _scaleFactor;
     float panelWidth = buttonCount * buttonSize + (buttonCount + 1) * buttonMargin;
     float panelHeight = buttonSize + 2 * buttonMargin;
@@ -827,15 +840,6 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
 
     panel->setPosition(adjustedPos);
 
-    // 背景
-    auto bg = LayerColor::create(Color4B(50, 50, 70, 220), panelWidth, panelHeight);
-    panel->addChild(bg, 0);
-
-    // 边框
-    auto border = DrawNode::create();
-    border->drawRect(Vec2(0, 0), Vec2(panelWidth, panelHeight), Color4F::WHITE);
-    panel->addChild(border, 1);
-
     float currentX = buttonMargin + buttonSize / 2;
     float centerY = panelHeight / 2;
 
@@ -847,6 +851,9 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
         infoBtn->setTitleFontSize(12 * _scaleFactor);
         infoBtn->setContentSize(Size(buttonSize, buttonSize));
         infoBtn->setScale9Enabled(true);
+    }
+    else{
+        infoBtn->setScale(0.18f);
     }
     infoBtn->setPosition(Vec2(currentX, centerY));
     infoBtn->addClickEventListener([this](Ref* sender) {
@@ -865,6 +872,9 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
         upgradeBtn->setTitleFontSize(12 * _scaleFactor);
         upgradeBtn->setContentSize(Size(buttonSize, buttonSize));
         upgradeBtn->setScale9Enabled(true);
+    }
+    else{
+        upgradeBtn->setScale(0.2f);
     }
     upgradeBtn->setPosition(Vec2(currentX, centerY));
 
@@ -888,6 +898,35 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
 
     currentX += buttonSize + buttonMargin;
 
+    // 资源收取按钮（仅资源建筑）
+    if (category == BuildingCategory::Resource) {
+        auto collectBtn = Button::create("UI/btn_collect.png", "UI/btn_collect_pressed.png");
+        if (!collectBtn->getVirtualRenderer()) {
+            collectBtn = Button::create();
+            collectBtn->setTitleText("Collect");
+            collectBtn->setTitleFontSize(12 * _scaleFactor);
+            collectBtn->setContentSize(Size(buttonSize, buttonSize));
+            collectBtn->setScale9Enabled(true);
+        }
+        else{
+            collectBtn->setScale(0.17f);
+        }
+        collectBtn->setPosition(Vec2(currentX, centerY));
+        collectBtn->addClickEventListener([this](Ref* sender) {
+            if (_selectedBuilding) {
+                CCLOG("Collecting resources from building: %s", _selectedBuilding->GetName().c_str());
+                TownHall* th = TownHall::GetInstance();
+                th->AddElixir();
+                th->AddGold();                
+                updateResourceDisplay(ResourceType::Gold, th->GetGold());
+                updateResourceDisplay(ResourceType::Elixir, th->GetElixir());                
+                showToast("Resources Collected!");
+            }
+            hidePanel(UIPanelType::BuildingOptions, true);
+        });
+        panel->addChild(collectBtn, 1);
+    }
+
     // 训练按钮（仅军营）
     if (category == BuildingCategory::Military) {
         auto trainBtn = Button::create("UI/btn_train.png", "UI/btn_train_pressed.png"); // 这里需要替换为实际按钮图片
@@ -897,6 +936,9 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
             trainBtn->setTitleFontSize(12 * _scaleFactor);
             trainBtn->setContentSize(Size(buttonSize, buttonSize));
             trainBtn->setScale9Enabled(true);
+        }
+        else{
+            trainBtn->setScale(0.18f);
         }
         trainBtn->setPosition(Vec2(currentX, centerY));
         trainBtn->addClickEventListener([this](Ref* sender) {
@@ -1142,7 +1184,9 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
             updateResourceDisplay(ResourceType::Elixir, townHall->GetElixir());
             _selectedBuilding->StartUpgrade(upgradeTime);
 
-            showUpgradeProgress(_selectedBuilding, (float)upgradeTime, (float)upgradeTime);
+            // 获取地图容器，使进度条跟随地图移动
+            auto worldNode = _selectedBuilding->getParent();
+            showUpgradeProgress(_selectedBuilding, (float)upgradeTime, (float)upgradeTime, worldNode);
             showToast("Upgrade started!");
             triggerUIEvent("OnUpgradeStarted");
             });
@@ -1278,7 +1322,7 @@ Node* UIManager::createArmyTraining(Building* building) {
         int row = (int)i / columns;
         int col = (int)i % columns;
         float xPos = col * (iconSize + itemSpacing) + iconSize / 2 + 10 * _scaleFactor;
-        float yPos = containerHeight - row * (iconSize + itemSpacing + 20 * _scaleFactor) - iconSize / 2 - 10 * _scaleFactor;
+        float yPos = containerHeight - row * (iconSize + itemSpacing + 20 * _scaleFactor) - iconSize / 2 - 50 * _scaleFactor;
 
         // ===== 左侧：当前部队 =====
         auto leftItem = Node::create();
@@ -1294,24 +1338,26 @@ Node* UIManager::createArmyTraining(Building* building) {
             leftIcon->setColor(Color3B(100, 150, 100));
         }
         leftIcon->setScale(iconSize / std::max(leftIcon->getContentSize().width, leftIcon->getContentSize().height));
-        leftIcon->setPosition(Vec2(iconSize / 2, iconSize / 2 + 15 * _scaleFactor));
+        leftIcon->setPosition(Vec2(iconSize / 2, iconSize / 2)); // 居中
         leftIcon->setName("icon");
         leftItem->addChild(leftIcon, 1);
 
-        // 左侧数量标签
+        // 左侧数量标签 - 移动到左上角，加粗
         int count = _tempArmyConfig[tmpl.name_];
-        auto leftCountLabel = Label::createWithTTF("x" + std::to_string(count), "fonts/arial.ttf", 14 * _scaleFactor);
-        leftCountLabel->setPosition(Vec2(iconSize / 2, 5 * _scaleFactor));
-        leftCountLabel->setColor(count > 0 ? Color3B::WHITE : Color3B(100, 100, 100));
+        auto leftCountLabel = Label::createWithTTF(std::to_string(count), "fonts/arial.ttf", 16 * _scaleFactor);
+        leftCountLabel->setAnchorPoint(Vec2(0, 1)); // 锚点左上角
+        leftCountLabel->setPosition(Vec2(2 * _scaleFactor, iconSize - 2 * _scaleFactor));
+        leftCountLabel->setColor(count > 0 ? Color3B::YELLOW : Color3B(100, 100, 100));
+        leftCountLabel->enableOutline(Color4B::BLACK, 2); // 描边达到加粗效果
         leftCountLabel->setName("countLabel");
-        leftItem->addChild(leftCountLabel, 1);
+        leftItem->addChild(leftCountLabel, 5); // 确保在图片上方
 
-        // 左侧点击事件（移除士兵）
+        // 左侧点击事件（移除士兵）- 修改为点击 icon 才有效
         auto leftTouchListener = EventListenerTouchOneByOne::create();
         leftTouchListener->setSwallowTouches(true);
-        leftTouchListener->onTouchBegan = [leftItem](Touch* touch, Event* event) -> bool {
-            Vec2 locationInNode = leftItem->convertToNodeSpace(touch->getLocation());
-            Rect rect(Vec2::ZERO, leftItem->getContentSize());
+        leftTouchListener->onTouchBegan = [leftIcon](Touch* touch, Event* event) -> bool {
+            Vec2 locationInNode = leftIcon->convertToNodeSpace(touch->getLocation());
+            Rect rect(Vec2::ZERO, leftIcon->getContentSize());
             return rect.containsPoint(locationInNode);
             };
 
@@ -1342,16 +1388,16 @@ Node* UIManager::createArmyTraining(Building* building) {
             rightIcon->setColor(Color3B(100, 100, 150));
         }
         rightIcon->setScale(iconSize / std::max(rightIcon->getContentSize().width, rightIcon->getContentSize().height));
-        rightIcon->setPosition(Vec2(iconSize / 2, iconSize / 2));
+        rightIcon->setPosition(Vec2(iconSize / 2, iconSize / 2)); // 居中
         rightIcon->setName("icon");
         rightItem->addChild(rightIcon, 1);
 
-        // 右侧点击事件（添加士兵）
+        // 右侧点击事件（添加士兵）- 修改为点击 icon 才有效
         auto rightTouchListener = EventListenerTouchOneByOne::create();
         rightTouchListener->setSwallowTouches(true);
-        rightTouchListener->onTouchBegan = [rightItem](Touch* touch, Event* event) -> bool {
-            Vec2 locationInNode = rightItem->convertToNodeSpace(touch->getLocation());
-            Rect rect(Vec2::ZERO, rightItem->getContentSize());
+        rightTouchListener->onTouchBegan = [rightIcon](Touch* touch, Event* event) -> bool {
+            Vec2 locationInNode = rightIcon->convertToNodeSpace(touch->getLocation());
+            Rect rect(Vec2::ZERO, rightIcon->getContentSize());
             return rect.containsPoint(locationInNode);
             };
 
@@ -1719,7 +1765,7 @@ void UIManager::refreshBattleHUDTroops() {
 }
 
 // 更新摧毁百分比和星级
-void UIManager::updateDestructionPercent(int percent) {
+void UIManager::updateDestructionPercent(int stars,int percent) {
     auto panel = getPanel(UIPanelType::BattleHUD);
     if (!panel) return;
 
@@ -1731,12 +1777,6 @@ void UIManager::updateDestructionPercent(int percent) {
     if (destroyLabel) {
         destroyLabel->setString(std::to_string(percent) + "%");
     }
-
-    // 计算星级（50%=1星，75%=2星，100%=3星）
-    int stars = 0;
-    if (percent >= 50) stars = 1;
-    if (percent >= 75) stars = 2;
-    if (percent >= 100) stars = 3;
 
     // 更新星级显示
     float starSize = 20 * _scaleFactor;
@@ -2032,7 +2072,7 @@ Node* UIManager::createUpgradeProgressOverlay(Building* building, float totalTim
     return overlay;
 }
 
-void UIManager::showUpgradeProgress(Building* building, float totalTime, float remainingTime) {
+void UIManager::showUpgradeProgress(Building* building, float totalTime, float remainingTime, Node* parent) {
     if (!building || !_rootScene) return;
 
     // 移除已存在的进度条（防止重复）
@@ -2041,12 +2081,18 @@ void UIManager::showUpgradeProgress(Building* building, float totalTime, float r
     auto overlay = createUpgradeProgressOverlay(building, totalTime, remainingTime);
     if (!overlay) return;
 
-    // 放置在建筑上方
-    Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
-    overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
-        buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
-
-    _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
+    if (parent) {
+        // 放置在建筑上方（使用本地坐标）
+        overlay->setPosition(Vec2(building->getPositionX() - overlay->getContentSize().width / 2,
+            building->getPositionY() + building->getContentSize().height / 2 + 10 * _scaleFactor));
+        parent->addChild(overlay, static_cast<int>(UILayer::HUD));
+    } else {
+        // 放置在建筑上方（使用世界坐标）
+        Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
+        overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
+            buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
+        _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
+    }
     _upgradeProgressNodes[building] = overlay;
 
     // 存储 totalTime（用于计算进度），removeUpgradeProgress 会 delete

@@ -1666,7 +1666,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         SoldierType::kGiant,
         "Giant",
         "Soldiers/Giant/Giantattackdown1.png",
-        5,
+        2,
         500,
         120,
         []() -> Soldier* {
@@ -1680,7 +1680,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         SoldierType::kBomber,
         "Bomber",
         "Soldiers/Bomber/Bomberwalkdown1.png",
-        2,
+        1,
         1000,
         60,
         []() -> Soldier* {

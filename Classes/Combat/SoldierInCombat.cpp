@@ -57,8 +57,9 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
         return false;
     }
     this->setPosition(map_->vecToWorld(spawn_pos));
-    map_->addChild(this);
-    this->setScale(0.5f);  // 调整大小（根据实际资源修改）
+    map_->addToWorld(this);
+    // 根据地图缩放系数调整士兵大小，保持视觉比例
+    this->setScale(0.5f * map_->getGridScaleFactor()); 
 
     this->DoAllMyActions();
 
@@ -215,25 +216,31 @@ void SoldierInCombat::Die() {
     this->stopAllActions();  // 停止所有当前动作
 
     auto remove_self = cocos2d::CallFunc::create([this]() {
-        this->removeFromParent();
         auto manager = CombatManager::GetInstance();
-        for(auto it = manager->live_soldiers.begin(); it != manager->live_soldiers.end(); ++it){
-            if(*it==this){
-                manager->live_soldiers.erase(it);
-                break;
+        if (manager) {
+            for(auto it = manager->live_soldiers.begin(); it != manager->live_soldiers.end(); ++it){
+                if(*it == this){
+                    manager->live_soldiers.erase(it);
+                    break;
+                }
             }
         }
-        for(auto it = current_target_->subscribers.begin(); it != current_target_->subscribers.end(); ++it){
-            if(*it==this){
-                current_target_->subscribers.erase(it);
-                break;
+        if (current_target_) {
+            for(auto it = current_target_->subscribers.begin(); it != current_target_->subscribers.end(); ++it){
+                if(*it == this){
+                    current_target_->subscribers.erase(it);
+                    break;
+                }
             }
         }
-        manager->num_of_live_soldiers_--;
-        if(manager->IsCombatEnd()){
-            CCLOG("call EndCombat() from soldier");
-            manager->EndCombat();
+        if (manager) {
+            manager->num_of_live_soldiers_--;
+            if(manager->IsCombatEnd()){
+                CCLOG("call EndCombat() from soldier");
+                manager->EndCombat();
+            }
         }
+        this->removeFromParent();
     });
     this->runAction(remove_self);
 }
@@ -457,11 +464,15 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
         if(!map_->IsGridAvailable(*ptr)){
             CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
             auto new_target = *ptr;
-            while(ptr->distance(new_target)<=this->soldier_template_->GetAttackRange()){
+            while(ptr != path.begin() && ptr->distance(new_target) <= this->soldier_template_->GetAttackRange()){
                 --ptr;
             }//ptr指向超出攻击范围的第一个点
-            ++ptr;//ptr指向目标到达的新的点
-            path.erase(++ptr,path.end());//删除ptr后的路径
+            // 此时 ptr 指向的是我们要保留的最后一个点
+            // 删除 ptr 之后的所有点
+            auto next_it = std::next(ptr);
+            if (next_it != path.end()) {
+                path.erase(next_it, path.end());
+            }
             break;
         }
     }
