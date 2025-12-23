@@ -33,8 +33,7 @@ ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec
     , uiLabel_(nullptr)
     , progressBar_(nullptr)
     , storageEffect_(nullptr)
-    , particleEffect_(nullptr) {
-}
+    , particleEffect_(nullptr){ }
 
 ResourceStorage* ResourceStorage::Create(const std::string& name, int base, cocos2d::Vec2 position,
     const std::string& texture, const std::string& resourceType) {
@@ -264,6 +263,8 @@ void ResourceStorage::TriggerCapacityFull() {
     }
 }
 
+
+
 // ==================== ProductionBuilding 实现 ====================
 
 ProductionBuilding::~ProductionBuilding() {
@@ -276,7 +277,7 @@ ProductionBuilding::ProductionBuilding(const std::string& name, int base, cocos2
     const std::string& texture, const std::string& resourceType)
     : ResourceStorage(name, base, position, texture, resourceType)
     , productionRate_(base * 10)
-    , productionTimer_(0.0f) {
+    {
 }
 
 ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, cocos2d::Vec2 position,
@@ -297,19 +298,6 @@ bool ProductionBuilding::Init() {
 
     InitProductionSystem();
     return true;
-}
-
-void ProductionBuilding::StartProduction() {
-    if (!isActive_) return;
-
-    // 启动生产定时器
-    schedule([this](float dt) {
-        OnProductionUpdate(dt);
-        }, 1.0f, "production_timer");
-}
-
-void ProductionBuilding::StopProduction() {
-    unschedule("production_timer");
 }
 
 void ProductionBuilding::CollectResources() {
@@ -386,23 +374,6 @@ void ProductionBuilding::InitProductionSystem() {
     }
 }
 
-void ProductionBuilding::OnProductionUpdate(float deltaTime) {
-    if (!isActive_) return;
-
-    productionTimer_ += deltaTime;
-
-    // 每小时生产一次
-    if (productionTimer_ >= 3600.0f) {
-        int productionAmount = productionRate_;
-
-        // 根据等级调整产量
-        productionAmount = static_cast<int>(productionAmount * (1.0f + 0.1f * GetLevel()));
-
-        AddResource(productionAmount);
-        productionTimer_ = 0.0f;
-    }
-}
-
 // ==================== ElixirStorage 实现 ====================
 
 ElixirStorage* ElixirStorage::Create(const std::string& name, int base,
@@ -449,16 +420,15 @@ ElixirStorage::ElixirStorage(const std::string& name, int base, cocos2d::Vec2 po
     : ProductionBuilding(name, base, position, texture.empty() ? "buildings/elixirmine.png" : texture, "Elixir")
     , collectionRadius_(100.0f)
     , elixirColor_(Color4F(0.8f, 0.2f, 0.8f, 1.0f)) {  // 紫色
+    // 初始化创建时间为当前系统时间（已在父类中初始化，这里仅作说明）
+    // creationTime_ 已在 ResourceStorage 构造函数中初始化
 }
 
 bool ElixirStorage::Init() {
     if (!ProductionBuilding::Init()) {
         return false;
     }
-
     InitElixirSpecificComponents();
-    StartProduction();
-
     return true;
 }
 
@@ -609,14 +579,14 @@ GoldStorage::GoldStorage(const std::string& name, int base, cocos2d::Vec2 positi
     , protectionPercentage_(0.3f)
     , protectionShield_(nullptr)
     , shieldEffect_(nullptr) {
+    // 初始化创建时间为当前系统时间（已在父类中初始化，这里仅作说明）
+    // creationTime_ 已在 ResourceStorage 构造函数中初始化
 }
 
 bool GoldStorage::Init() {
     if (!ProductionBuilding::Init()) {
         return false;
     }
-    StartProduction();
-
     return true;
 }
 
