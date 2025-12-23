@@ -147,6 +147,9 @@ public:
 
     //napper:用于炸弹人的范围溅射时获取周围八格的处理，可能可以被复用或改善以用于放置禁区的处理
     std::vector<cocos2d::Vec2> GetSurroundings(const cocos2d::Vec2& pos) const;
+
+    //napper:设为公有以供士兵类调用
+    void updateYOrder(cocos2d::Node* node);
 protected:
     MapManager();
     virtual ~MapManager();
@@ -157,7 +160,6 @@ protected:
     // 设置格子状态
     void setGridState(int gridX, int gridY, GridState state);
 
-    void updateYOrder(cocos2d::Node* node);
 
     // 获取格子状态
     GridState getGridState(int gridX, int gridY) const;

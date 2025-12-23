@@ -317,6 +317,7 @@ void SoldierInCombat::DealSplashDamage(const cocos2d::Vec2& pos){
 
 void SoldierInCombat::UpdatePosition() {
     this->position_=map_->worldToVec(this->getPosition());
+    map_->updateYOrder(this);
 }
 
 struct AStarNode {
@@ -563,7 +564,8 @@ void SoldierInCombat::MoveToTargetAndStartAttack() {
         moves.pushBack(CreateStraightMoveAction(path[i-1],path[i]));
     }
     auto start_attack = cocos2d::CallFunc::create([this,path]() {
-        this->Attack(path.back());
+        if (path.empty()) this->Attack(this->position_);
+        else this->Attack(path.back());
     });
     moves.pushBack(start_attack);
     cocos2d::Sequence* seq = cocos2d::Sequence::create(moves);

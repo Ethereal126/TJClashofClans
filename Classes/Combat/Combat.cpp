@@ -38,15 +38,16 @@ CombatManager* CombatManager::GetInstance() {
 }
 
 CombatManager::~CombatManager(){
+    DestroyInstance();
+}
+
+void CombatManager::DestroyInstance(){
     if (instance_) {
-        instance_->EndCombat(); // 强制结束战斗
         instance_->map_ = nullptr;
-        instance_->release(); // 释放 Cocos 引用计数
         instance_ = nullptr;
         CCLOG("Combat singleton destroyed!");
     }
 }
-
 
 //初始化战场中的建筑，返回初始化结果
 bool CombatManager::Init(MapManager* map){
@@ -139,6 +140,7 @@ void CombatManager::EndCombat() {
     }
     this->removeFromParent();
     UIManager::getInstance()->endBattle(stars,destroy_degree_);
+    DestroyInstance();
     CCLOG("CombatManager EndCombat() finished");
 }
 
