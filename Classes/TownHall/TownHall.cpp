@@ -249,8 +249,6 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
     }
 }
 
-
-
 bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
                                    int gold, int elixir, int level) {
     // 参数验证

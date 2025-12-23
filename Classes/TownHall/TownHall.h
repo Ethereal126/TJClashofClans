@@ -90,7 +90,6 @@ protected:
     int GetTotalArmyCapacityFromBarracks() const;
 
 public:
-
     /**
      * @brief 将玩家数据写入JSON文件
     * @param file_path JSON文件路径
