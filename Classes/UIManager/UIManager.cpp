@@ -808,7 +808,10 @@ void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory categ
 Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory category) {
     auto panel = Node::create();
 
-    int buttonCount = (category == BuildingCategory::Military) ? 3 : 2;
+    int buttonCount = 2;
+    if (category == BuildingCategory::Military || category == BuildingCategory::Resource) {
+        buttonCount = 3;
+    }    
     float buttonSize = 50 * _scaleFactor;
     float buttonMargin = 10 * _scaleFactor;
     float panelWidth = buttonCount * buttonSize + (buttonCount + 1) * buttonMargin;
@@ -887,6 +890,32 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     panel->addChild(upgradeBtn, 1);
 
     currentX += buttonSize + buttonMargin;
+
+    // 资源收取按钮（仅资源建筑）
+    if (category == BuildingCategory::Resource) {
+        auto collectBtn = Button::create("UI/btn_collect.png", "UI/btn_collect_pressed.png");
+        if (!collectBtn->getVirtualRenderer()) {
+            collectBtn = Button::create();
+            collectBtn->setTitleText("Collect");
+            collectBtn->setTitleFontSize(12 * _scaleFactor);
+            collectBtn->setContentSize(Size(buttonSize, buttonSize));
+            collectBtn->setScale9Enabled(true);
+        }
+        collectBtn->setPosition(Vec2(currentX, centerY));
+        collectBtn->addClickEventListener([this](Ref* sender) {
+            if (_selectedBuilding) {
+                CCLOG("Collecting resources from building: %s", _selectedBuilding->GetName().c_str());
+                // TODO: 实际调用逻辑
+                // TownHall::GetInstance()->collectFromBuilding(_selectedBuilding);
+                TownHall* th = TownHall::GetInstance();
+                updateResourceDisplay(ResourceType::Gold, th->GetGold());
+                updateResourceDisplay(ResourceType::Elixir, th->GetElixir());                
+                showToast("Resources Collected!");
+            }
+            hidePanel(UIPanelType::BuildingOptions, true);
+        });
+        panel->addChild(collectBtn, 1);
+    }
 
     // 训练按钮（仅军营）
     if (category == BuildingCategory::Military) {
@@ -1719,7 +1748,7 @@ void UIManager::refreshBattleHUDTroops() {
 }
 
 // 更新摧毁百分比和星级
-void UIManager::updateDestructionPercent(int percent) {
+void UIManager::updateDestructionPercent(int stars,int percent) {
     auto panel = getPanel(UIPanelType::BattleHUD);
     if (!panel) return;
 
@@ -1731,12 +1760,6 @@ void UIManager::updateDestructionPercent(int percent) {
     if (destroyLabel) {
         destroyLabel->setString(std::to_string(percent) + "%");
     }
-
-    // 计算星级（50%=1星，75%=2星，100%=3星）
-    int stars = 0;
-    if (percent >= 50) stars = 1;
-    if (percent >= 75) stars = 2;
-    if (percent >= 100) stars = 3;
 
     // 更新星级显示
     float starSize = 20 * _scaleFactor;

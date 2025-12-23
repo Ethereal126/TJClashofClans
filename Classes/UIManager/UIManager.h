@@ -209,7 +209,7 @@ public:
     // 更新战斗中士兵数量（MapManager 放置士兵后调用）
     void updateBattleTroopCount(const std::string& troopName, int newCount);
     // 更新摧毁百分比（自动计算星级）
-    void updateDestructionPercent(int percent);
+    void updateDestructionPercent(int stars,int percent);
     // 获取当前选中的士兵类型名称
     std::string getSelectedTroopName() const { return _selectedTroopName; }
     // 获取指定士兵的剩余数量

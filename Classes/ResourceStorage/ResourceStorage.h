@@ -240,6 +240,7 @@ public:
 protected:
     GoldStorage(const std::string& name, int base, cocos2d::Vec2 position, const std::string& texture);
 
+
     // 成员变量
     bool isVaultProtected_;
     float protectionPercentage_;
