@@ -224,6 +224,9 @@ class SourceBuilding : public Building {
 private:
     int production_rate_;   // 每小时生产的资源数量
 
+    // 时间记录相关
+    double creationTime_;  // 记录建筑创建时的初始系统时间
+
 public:
     /**
      * @brief 构造函数
@@ -244,12 +247,6 @@ public:
         cocos2d::Vec2 position,
         const std::string& texture,
         const std::string& resourceType);
-
-    /**
-     * @brief 生产资源
-     * @return 本次生产的资源数量。
-     */
-    virtual int ProduceResource () const;
 
     /**
      * @brief 显示资源建筑信息
@@ -274,6 +271,15 @@ public:
      * @param rate 新的生产速率
      */
     void SetProductionRate(int rate) { production_rate_ = rate; }
+
+    // 时间相关功能
+    /**
+     * @brief 计算并返回时间差与生产速率的乘积
+     * 计算从上次调用到当前时间的时间差，然后与生产速率相乘
+     * @return 时间差与生产速率的乘积
+     */
+    virtual double CalculateTimeProductionProduct();
+
 };
 
 /**

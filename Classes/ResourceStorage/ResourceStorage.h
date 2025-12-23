@@ -93,7 +93,6 @@ protected:
     // 事件回调
     std::function<void(int, int)> onAmountChangedCallback_;
     std::function<void()> onCapacityFullCallback_;
-
 private:
     ResourceStorage(const ResourceStorage&) = delete;
     ResourceStorage& operator=(const ResourceStorage&) = delete;
@@ -117,8 +116,6 @@ public:
     virtual bool Init() override;
 
     // 生产管理
-    virtual void StartProduction();
-    virtual void StopProduction();
     virtual void CollectResources();
 
     // 生产速率相关
@@ -142,12 +139,8 @@ protected:
     // 初始化生产系统
     virtual void InitProductionSystem();
 
-    // 生产更新（由定时器调用）
-    virtual void OnProductionUpdate(float deltaTime);
-
     // 成员变量
     int productionRate_;
-    float productionTimer_;
     std::vector<cocos2d::Sprite*> collectors_;
 
 private:

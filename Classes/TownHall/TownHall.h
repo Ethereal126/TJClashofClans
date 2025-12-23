@@ -28,6 +28,27 @@
     static bool LoadPlayerDataFromJSON(const std::string& file_path,
         int& gold, int& elixir, int& level);
 
+/**
+ * @brief 将玩家数据写入JSON文件
+ * @param file_path JSON文件路径
+ * @param gold 要写入的金币数量
+ * @param elixir 要写入的圣水数量
+ * @param level 要写入的大本营等级
+ * @return 写入成功返回true，失败返回false
+ */
+    static bool SavePlayerDataToJSON(const std::string& file_path,
+        int gold, int elixir, int level);
+
+/**
+ * @brief 更新JSON文件中的特定字段
+ * @param file_path JSON文件路径
+ * @param field_name 要更新的字段名（"gold"、"elixir"或"town_hall_level"）
+ * @param value 要写入的新值
+ * @return 更新成功返回true，失败返回false
+ */
+    static bool UpdatePlayerDataField(const std::string& file_path,
+        const std::string& field_name, int value);
+
 
 /**
  * @brief TownHall类
@@ -36,8 +57,6 @@
  */
 class TownHall : public Building {
 private:
-    
-
     /**
      * @brief 私有构造函数
      * 使用基准数值 base 初始化大本营的生命、防御、建造时间与成本等属性。
@@ -171,7 +190,7 @@ public:
      * @param amount 要增加的金币数量。
      * @return 实际成功存入的金币数量（可能受容量限制小于 amount）。
      */
-    int AddGold(int amount);
+    int AddGold();
 
     /**
      * @brief 消耗大本营中的金币
@@ -185,7 +204,7 @@ public:
      * @param amount 要增加的圣水数量。
      * @return 实际成功存入的圣水数量。
      */
-    int AddElixir(int amount);
+    int AddElixir();
 
     /**
      * @brief 消耗大本营中的圣水

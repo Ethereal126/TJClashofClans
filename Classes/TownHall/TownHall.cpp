@@ -3,7 +3,6 @@
 //
 
 #include "TownHall.h"
-#include "string"
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -42,18 +41,46 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
     std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
     cocos2d::log("尝试加载JSON文件: %s -> %s", file_path.c_str(), fullPath.c_str());
     
-    // 如果主路径找不到文件，尝试备用路径
-    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
-        cocos2d::log("主路径未找到文件，尝试备用路径...");
-        
-        // 尝试的备用路径列表
-        std::vector<std::string> alternativePaths = {
-            "Resources/archived/player_save.json",
-            "Resources/archived/player_save.json",
-            "../Resources/archived/player_save.json",
-            "../../Resources/archived/player_save.json"
-        };
-    }
+    // 使用局部变量存储实际使用的路径
+            std::string actualFilePath = file_path;
+            
+            // 如果主路径找不到文件，尝试备用路径
+            if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+                cocos2d::log("主路径未找到文件，尝试备用路径...");
+                
+                // 尝试的备用路径列表
+                std::vector<std::string> alternativePaths = {
+                    "Resources/archived/player_save.json",
+                    "Resources/archived/player_save.json",
+                    "../Resources/archived/player_save.json",
+                    "../../Resources/archived/player_save.json"
+                };
+                
+                bool found = false;
+                for (const auto& altPath : alternativePaths) {
+                    std::string altFullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(altPath);
+                    if (cocos2d::FileUtils::getInstance()->isFileExist(altFullPath)) {
+                        fullPath = altFullPath;
+                        actualFilePath = altPath;  // 修改局部变量而不是const参数
+                        found = true;
+                        cocos2d::log("使用备用路径找到文件: %s", altFullPath.c_str());
+                        break;
+                    }
+                }
+                
+                if (!found) {
+                    cocos2d::log("错误: 无法找到JSON文件: %s", fullPath.c_str());
+                    cocos2d::log("搜索路径列表:");
+                    const auto& searchPaths = cocos2d::FileUtils::getInstance()->getSearchPaths();
+                    for (const auto& path : searchPaths) {
+                        cocos2d::log("  - %s", path.c_str());
+                    }
+                    return false;
+                }
+            }
+            
+            // 记录实际使用的文件路径
+            cocos2d::log("实际使用的文件路径: %s", actualFilePath.c_str());
 
     // 读取文件内容
     std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
@@ -208,8 +235,250 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
     }
 }
 
-// ==================== TownHall 实现 ====================
 
+
+bool SavePlayerDataToJSON(const std::string& file_path,
+                                   int gold, int elixir, int level) {
+    // 参数验证
+    if (file_path.empty()) {
+        cocos2d::log("错误: JSON文件路径为空");
+        return false;
+    }
+
+    // 使用Cocos2d-x的FileUtils处理资源文件路径
+    std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
+    cocos2d::log("尝试保存JSON文件: %s -> %s", file_path.c_str(), fullPath.c_str());
+    
+    // 使用局部变量存储实际使用的路径
+    std::string actualFilePath = file_path;
+    
+    // 如果主路径找不到文件，尝试备用路径
+    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        cocos2d::log("主路径未找到文件，尝试备用路径...");
+        
+        // 尝试的备用路径列表
+        std::vector<std::string> alternativePaths = {
+            "Resources/archived/player_save.json",
+            "archived/player_save.json",
+            "../Resources/archived/player_save.json",
+            "../../Resources/archived/player_save.json"
+        };
+        
+        bool found = false;
+        for (const auto& altPath : alternativePaths) {
+            std::string altFullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(altPath);
+            if (cocos2d::FileUtils::getInstance()->isFileExist(altFullPath)) {
+                fullPath = altFullPath;
+                actualFilePath = altPath;
+                found = true;
+                cocos2d::log("使用备用路径找到文件: %s", altFullPath.c_str());
+                break;
+            }
+        }
+        
+        if (!found) {
+            cocos2d::log("错误: 无法找到JSON文件，将创建新文件: %s", fullPath.c_str());
+            // 如果找不到文件，使用可写路径
+            fullPath = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
+            actualFilePath = "player_save.json";
+        }
+    }
+    
+    // 读取现有JSON文件内容（如果存在）
+    rapidjson::Document doc;
+    std::string content = "";
+    
+    if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
+        if (!content.empty()) {
+            doc.Parse(content.c_str());
+            if (doc.HasParseError()) {
+                cocos2d::log("警告: JSON解析失败，将创建新文档，错误代码: %d", doc.GetParseError());
+                doc.SetObject();
+            }
+        } else {
+            doc.SetObject();
+        }
+    } else {
+        doc.SetObject();
+    }
+    
+    // 确保文档是对象类型
+    if (!doc.IsObject()) {
+        doc.SetObject();
+    }
+    
+    // 创建或更新player_stats对象
+    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+    
+    if (!doc.HasMember("player_stats")) {
+        rapidjson::Value player_stats(rapidjson::kObjectType);
+        doc.AddMember("player_stats", player_stats, allocator);
+    }
+    
+    rapidjson::Value& player_stats = doc["player_stats"];
+    if (!player_stats.IsObject()) {
+        player_stats.SetObject();
+    }
+    
+    // 更新数据
+    if (player_stats.HasMember("gold")) {
+        player_stats["gold"].SetInt(gold);
+    } else {
+        player_stats.AddMember("gold", gold, allocator);
+    }
+    
+    if (player_stats.HasMember("elixir")) {
+        player_stats["elixir"].SetInt(elixir);
+    } else {
+        player_stats.AddMember("elixir", elixir, allocator);
+    }
+    
+    if (player_stats.HasMember("level")) {
+        player_stats["level"].SetInt(level);
+    } else {
+        player_stats.AddMember("level", level, allocator);
+    }
+    
+    // 将JSON转换为字符串
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    std::string jsonContent = buffer.GetString();
+    
+    // 写入文件
+    std::ofstream outputFile(fullPath);
+    if (!outputFile.is_open()) {
+        cocos2d::log("错误: 无法打开文件进行写入: %s", fullPath.c_str());
+        return false;
+    }
+    
+    outputFile << jsonContent;
+    outputFile.close();
+    
+    cocos2d::log("成功保存玩家数据到JSON文件: 金币=%d, 圣水=%d, 大本营等级=%d", gold, elixir, level);
+    return true;
+}
+
+bool UpdatePlayerDataField(const std::string& file_path,
+                                     const std::string& field_name, int value) {
+    // 参数验证
+    if (file_path.empty()) {
+        cocos2d::log("错误: JSON文件路径为空");
+        return false;
+    }
+    
+    if (field_name != "gold" && field_name != "elixir" && field_name != "level") {
+        cocos2d::log("错误: 不支持的字段名: %s", field_name.c_str());
+        return false;
+    }
+    
+    // 使用Cocos2d-x的FileUtils处理资源文件路径
+    std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
+    cocos2d::log("尝试更新JSON字段: %s -> %s", file_path.c_str(), fullPath.c_str());
+    
+    // 使用局部变量存储实际使用的路径
+    std::string actualFilePath = file_path;
+    
+    // 如果主路径找不到文件，尝试备用路径
+    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        cocos2d::log("主路径未找到文件，尝试备用路径...");
+        
+        // 尝试的备用路径列表
+        std::vector<std::string> alternativePaths = {
+            "Resources/archived/player_save.json",
+            "archived/player_save.json",
+            "../Resources/archived/player_save.json",
+            "../../Resources/archived/player_save.json"
+        };
+        
+        bool found = false;
+        for (const auto& altPath : alternativePaths) {
+            std::string altFullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(altPath);
+            if (cocos2d::FileUtils::getInstance()->isFileExist(altFullPath)) {
+                fullPath = altFullPath;
+                actualFilePath = altPath;
+                found = true;
+                cocos2d::log("使用备用路径找到文件: %s", altFullPath.c_str());
+                break;
+            }
+        }
+        
+        if (!found) {
+            cocos2d::log("错误: 无法找到JSON文件，将创建新文件: %s", fullPath.c_str());
+            // 如果找不到文件，使用可写路径
+            fullPath = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
+            actualFilePath = "player_save.json";
+        }
+    }
+    
+    // 读取现有JSON文件内容（如果存在）
+    rapidjson::Document doc;
+    std::string content = "";
+    
+    if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
+        if (!content.empty()) {
+            doc.Parse(content.c_str());
+            if (doc.HasParseError()) {
+                cocos2d::log("警告: JSON解析失败，将创建新文档，错误代码: %d", doc.GetParseError());
+                doc.SetObject();
+            }
+        } else {
+            doc.SetObject();
+        }
+    } else {
+        doc.SetObject();
+    }
+    
+    // 确保文档是对象类型
+    if (!doc.IsObject()) {
+        doc.SetObject();
+    }
+    
+    // 创建或更新player_stats对象
+    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+    
+    if (!doc.HasMember("player_stats")) {
+        rapidjson::Value player_stats(rapidjson::kObjectType);
+        doc.AddMember("player_stats", player_stats, allocator);
+    }
+    
+    rapidjson::Value& player_stats = doc["player_stats"];
+    if (!player_stats.IsObject()) {
+        player_stats.SetObject();
+    }
+    
+    // 更新指定字段
+    rapidjson::Value fieldName(field_name.c_str(), allocator);
+    
+    if (player_stats.HasMember(fieldName)) {
+        player_stats[fieldName].SetInt(value);
+    } else {
+        player_stats.AddMember(fieldName, value, allocator);
+    }
+    
+    // 将JSON转换为字符串
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    std::string jsonContent = buffer.GetString();
+    
+    // 写入文件
+    std::ofstream outputFile(fullPath);
+    if (!outputFile.is_open()) {
+        cocos2d::log("错误: 无法打开文件进行写入: %s", fullPath.c_str());
+        return false;
+    }
+    
+    outputFile << jsonContent;
+    outputFile.close();
+    
+    cocos2d::log("成功更新JSON字段: %s = %d", field_name.c_str(), value);
+    return true;
+}
+
+// ==================== TownHall 实现 ====================
 // ==================== 单例管理相关 ====================
 
 // 在文件开头添加静态成员初始化
@@ -397,6 +666,12 @@ void TownHall::Upgrade() {
     // 更新纹理（假设纹理命名规则为 "buildings/TownHallX.png"）
     std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
     this->setTexture(new_texture);
+
+    // 保存更新后的大本营等级到JSON文件
+    std::string json_file_path = "archived/player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "level", level_)) {
+        cocos2d::log("警告：保存大本营等级数据到JSON文件失败");
+    }
 
     cocos2d::log("%s 升级到等级 %d，金币池上限: %d，圣水池上限: %d，金矿上限: %d，圣水收集器上限: %d，训练营上限: %d，军队容量: %d",
         name_.c_str(), level_, gold_storage_capacity_, elixir_storage_capacity_,
@@ -783,14 +1058,18 @@ int TownHall::GetCurrentArmyCount() const {
     return current_army_count_;
 }
 
-int TownHall::AddGold(int amount) {
-    if (amount <= 0) {
-        return 0;
+int TownHall::AddGold() {
+    int amount = 0;
+
+    for (const auto& collector : gold_mines_) {
+        if (collector && collector->IsActive()) {
+            amount += collector->CalculateTimeProductionProduct();
+        }
     }
 
     // 获取总金币容量（金币池容量总和）
     int max_capacity = GetTotalGoldCapacity();
-    int current_total = GetTotalGoldFromStorages();
+    int current_total = gold_;
 
     if (current_total >= max_capacity) {
         cocos2d::log("金币池已达上限，无法存入更多金币");
@@ -812,6 +1091,15 @@ int TownHall::AddGold(int amount) {
             storage->AddResource(add_to_storage);
             remaining -= add_to_storage;
         }
+    }
+
+    //更新大本营金币数量
+    gold_ += actual_add;
+    
+    // 保存更新后的金币数量到JSON文件
+    std::string json_file_path = "archived/player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "gold", gold_)) {
+        cocos2d::log("警告：保存金币数据到JSON文件失败");
     }
 
     //返回存入金币数
@@ -845,19 +1133,36 @@ bool TownHall::SpendGold(int amount) {
         }
     }
 
+    //更新大本营金币数量
+    gold_ = GetTotalGoldFromStorages();
+    
+    // 保存更新后的金币数量到JSON文件
+    std::string json_file_path = "archived/player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "gold", gold_)) {
+        cocos2d::log("警告：保存金币数据到JSON文件失败");
+    }
+
     cocos2d::log("消耗金币: %d，剩余: %d", amount, total_gold - amount);
     return true;
 }
 
 
-int TownHall::AddElixir(int amount) {
+int TownHall::AddElixir() {
+    int amount = 0;
+
+	for (const auto& collector : elixir_collectors_) {
+		if (collector && collector->IsActive()) {
+			amount += collector->CalculateTimeProductionProduct();
+		}
+	}
+
     if (amount <= 0) {
         return 0;
     }
 
     // 获取总圣水容量（圣水池容量总和）
     int max_capacity = GetTotalElixirCapacity();
-    int current_total = GetTotalElixirFromStorages();
+    int current_total = elixir_;
 
     if (current_total >= max_capacity) {
         cocos2d::log("圣水池已达上限，无法存入更多圣水");
@@ -879,6 +1184,15 @@ int TownHall::AddElixir(int amount) {
             storage->AddResource(add_to_storage);
             remaining -= add_to_storage;
         }
+    }
+
+    //更新大本营圣水数量
+    elixir_ += actual_add;
+    
+    // 保存更新后的圣水数量到JSON文件
+    std::string json_file_path = "archived/player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "elixir", elixir_)) {
+        cocos2d::log("警告：保存圣水数据到JSON文件失败");
     }
 
     cocos2d::log("存入圣水: %d，剩余可存入: %d", actual_add, remaining);
@@ -908,6 +1222,15 @@ bool TownHall::SpendElixir(int amount) {
             storage->UseResource(deduct_from_storage);
             remaining -= deduct_from_storage;
         }
+    }
+
+    //更新大本营圣水数量
+    elixir_ = GetTotalElixirFromStorages();
+    
+    // 保存更新后的圣水数量到JSON文件
+    std::string json_file_path = "archived/player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "elixir", elixir_)) {
+        cocos2d::log("警告：保存圣水数据到JSON文件失败");
     }
 
     cocos2d::log("消耗圣水: %d，剩余: %d", amount, total_elixir - amount);

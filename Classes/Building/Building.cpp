@@ -208,7 +208,9 @@ cocos2d::Vec2 Building::GetPosition() const {
 SourceBuilding::SourceBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture)
     : Building(name, 1, 16 * base, 2 * base,
         base, base * 500, 3, 3, position),
-    production_rate_(base * 50) {
+    production_rate_(base * 50), creationTime_(0.0) {
+    // 初始化创建时间为当前系统时间
+    creationTime_ = cocos2d::utils::gettime();
     // 设置资源建筑的纹理
     this->setTexture(texture);
 }
@@ -254,13 +256,24 @@ SourceBuilding* SourceBuilding::Create(const std::string& name, int base,
     return nullptr;
 }
 
-/**
- * @brief 生产资源
- * @return 本次生产的资源数量（与 production_rate_ 相同）。
- */
-int SourceBuilding::ProduceResource() const {
-    int resource = production_rate_;
-    return resource;
+double SourceBuilding::CalculateTimeProductionProduct() {
+    // 获取当前系统时间
+    double currentTime = cocos2d::utils::gettime();
+
+    // 计算时间差（秒）
+    double timeDifference = currentTime - creationTime_;
+
+    // 计算时间差与生产速率的乘积
+    double result = timeDifference * production_rate_;
+
+    // 更新记录的时间为当前时间
+    creationTime_ = currentTime;
+
+    // 记录日志
+    cocos2d::log("计算时间与生产速率乘积: 时间差=%.2f秒, 生产速率=%.2f, 结果=%.2f",
+        timeDifference, production_rate_, result);
+
+    return result;
 }
 
 /**
