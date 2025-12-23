@@ -154,10 +154,12 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto manager = CombatManager::GetInstance();
     auto giant = TownHall::GetSoldierTemplate(SoldierType::kGiant)->Create();
     auto bomber = TownHall::GetSoldierTemplate(SoldierType::kBomber)->Create();
+    auto archer = TownHall::GetSoldierTemplate(SoldierType::kArcher)->Create();
+    auto barbarian = TownHall::GetSoldierTemplate(SoldierType::kBarbarian)->Create();
+
     manager->StartCombat();
     manager->SendSoldier(bomber,cocos2d::Vec2(1,2));
     manager->SendSoldier(giant,cocos2d::Vec2(20,20));
-    manager->SendSoldier(giant,cocos2d::Vec2(0,30));
     manager->SendSoldier(archer,cocos2d::Vec2(1,2));
     manager->SendSoldier(barbarian,cocos2d::Vec2(12,12));
 

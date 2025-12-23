@@ -124,13 +124,17 @@ void AttackBuildingInCombat::StartAttack() {
 void AttackBuildingInCombat::ChooseTarget(){
     if(current_target_!= nullptr && current_target_->is_alive_) return;
     auto soldiers = CombatManager::GetInstance()->live_soldiers;
-    if(soldiers.empty()) CCLOG("no target for building");
-    SoldierInCombat* target = *std::min_element(soldiers.begin(),soldiers.end(),
+    if(soldiers.empty()) {
+        CCLOG("no target for building");
+        current_target_ = nullptr;
+        return;
+    }
+    auto it = std::min_element(soldiers.begin(),soldiers.end(),
                                                  [&](SoldierInCombat* a,SoldierInCombat* b){
                                                      return this->position_.distance(a->position_)<this->position_.distance(b->position_);
                                                  });
-    if(this->position_.distance(target->position_)<=attack_range_){
-        current_target_ = target;
+    if (it != soldiers.end() && this->position_.distance((*it)->position_) <= attack_range_) {
+        current_target_ = *it;
     }
     else{
         current_target_ = nullptr;
@@ -147,7 +151,7 @@ void BuildingInCombat::Die() {
     manager->num_of_live_buildings--;
     if(IsBuildingShouldCount(building_template_)) manager->buildings_should_count_destroyed++;
     manager->destroy_degree_ = 100*manager->buildings_should_count_destroyed/manager->buildings_should_count;
-    UIManager::getInstance()->updateDestructionPercent(manager->destroy_degree_);
+    UIManager::getInstance()->updateDestructionPercent(1,manager->destroy_degree_);   // 这里接口参数是星级和摧毁率，我这边先补一个1上去
     if(typeid(*building_template_)==typeid(TownHall)) manager->stars++;
 
     CCLOG("live buildings:%d",manager->num_of_live_buildings);

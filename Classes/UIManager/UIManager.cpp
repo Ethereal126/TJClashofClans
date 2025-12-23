@@ -822,7 +822,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
     if (category == BuildingCategory::Military || category == BuildingCategory::Resource) {
         buttonCount = 3;
     }    
-    float buttonSize = 50 * _scaleFactor;
+    float buttonSize = 100 * _scaleFactor;
     float buttonMargin = 10 * _scaleFactor;
     float panelWidth = buttonCount * buttonSize + (buttonCount + 1) * buttonMargin;
     float panelHeight = buttonSize + 2 * buttonMargin;
@@ -840,15 +840,6 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
 
     panel->setPosition(adjustedPos);
 
-    // 背景
-    auto bg = LayerColor::create(Color4B(50, 50, 70, 220), panelWidth, panelHeight);
-    panel->addChild(bg, 0);
-
-    // 边框
-    auto border = DrawNode::create();
-    border->drawRect(Vec2(0, 0), Vec2(panelWidth, panelHeight), Color4F::WHITE);
-    panel->addChild(border, 1);
-
     float currentX = buttonMargin + buttonSize / 2;
     float centerY = panelHeight / 2;
 
@@ -860,6 +851,9 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
         infoBtn->setTitleFontSize(12 * _scaleFactor);
         infoBtn->setContentSize(Size(buttonSize, buttonSize));
         infoBtn->setScale9Enabled(true);
+    }
+    else{
+        infoBtn->setScale(0.18f);
     }
     infoBtn->setPosition(Vec2(currentX, centerY));
     infoBtn->addClickEventListener([this](Ref* sender) {
@@ -878,6 +872,9 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
         upgradeBtn->setTitleFontSize(12 * _scaleFactor);
         upgradeBtn->setContentSize(Size(buttonSize, buttonSize));
         upgradeBtn->setScale9Enabled(true);
+    }
+    else{
+        upgradeBtn->setScale(0.2f);
     }
     upgradeBtn->setPosition(Vec2(currentX, centerY));
 
@@ -911,13 +908,16 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
             collectBtn->setContentSize(Size(buttonSize, buttonSize));
             collectBtn->setScale9Enabled(true);
         }
+        else{
+            collectBtn->setScale(0.17f);
+        }
         collectBtn->setPosition(Vec2(currentX, centerY));
         collectBtn->addClickEventListener([this](Ref* sender) {
             if (_selectedBuilding) {
                 CCLOG("Collecting resources from building: %s", _selectedBuilding->GetName().c_str());
-                // TODO: 实际调用逻辑
-                // TownHall::GetInstance()->collectFromBuilding(_selectedBuilding);
                 TownHall* th = TownHall::GetInstance();
+                th->AddElixir();
+                th->AddGold();                
                 updateResourceDisplay(ResourceType::Gold, th->GetGold());
                 updateResourceDisplay(ResourceType::Elixir, th->GetElixir());                
                 showToast("Resources Collected!");
@@ -936,6 +936,9 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
             trainBtn->setTitleFontSize(12 * _scaleFactor);
             trainBtn->setContentSize(Size(buttonSize, buttonSize));
             trainBtn->setScale9Enabled(true);
+        }
+        else{
+            trainBtn->setScale(0.18f);
         }
         trainBtn->setPosition(Vec2(currentX, centerY));
         trainBtn->addClickEventListener([this](Ref* sender) {
@@ -1319,7 +1322,7 @@ Node* UIManager::createArmyTraining(Building* building) {
         int row = (int)i / columns;
         int col = (int)i % columns;
         float xPos = col * (iconSize + itemSpacing) + iconSize / 2 + 10 * _scaleFactor;
-        float yPos = containerHeight - row * (iconSize + itemSpacing + 20 * _scaleFactor) - iconSize / 2 - 10 * _scaleFactor;
+        float yPos = containerHeight - row * (iconSize + itemSpacing + 20 * _scaleFactor) - iconSize / 2 - 50 * _scaleFactor;
 
         // ===== 左侧：当前部队 =====
         auto leftItem = Node::create();
@@ -1335,24 +1338,26 @@ Node* UIManager::createArmyTraining(Building* building) {
             leftIcon->setColor(Color3B(100, 150, 100));
         }
         leftIcon->setScale(iconSize / std::max(leftIcon->getContentSize().width, leftIcon->getContentSize().height));
-        leftIcon->setPosition(Vec2(iconSize / 2, iconSize / 2 + 15 * _scaleFactor));
+        leftIcon->setPosition(Vec2(iconSize / 2, iconSize / 2)); // 居中
         leftIcon->setName("icon");
         leftItem->addChild(leftIcon, 1);
 
-        // 左侧数量标签
+        // 左侧数量标签 - 移动到左上角，加粗
         int count = _tempArmyConfig[tmpl.name_];
-        auto leftCountLabel = Label::createWithTTF("x" + std::to_string(count), "fonts/arial.ttf", 14 * _scaleFactor);
-        leftCountLabel->setPosition(Vec2(iconSize / 2, 5 * _scaleFactor));
-        leftCountLabel->setColor(count > 0 ? Color3B::WHITE : Color3B(100, 100, 100));
+        auto leftCountLabel = Label::createWithTTF(std::to_string(count), "fonts/arial.ttf", 16 * _scaleFactor);
+        leftCountLabel->setAnchorPoint(Vec2(0, 1)); // 锚点左上角
+        leftCountLabel->setPosition(Vec2(2 * _scaleFactor, iconSize - 2 * _scaleFactor));
+        leftCountLabel->setColor(count > 0 ? Color3B::YELLOW : Color3B(100, 100, 100));
+        leftCountLabel->enableOutline(Color4B::BLACK, 2); // 描边达到加粗效果
         leftCountLabel->setName("countLabel");
-        leftItem->addChild(leftCountLabel, 1);
+        leftItem->addChild(leftCountLabel, 5); // 确保在图片上方
 
-        // 左侧点击事件（移除士兵）
+        // 左侧点击事件（移除士兵）- 修改为点击 icon 才有效
         auto leftTouchListener = EventListenerTouchOneByOne::create();
         leftTouchListener->setSwallowTouches(true);
-        leftTouchListener->onTouchBegan = [leftItem](Touch* touch, Event* event) -> bool {
-            Vec2 locationInNode = leftItem->convertToNodeSpace(touch->getLocation());
-            Rect rect(Vec2::ZERO, leftItem->getContentSize());
+        leftTouchListener->onTouchBegan = [leftIcon](Touch* touch, Event* event) -> bool {
+            Vec2 locationInNode = leftIcon->convertToNodeSpace(touch->getLocation());
+            Rect rect(Vec2::ZERO, leftIcon->getContentSize());
             return rect.containsPoint(locationInNode);
             };
 
@@ -1383,16 +1388,16 @@ Node* UIManager::createArmyTraining(Building* building) {
             rightIcon->setColor(Color3B(100, 100, 150));
         }
         rightIcon->setScale(iconSize / std::max(rightIcon->getContentSize().width, rightIcon->getContentSize().height));
-        rightIcon->setPosition(Vec2(iconSize / 2, iconSize / 2));
+        rightIcon->setPosition(Vec2(iconSize / 2, iconSize / 2)); // 居中
         rightIcon->setName("icon");
         rightItem->addChild(rightIcon, 1);
 
-        // 右侧点击事件（添加士兵）
+        // 右侧点击事件（添加士兵）- 修改为点击 icon 才有效
         auto rightTouchListener = EventListenerTouchOneByOne::create();
         rightTouchListener->setSwallowTouches(true);
-        rightTouchListener->onTouchBegan = [rightItem](Touch* touch, Event* event) -> bool {
-            Vec2 locationInNode = rightItem->convertToNodeSpace(touch->getLocation());
-            Rect rect(Vec2::ZERO, rightItem->getContentSize());
+        rightTouchListener->onTouchBegan = [rightIcon](Touch* touch, Event* event) -> bool {
+            Vec2 locationInNode = rightIcon->convertToNodeSpace(touch->getLocation());
+            Rect rect(Vec2::ZERO, rightIcon->getContentSize());
             return rect.containsPoint(locationInNode);
             };
 

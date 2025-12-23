@@ -221,12 +221,14 @@ TerrainType MapManager::getTerrainType() const {
 }
 
 bool MapManager::isValidGrid(int gridX, int gridY) const {
-    return gridX >= 0 && gridY >= 0 && gridX < _width && gridY < _length;
+    // 基础边界检查
+    return (gridX >= 0 && gridX < _width && gridY >= 0 && gridY < _length);
 }
 
 bool MapManager::isValidGrid(const cocos2d::Vec2& grid_pos) const {
-    return isValidGrid(static_cast<int>(std::floor(grid_pos.x + 0.001f)), 
-                      static_cast<int>(std::floor(grid_pos.y + 0.001f)));
+    // 增加精度补偿的浮点数判定，防止边缘浮点误差导致的索引溢出
+    return (grid_pos.x >= -0.001f && grid_pos.x < static_cast<float>(_width) - 0.999f &&
+            grid_pos.y >= -0.001f && grid_pos.y < static_cast<float>(_length) - 0.999f);
 }
 
 GridState MapManager::getGridState(int gridX, int gridY) const {
@@ -243,8 +245,10 @@ void MapManager::setGridState(int gridX, int gridY, GridState state) {
 
 
 bool MapManager::isRangeAvailable(int gridX, int gridY, int width, int length) const {
-    // 边界检查
-    if (gridX < 0 || gridY < 0 || gridX + width > _width || gridY + length > _length) return false;
+    // 1. 范围合法性首层保护：严格边界检查
+    if (gridX < 0 || gridY < 0 || (gridX + width) > _width || (gridY + length) > _length) {
+        return false;
+    }
     for (int x = gridX; x < gridX + width; ++x) {
         for (int y = gridY; y < gridY + length; ++y) {
             const GridState st = _gridStates[x][y];
@@ -379,10 +383,10 @@ std::pair<int, int> MapManager::worldToGrid(const cocos2d::Vec2& worldPos) const
     // 关键点：将世界坐标转换为 worldNode 的本地坐标，自动处理拖拽和缩放
     cocos2d::Vec2 localPos = _worldNode->convertToNodeSpace(worldPos);
     auto vec_pos = worldToVec(localPos);
-    int ix = static_cast<int>(std::floor(vec_pos.x));
-    int iy = static_cast<int>(std::floor(vec_pos.y));
+    // 精度补偿并强制钳位保护：确保返回的索引永远在合法网格范围内
+    int ix = static_cast<int>(std::floor(vec_pos.x + 0.001f));
+    int iy = static_cast<int>(std::floor(vec_pos.y + 0.001f));
 
-    // 强制边界检查，防止 ix/iy 为负数或越界导致闪退
     ix = std::max(0, std::min(ix, _width - 1));
     iy = std::max(0, std::min(iy, _length - 1));
     return { ix, iy };
@@ -630,29 +634,22 @@ void MapManager::drawPlacementHighlight() {
 
     // 根据是否可放置选择颜色
     cocos2d::Color4F fillColor = _canPlaceAtCurrentPos ?
-        cocos2d::Color4F(0.0f, 1.0f, 0.0f, 0.3f) :  // 绿色半透明
-        cocos2d::Color4F(1.0f, 0.0f, 0.0f, 0.3f);   // 红色半透明
+        cocos2d::Color4F(0.0f, 1.0f, 0.0f, 0.35f) :  // 绿色半透明
+        cocos2d::Color4F(1.0f, 0.0f, 0.0f, 0.35f);   // 红色半透明
 
     cocos2d::Color4F borderColor = _canPlaceAtCurrentPos ?
         cocos2d::Color4F(0.0f, 1.0f, 0.0f, 0.8f) :  // 绿色边框
         cocos2d::Color4F(1.0f, 0.0f, 0.0f, 0.8f);   // 红色边框
 
-    // 绘制每个格子的等角菱形
-    for (int x = _placementGridX; x < _placementGridX + buildingWidth; ++x) {
-        for (int y = _placementGridY; y < _placementGridY + buildingHeight; ++y) {
-            cocos2d::Vec2 center = gridToWorld(x, y);
-            float halfW = _gridSize * 0.5f;
-            float quarterH = _gridSize * 0.25f;
-
-            cocos2d::Vec2 top(center.x, center.y + quarterH);
-            cocos2d::Vec2 right(center.x + halfW, center.y);
-            cocos2d::Vec2 bottom(center.x, center.y - quarterH);
-            cocos2d::Vec2 left(center.x - halfW, center.y);
-
-            cocos2d::Vec2 verts[] = { top, right, bottom, left };
-            _placementHighlight->drawPolygon(verts, 4, fillColor, 2.0f, borderColor);
-        }
-    }
+    // 计算建筑占地的四个顶点坐标
+    cocos2d::Vec2 origin = gridToWorld(_placementGridX, _placementGridY);
+    cocos2d::Vec2 rightEdge = gridToWorld(_placementGridX + buildingWidth, _placementGridY);
+    cocos2d::Vec2 topEdge = gridToWorld(_placementGridX + buildingWidth, _placementGridY + buildingHeight);
+    cocos2d::Vec2 leftEdge = gridToWorld(_placementGridX, _placementGridY + buildingHeight);
+    cocos2d::Vec2 verts[] = { origin, rightEdge, topEdge, leftEdge };
+    
+    // 绘制一个覆盖整个建筑区域的闭合多边形
+    _placementHighlight->drawPolygon(verts, 4, fillColor, 2.0f, borderColor);
 }
 
 void MapManager::updateConfirmButtonState() {
@@ -674,8 +671,8 @@ void MapManager::updateConfirmButtonState() {
     cocos2d::Vec2 buildingPos = _pendingBuilding->getPosition();
     
     // 按钮放在建筑上方一点
-    float buttonY = buildingPos.y + 100.0f; 
-    float btnSpacing = 60.0f;
+    float buttonY = buildingPos.y + 70.0f; 
+    float btnSpacing = 40.0f;
 
     _confirmBtn->setPosition(cocos2d::Vec2(buildingPos.x - btnSpacing, buttonY));
     _cancelBtn->setPosition(cocos2d::Vec2(buildingPos.x + btnSpacing, buttonY));
@@ -693,9 +690,12 @@ void MapManager::createPlacementUI() {
     if (!_confirmBtn || !_confirmBtn->getVirtualRenderer()) {
         _confirmBtn = cocos2d::ui::Button::create();
         _confirmBtn->setScale9Enabled(true);
-        _confirmBtn->setContentSize(cocos2d::Size(140, 54));
+        _confirmBtn->setContentSize(cocos2d::Size(80, 36));
         _confirmBtn->setTitleText("Confirm");
-        _confirmBtn->setTitleFontSize(20);
+        _confirmBtn->setTitleFontSize(14);
+    }
+    else{
+        _confirmBtn->setScale(0.2f);
     }
     _confirmBtn->addClickEventListener([this](cocos2d::Ref*) {
         confirmPlacement();
@@ -707,9 +707,12 @@ void MapManager::createPlacementUI() {
     if (!_cancelBtn || !_cancelBtn->getVirtualRenderer()) {
         _cancelBtn = cocos2d::ui::Button::create();
         _cancelBtn->setScale9Enabled(true);
-        _cancelBtn->setContentSize(cocos2d::Size(140, 54));
+        _cancelBtn->setContentSize(cocos2d::Size(80, 36));
         _cancelBtn->setTitleText("Cancel");
-        _cancelBtn->setTitleFontSize(20);
+        _cancelBtn->setTitleFontSize(14);
+    }
+    else{
+        _cancelBtn->setScale(0.2f);
     }
     _cancelBtn->addClickEventListener([this](cocos2d::Ref*) {
         exitPlacementMode();
