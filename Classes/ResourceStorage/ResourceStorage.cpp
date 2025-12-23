@@ -280,16 +280,42 @@ ProductionBuilding::ProductionBuilding(const std::string& name, int base, cocos2
     {
 }
 
-ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, cocos2d::Vec2 position,
-    const std::string& texture, const std::string& resourceType) {
+ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, 
+    cocos2d::Vec2 position,
+    const std::string& texture, 
+    const std::string& resourceType) {
     auto building = new (std::nothrow) ProductionBuilding(name, base, position, texture, resourceType);
-    if (building && building->Init()) {
-        building->autorelease();
-        return building;
+
+    if (building) {
+        // 设置资源类型（如果构造函数没有设置的话）
+        // 注意：这里假设ProductionBuilding类有一个SetResourceType方法
+        // 如果没有，可以在构造函数中直接设置
+        if (building->initWithFile(texture)) {
+            // 标记为自动释放（Cocos2d-x的内存管理机制）
+            building->autorelease();
+
+            // 设置一些默认属性
+            if (resourceType == "Gold Storage") {
+                building->setColor(cocos2d::Color3B::YELLOW);
+            }
+            else if (resourceType == "Elixir Storage") {
+                building->setColor(cocos2d::Color3B(200, 100, 255)); // 紫色
+            }
+
+            cocos2d::log("创建资源建筑: %s (类型: %s, 位置: %f,%f)",
+                name.c_str(), resourceType.c_str(),
+                position.x, position.y);
+            return building;
+        }
+
+        // 初始化失败，删除对象
+        delete building;
     }
-    CC_SAFE_DELETE(building);
+
+    cocos2d::log("创建资源建筑失败: %s", name.c_str());
     return nullptr;
 }
+
 
 bool ProductionBuilding::Init() {
     if (!ResourceStorage::Init()) {

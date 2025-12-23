@@ -1529,7 +1529,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return GoldStorage::Create("Gold Storage", 1, { 0, 0 },"buildings/goldpool1.png","Gold Storage");
+            return ProductionBuilding::Create("Gold Storage", 1, { 0, 0 },"buildings/goldpool1.png","Gold Storage");
         }
     );
 
@@ -1541,7 +1541,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return ElixirStorage::Create("Elixir Storage", 1, { 0, 0 },"buildings/elixirpool2.png","Elixir Storage");
+            return ProductionBuilding::Create("Elixir Storage", 1, { 0, 0 },"buildings/elixirpool2.png","Elixir Storage");
         }
     );
 
@@ -1553,7 +1553,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return Barracks::Create("Barrack", 1, { 0, 0 });
+            return TrainingBuilding::Create("Barrack", 1, { 0, 0 }, "buildings/barrack.png", 50, 2);
         }
     );
 
