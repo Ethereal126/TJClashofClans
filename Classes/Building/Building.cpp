@@ -492,12 +492,16 @@ TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
     auto building = new (std::nothrow) TrainingBuilding(name, base, position, texture, capacity, speed);
 
     if (building) {
-        if (building->Init()) {
-            // 标记为自动释放
+        // 设置资源类型（如果构造函数没有设置的话）
+        // 注意：这里假设SourceBuilding类有一个SetResourceType方法
+        // 如果没有，可以在构造函数中直接设置
+        if (building->initWithFile(texture)) {
+            // 标记为自动释放（Cocos2d-x的内存管理机制）
             building->autorelease();
 
-            cocos2d::log("创建训练营: %s (容量: %d人口, 速度: %d, 位置: %.1f,%.1f)",
-                name.c_str(), capacity, speed, position.x, position.y);
+            cocos2d::log("创建训练营: %s (位置: %f,%f)",
+                name.c_str(),
+                position.x, position.y);
             return building;
         }
 
