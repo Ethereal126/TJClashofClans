@@ -18,7 +18,8 @@ Building::Building(std::string name, int level, int health, int defense,
     build_time_(buildtime), build_cost_(build_cost), width_(width), length_(length),
     is_upgrading_(false), upgrade_remaining_time_(0.0f),
     position_(position) {
-    this->setPosition(position_);
+    //napper:按照默认初始化为（0，0）这一指令不合适，且未做任何地图位置与屏幕位置之间的转换
+    //this->setPosition(position_);
 }
 
 /**

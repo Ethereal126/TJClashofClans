@@ -127,8 +127,14 @@ public:
     bool confirmPlacement();
 
     //napper:辅助测试使用
-    void PushBuilding(Building* b){_buildings.push_back(b);}
+    void PushBuilding(Building* b){
+        _buildings.push_back(b);
+        updateBuildingGrids(b, floor(b->GetPosition().x), floor(b->GetPosition().y), true);
+    }
 
+
+    //napper:用于炸弹人的范围溅射时获取周围八格的处理，可能可以被复用或改善以用于放置禁区的处理
+    std::vector<cocos2d::Vec2> GetSurroundings(const cocos2d::Vec2& pos) const;
 protected:
     MapManager();
     virtual ~MapManager();

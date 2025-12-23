@@ -5,7 +5,7 @@
 
 CombatManager* CombatManager::instance_ = nullptr;
 // Combat类的实现
-CombatManager* CombatManager::Create(MapManager* map) {
+CombatManager* CombatManager::InitializeInstance(MapManager* map) {
     // 若已创建，直接返回现有实例（避免重复初始化）
     if (instance_) {
         CCLOG("Combat instance already created! Return existing one.");
@@ -31,7 +31,7 @@ CombatManager* CombatManager::Create(MapManager* map) {
 
 CombatManager* CombatManager::GetInstance() {
     if (!instance_) {
-        CCLOG("Combat instance not created yet! Call Create first.");
+        CCLOG("Combat instance not created yet! Call InitializeInstance first.");
         return nullptr;
     }
     return instance_;
@@ -61,15 +61,16 @@ bool CombatManager::Init(MapManager* map){
     }
     for(auto building:map_->getAllBuildings()){
         if(typeid(*building)==typeid(AttackBuilding)){
-            CCLOG("attack building");
             auto attack_b = AttackBuildingInCombat::Create(building,map_);
             attack_b->StartAttack();
             live_buildings_.push_back(attack_b);
         }
         else {
-            CCLOG("common building");
             auto b = BuildingInCombat::Create(building, map_);
             live_buildings_.push_back(b);
+        }
+        if(BuildingInCombat::IsBuildingShouldCount(building)){
+            buildings_should_count++;
         }
         num_of_live_buildings++;
     }
@@ -121,6 +122,13 @@ void CombatManager::EndCombat() {
     state_ = CombatState::kEnded;
     this->unscheduleUpdate(); // 停止帧检测
 
+    if(destroy_degree_>=50){
+        stars++;
+    }
+    if(destroy_degree_==100){
+        stars++;
+    }
+
     for(auto it:live_soldiers){
         it->stopAllActions();
         it->removeFromParent();
@@ -130,7 +138,8 @@ void CombatManager::EndCombat() {
         it->removeFromParent();
     }
     this->removeFromParent();
-    CCLOG("EndCombat() finished");
+    UIManager::getInstance()->endBattle(stars,destroy_degree_);
+    CCLOG("CombatManager EndCombat() finished");
 }
 
 // 每帧更新：核心检测逻辑（Cocos 帧循环驱动）
@@ -143,7 +152,6 @@ void CombatManager::Update(float dt) {
     combat_time_ += dt;
     if (combat_time_ >= kMaxCombatTime) {
         EndCombat();
-        winner_ = WinnerState::kDefence;
         return;
     }
 
@@ -178,17 +186,9 @@ bool CombatManager::IsCombatEnd() {
             break;
         }
     }
-    if(all_soldiers_die) {
-        winner_ = WinnerState::kDefence;
+    if(all_soldiers_die || destroy_degree_==100) {
         return true;
     }
-
-    bool all_buildings_die = (num_of_live_buildings == 0);
-    if(all_buildings_die) {
-        winner_ = WinnerState::kOffence;
-        return true;
-    }
-
     return false;
 }
 

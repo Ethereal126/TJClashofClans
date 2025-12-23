@@ -175,6 +175,7 @@ bool MapManager::isRangeAvailable(int gridX, int gridY, int width, int length) c
         for (int y = gridY; y < gridY + length; ++y) {
             const GridState st = _gridStates[x][y];
             if (st == GridState::HasBuilding || st == GridState::Obstacle) {
+                CCLOG("(%d,%d) in path not available because of state %d",x,y,int(st));
                 return false;
             }
         }
@@ -844,4 +845,25 @@ bool MapManager::saveMapData(const std::string& filePath) const {
 
     return cocos2d::FileUtils::getInstance()->writeStringToFile(buffer.GetString(), filePath);
 
+}
+
+std::vector<cocos2d::Vec2> MapManager::GetSurroundings(const cocos2d::Vec2& pos) const{
+    std::vector<cocos2d::Vec2> v;
+    static std::array<cocos2d::Vec2,8> dir = {
+            cocos2d::Vec2(-1,1),
+            cocos2d::Vec2(0,1),
+            cocos2d::Vec2(1,1),
+            cocos2d::Vec2(-1,0),
+            cocos2d::Vec2(1,0),
+            cocos2d::Vec2(-1,-1),
+            cocos2d::Vec2(0,-1),
+            cocos2d::Vec2(1,-1)
+    };
+    for(auto it:dir){
+        auto target_pos = pos+it;
+        if(isValidGrid(target_pos)){
+            v.push_back(target_pos);
+        }
+    }
+    return v;
 }

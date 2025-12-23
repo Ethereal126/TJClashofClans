@@ -50,18 +50,21 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
 
     this->position_ = building_template->GetPosition();
     this->setPosition(map->vecToWorld(position_));
-    this->setScale(0.5f);  // 调整大小（根据实际资源修改）
+    this->setScale(0.2f);  // 调整大小（根据实际资源修改）
 
     CCLOG("Building init success");
     return true;
 }
 
-void BuildingInCombat::TakeDamage(int damage) {
+//返回值说明建筑收到伤害后是否仍然存活
+bool BuildingInCombat::TakeDamage(int damage) {
     current_health_ -= damage;
     if (current_health_ <= 0) {
         current_health_ = 0;
         Die();
+        return false;
     }
+    return true;
 }
 
 AttackBuildingInCombat* AttackBuildingInCombat::Create(const Building* building_template, MapManager* map) {
@@ -140,6 +143,11 @@ void BuildingInCombat::Die() {
 
     auto manager = CombatManager::GetInstance();
     manager->num_of_live_buildings--;
+    if(IsBuildingShouldCount(building_template_)) manager->buildings_should_count_destroyed++;
+    manager->destroy_degree_ = 100*manager->buildings_should_count_destroyed/manager->buildings_should_count;
+    UIManager::getInstance()->updateDestructionPercent(manager->destroy_degree_);
+    if(typeid(*building_template_)==typeid(TownHall)) manager->stars++;
+
     CCLOG("live buildings:%d",manager->num_of_live_buildings);
     if(manager->IsCombatEnd()){
         CCLOG("call EndCombat() from building");
@@ -160,4 +168,9 @@ void BuildingInCombat::Die() {
     }
 
     this->removeFromParent();
+    CCLOG("building finish Die()");
+}
+
+bool BuildingInCombat::IsBuildingShouldCount(const Building* b) {
+    return typeid(*b)!=typeid(WallBuilding);
 }

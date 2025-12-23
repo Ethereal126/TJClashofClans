@@ -211,6 +211,9 @@ public:
      * @return 升级剩余时间（秒）
      */
     float GetUpgradeRemainingTime() const { return upgrade_remaining_time_; }
+
+    //napper:提供方法以从外部修改建筑的地图位置
+    void SetMapPosition(const cocos2d::Vec2 pos){position_ = pos;};
 };
 
 /**

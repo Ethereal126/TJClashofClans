@@ -8,6 +8,8 @@
 #include "cocos2d.h"
 #include "Building/Building.h"
 #include "MapManager/MapManager.h"
+#include "UIManager/UIManager.h"
+#include "TownHall/TownHall.h"
 #include "Combat.h"
 
 class BuildingInCombat : public cocos2d::Sprite{
@@ -24,14 +26,18 @@ public:
     virtual bool Init(const Building* building_template,MapManager* map);
 
     // 被攻击函数
-    virtual void TakeDamage(int damage);
+    virtual bool TakeDamage(int damage);
 
     void Die();
+
+    //判断建筑是否应该包括用于计算破坏度
+    static bool IsBuildingShouldCount(const Building* b);
 
     int GetCurrentHealth() const{return current_health_;};
 private:
     int current_health_;
     MapManager* map_;
+
 };
 
 class AttackBuildingInCombat : public BuildingInCombat{
