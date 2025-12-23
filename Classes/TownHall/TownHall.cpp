@@ -221,6 +221,20 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
             cocos2d::log("缺少level字段，使用默认值1");
             level = 1;
         }
+        
+        // 也尝试读取town_hall_level字段（向后兼容）
+        if (player_stats.HasMember("town_hall_level") && player_stats["town_hall_level"].IsInt()) {
+            level = player_stats["town_hall_level"].GetInt();
+            // 验证等级数值范围
+            if (level <= 0) {
+                cocos2d::log("警告: 大本营等级小于等于0，已修正为1");
+                level = 1;
+            } else if (level > 10) {
+                cocos2d::log("警告: 大本营等级超过最大值10，已修正为10");
+                level = 10;
+            }
+            cocos2d::log("从town_hall_level字段读取大本营等级: %d", level);
+        }
 
         cocos2d::log("成功解析JSON数据: 金币=%d, 圣水=%d, 等级=%d", gold, elixir, level);
         return true;
@@ -237,7 +251,7 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
 
 
 
-bool SavePlayerDataToJSON(const std::string& file_path,
+bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
                                    int gold, int elixir, int level) {
     // 参数验证
     if (file_path.empty()) {
@@ -321,23 +335,35 @@ bool SavePlayerDataToJSON(const std::string& file_path,
         player_stats.SetObject();
     }
     
+    // 检查是否存在player_stats对象
+    if (!doc.HasMember("player_stats")) {
+        // 如果不存在，创建player_stats对象
+        rapidjson::Value playerStats(rapidjson::kObjectType);
+        doc.AddMember("player_stats", playerStats, doc.GetAllocator());
+    }
+    
+    // 确保player_stats是对象类型
+    if (!doc["player_stats"].IsObject()) {
+        doc["player_stats"].SetObject();
+    }
+    
     // 更新数据
-    if (player_stats.HasMember("gold")) {
-        player_stats["gold"].SetInt(gold);
+    if (doc["player_stats"].HasMember("gold")) {
+        doc["player_stats"]["gold"].SetInt(gold);
     } else {
-        player_stats.AddMember("gold", gold, allocator);
+        doc["player_stats"].AddMember("gold", gold, allocator);
     }
     
-    if (player_stats.HasMember("elixir")) {
-        player_stats["elixir"].SetInt(elixir);
+    if (doc["player_stats"].HasMember("elixir")) {
+        doc["player_stats"]["elixir"].SetInt(elixir);
     } else {
-        player_stats.AddMember("elixir", elixir, allocator);
+        doc["player_stats"].AddMember("elixir", elixir, allocator);
     }
     
-    if (player_stats.HasMember("level")) {
-        player_stats["level"].SetInt(level);
+    if (doc["player_stats"].HasMember("town_hall_level")) {
+        doc["player_stats"]["town_hall_level"].SetInt(level);
     } else {
-        player_stats.AddMember("level", level, allocator);
+        doc["player_stats"].AddMember("town_hall_level", level, allocator);
     }
     
     // 将JSON转换为字符串
@@ -360,7 +386,7 @@ bool SavePlayerDataToJSON(const std::string& file_path,
     return true;
 }
 
-bool UpdatePlayerDataField(const std::string& file_path,
+bool TownHall::UpdatePlayerDataField(const std::string& file_path,
                                      const std::string& field_name, int value) {
     // 参数验证
     if (file_path.empty()) {
@@ -368,7 +394,7 @@ bool UpdatePlayerDataField(const std::string& file_path,
         return false;
     }
     
-    if (field_name != "gold" && field_name != "elixir" && field_name != "level") {
+    if (field_name != "gold" && field_name != "elixir" && field_name != "town_hall_level") {
         cocos2d::log("错误: 不支持的字段名: %s", field_name.c_str());
         return false;
     }
@@ -449,13 +475,25 @@ bool UpdatePlayerDataField(const std::string& file_path,
         player_stats.SetObject();
     }
     
-    // 更新指定字段
+    // 检查是否存在player_stats对象
+    if (!doc.HasMember("player_stats")) {
+        // 如果不存在，创建player_stats对象
+        rapidjson::Value playerStats(rapidjson::kObjectType);
+        doc.AddMember("player_stats", playerStats, doc.GetAllocator());
+    }
+    
+    // 确保player_stats是对象类型
+    if (!doc["player_stats"].IsObject()) {
+        doc["player_stats"].SetObject();
+    }
+    
+    // 更新player_stats对象内的指定字段
     rapidjson::Value fieldName(field_name.c_str(), allocator);
     
-    if (player_stats.HasMember(fieldName)) {
-        player_stats[fieldName].SetInt(value);
+    if (doc["player_stats"].HasMember(fieldName)) {
+        doc["player_stats"][fieldName].SetInt(value);
     } else {
-        player_stats.AddMember(fieldName, value, allocator);
+        doc["player_stats"].AddMember(fieldName, value, allocator);
     }
     
     // 将JSON转换为字符串

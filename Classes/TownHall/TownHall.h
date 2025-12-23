@@ -29,28 +29,6 @@
         int& gold, int& elixir, int& level);
 
 /**
- * @brief 将玩家数据写入JSON文件
- * @param file_path JSON文件路径
- * @param gold 要写入的金币数量
- * @param elixir 要写入的圣水数量
- * @param level 要写入的大本营等级
- * @return 写入成功返回true，失败返回false
- */
-    static bool SavePlayerDataToJSON(const std::string& file_path,
-        int gold, int elixir, int level);
-
-/**
- * @brief 更新JSON文件中的特定字段
- * @param file_path JSON文件路径
- * @param field_name 要更新的字段名（"gold"、"elixir"或"town_hall_level"）
- * @param value 要写入的新值
- * @return 更新成功返回true，失败返回false
- */
-    static bool UpdatePlayerDataField(const std::string& file_path,
-        const std::string& field_name, int value);
-
-
-/**
  * @brief TownHall类
  * 表示玩家村庄中的“大本营”建筑，是整个村庄的核心。
  * 继承自 Building 基类，额外维护资源建筑容量和兵营容量等信息。
@@ -112,6 +90,28 @@ protected:
     int GetTotalArmyCapacityFromBarracks() const;
 
 public:
+
+    /**
+     * @brief 将玩家数据写入JSON文件
+    * @param file_path JSON文件路径
+    * @param gold 要写入的金币数量
+     * @param elixir 要写入的圣水数量
+     * @param level 要写入的大本营等级
+     * @return 写入成功返回true，失败返回false
+     */
+    static bool SavePlayerDataToJSON(const std::string& file_path,
+        int gold, int elixir, int level);
+
+    /**
+     * @brief 更新JSON文件中的特定字段
+     * @param file_path JSON文件路径
+     * @param field_name 要更新的字段名（"gold"、"elixir"或"town_hall_level"）
+     * @param value 要写入的新值
+     * @return 更新成功返回true，失败返回false
+     */
+    static bool UpdatePlayerDataField(const std::string& file_path,
+        const std::string& field_name, int value);
+
     /**
      * @brief 获取大本营单例实例
      * @return 返回TownHall单例指针，如果未初始化则返回nullptr
@@ -160,6 +160,7 @@ public:
      * 并根据等级更新大本营的贴图与 UI 显示效果。
      */
     virtual void Upgrade() override;
+
 
     // ==================== 资源操作接口 ====================
 
