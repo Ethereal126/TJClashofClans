@@ -157,6 +157,10 @@ bool AppDelegate::applicationDidFinishLaunching() {
     manager->StartCombat();
     manager->SendSoldier(bomber,cocos2d::Vec2(1,2));
     manager->SendSoldier(giant,cocos2d::Vec2(20,20));
+    manager->SendSoldier(giant,cocos2d::Vec2(0,30));
+    manager->SendSoldier(archer,cocos2d::Vec2(1,2));
+    manager->SendSoldier(barbarian,cocos2d::Vec2(12,12));
+
 
     return true;
 }

@@ -791,7 +791,7 @@ void UIManager::playMapSelectAnimation(int mapIndex, const std::function<void()>
 }
 
 // ==================== 建筑操作面板 ====================
-void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory category, Building* building) {
+void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory category, Building* building, Node* parent) {
     _selectedBuilding = building;
 
     // 先隐藏之前的BuildingOptions
@@ -800,7 +800,17 @@ void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory categ
     auto panel = createBuildingOptions(position, category);
     if (panel) {
         _panels[UIPanelType::BuildingOptions] = panel;
-        addPanelToScene(panel, UILayer::HUD, false);
+        if (parent) {
+            // 如果提供了父节点（通常是 MapManager 的 _worldNode），则添加到该节点
+            // 此时 position 应该是相对于该父节点的本地坐标
+            parent->addChild(panel, 1000);
+            
+            // 在父节点空间中，不需要根据屏幕边缘限制位置，直接居中于建筑下方即可
+            panel->setPosition(position.x - panel->getContentSize().width / 2, 
+                             position.y - panel->getContentSize().height - 20 * _scaleFactor);
+        } else {
+            addPanelToScene(panel, UILayer::HUD, false);
+        }
         playShowAnimation(panel);
     }
 }
@@ -1171,7 +1181,9 @@ Node* UIManager::createBuildingUpgrade(Building* building) {
             updateResourceDisplay(ResourceType::Elixir, townHall->GetElixir());
             _selectedBuilding->StartUpgrade(upgradeTime);
 
-            showUpgradeProgress(_selectedBuilding, (float)upgradeTime, (float)upgradeTime);
+            // 获取地图容器，使进度条跟随地图移动
+            auto worldNode = _selectedBuilding->getParent();
+            showUpgradeProgress(_selectedBuilding, (float)upgradeTime, (float)upgradeTime, worldNode);
             showToast("Upgrade started!");
             triggerUIEvent("OnUpgradeStarted");
             });
@@ -2055,7 +2067,7 @@ Node* UIManager::createUpgradeProgressOverlay(Building* building, float totalTim
     return overlay;
 }
 
-void UIManager::showUpgradeProgress(Building* building, float totalTime, float remainingTime) {
+void UIManager::showUpgradeProgress(Building* building, float totalTime, float remainingTime, Node* parent) {
     if (!building || !_rootScene) return;
 
     // 移除已存在的进度条（防止重复）
@@ -2064,12 +2076,18 @@ void UIManager::showUpgradeProgress(Building* building, float totalTime, float r
     auto overlay = createUpgradeProgressOverlay(building, totalTime, remainingTime);
     if (!overlay) return;
 
-    // 放置在建筑上方
-    Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
-    overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
-        buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
-
-    _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
+    if (parent) {
+        // 放置在建筑上方（使用本地坐标）
+        overlay->setPosition(Vec2(building->getPositionX() - overlay->getContentSize().width / 2,
+            building->getPositionY() + building->getContentSize().height / 2 + 10 * _scaleFactor));
+        parent->addChild(overlay, static_cast<int>(UILayer::HUD));
+    } else {
+        // 放置在建筑上方（使用世界坐标）
+        Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
+        overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
+            buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
+        _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
+    }
     _upgradeProgressNodes[building] = overlay;
 
     // 存储 totalTime（用于计算进度），removeUpgradeProgress 会 delete

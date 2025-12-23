@@ -39,9 +39,9 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     }
 
     map_ = map;
-    // 只有在map_不为nullptr时才调用addChild
+    // 只有在map_不为nullptr时才调用addToWorld
     if (map_ != nullptr) {
-        map_->addChild(this,0);
+        map_->addToWorld(this, 0);
     }
     else{
         CCLOG("BuildingInCombat init failed: get map failure!");
@@ -50,7 +50,9 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
 
     this->position_ = building_template->GetPosition();
     this->setPosition(map->vecToWorld(position_));
-    this->setScale(0.2f);  // 调整大小（根据实际资源修改）
+
+    // 根据地图缩放系数调整建筑大小
+    this->setScale(0.5f * map->getGridScaleFactor()); 
 
     CCLOG("Building init success");
     return true;

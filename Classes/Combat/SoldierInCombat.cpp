@@ -57,8 +57,9 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
         return false;
     }
     this->setPosition(map_->vecToWorld(spawn_pos));
-    map_->addChild(this);
-    this->setScale(0.5f);  // 调整大小（根据实际资源修改）
+    map_->addToWorld(this);
+    // 根据地图缩放系数调整士兵大小，保持视觉比例
+    this->setScale(0.5f * map_->getGridScaleFactor()); 
 
     this->DoAllMyActions();
 
@@ -457,7 +458,7 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
         if(!map_->IsGridAvailable(*ptr)){
             CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
             auto new_target = *ptr;
-            while(ptr->distance(new_target)<=this->soldier_template_->GetAttackRange()){
+            while(ptr->distance(new_target) <= this->soldier_template_->GetAttackRange()){
                 --ptr;
             }//ptr指向超出攻击范围的第一个点
             ++ptr;//ptr指向目标到达的新的点

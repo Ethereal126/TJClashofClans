@@ -108,7 +108,8 @@ public:
     // position: 建筑在屏幕上的位置（浮窗显示在建筑下方）
     // category: 建筑类别（决定显示哪些按钮）
     // building: 当前选中的建筑指针（用于后续操作）
-    void showBuildingOptions(const cocos2d::Vec2& position, BuildingCategory category, Building* building);
+    // parent: 可选的父节点。如果提供，浮窗将添加到该节点而不是HUD层，实现随地图移动
+    void showBuildingOptions(const cocos2d::Vec2& position, BuildingCategory category, Building* building, cocos2d::Node* parent = nullptr);
 
     // 显示建筑信息面板
     void showBuildingInfo(Building* building);
@@ -124,7 +125,8 @@ public:
     // building: 正在升级的建筑
     // totalTime: 升级总时间（秒）
     // remainingTime: 剩余时间（秒）
-    void showUpgradeProgress(Building* building, float totalTime, float remainingTime);
+    // parent: 可选的父节点（如 MapManager 的 _worldNode），用于跟随地图移动
+    void showUpgradeProgress(Building* building, float totalTime, float remainingTime, cocos2d::Node* parent = nullptr);
 
     // 更新升级进度
     void updateUpgradeProgress(Building* building, float remainingTime);
