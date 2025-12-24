@@ -1660,7 +1660,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 7, 5, 20);
+            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 1, 10, 10);
         }
     );
 
@@ -1672,7 +1672,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Cannon", 1, { 0, 0 }, "buildings/cannon1.png", 7, 10, 50);
+            return AttackBuilding::Create("Cannon", 1, { 0, 0 }, "buildings/cannon1.png", 0.8, 7, 9);
         }
     );
 

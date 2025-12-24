@@ -26,6 +26,7 @@ SoldierInCombat::~SoldierInCombat() {
 }
 
 // -------------------------- 初始化实现 --------------------------
+
 bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
     // 1. 调用父类Sprite::init()确保渲染节点初始化
     if (!cocos2d::Sprite::init()) {
@@ -47,6 +48,9 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     if (!is_animation_loaded_[static_cast<int>(this->soldier_template_->GetSoldierType())]) {
         LoadSoldierAnimations();
     }
+    auto soldierAnim = cocos2d::AnimationCache::getInstance()->getAnimation(this->soldier_template_->GetName()+"walkdown");
+    auto firstFrame = soldierAnim->getFrames().at(0)->getSpriteFrame();
+    this->setSpriteFrame(firstFrame);
 
     // 4. 设置初始状态
     map_ = map;
@@ -62,17 +66,43 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     map_->addToWorld(this);
     map_->updateYOrder(this);
 
+    auto soldierSize = this->getContentSize();
+    CCLOG("%s size : %f",soldier_template->GetName().c_str(),soldierSize.height);
+    auto hpY = static_cast<float>(soldierSize.height * 1.4);
+    float hp_width = 20.0f,hp_height = hp_width / 10;
+    // 加载血条背景（九宫格）
+    _hpBg = cocos2d::ui::Scale9Sprite::create("UI/slider_bg.png");
+    _hpBg->setContentSize(cocos2d::Size(hp_width, hp_height));
+    _hpBg->setPosition(cocos2d::Vec2(hp_width / 2, hpY)); // 显示在士兵头顶
+    _hpBg->setVisible(false);
+    this->addChild(_hpBg, 10); // 层级高于士兵
+
+    // 加载血条进度条
+    _hpBar = cocos2d::ui::Scale9Sprite::create("UI/slider_progress.png");
+    _hpBar->setContentSize(cocos2d::Size(hp_width,hp_height));
+    _hpBar->setAnchorPoint(cocos2d::Vec2(0, 0.5));
+    _hpBar->setPosition(cocos2d::Vec2(0, hpY));
+    _hpBar->setVisible(false);
+    this->addChild(_hpBar, 11);
+
     this->DoAllMyActions();
 
     return true;
 }
 
 void SoldierInCombat::TakeDamage(int damage) {
+    if(current_health_==soldier_template_->GetHealth()){
+        _hpBg->setVisible(true);
+        _hpBar->setVisible(true);
+    }
     current_health_ -= damage;
     if (current_health_ < 0){
         current_health_ = 0;
         Die();
     }
+    float hpPercent = static_cast<float>(current_health_) / static_cast<float>(soldier_template_->GetHealth());
+    // 可选：添加血条平滑动画，更自然
+    _hpBar->runAction(cocos2d::ScaleTo::create(0.2f, hpPercent, 1.0f));
 }
 
 
@@ -472,7 +502,7 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
     LogPath(path);
     for(auto ptr = path.begin();ptr != path.end();ptr++){
         if(!map_->IsGridAvailable(*ptr)){
-            CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
+            //CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
             auto new_target = *ptr;
             while(ptr != path.begin() && ptr->distance(new_target) <= this->soldier_template_->GetAttackRange()){
                 --ptr;

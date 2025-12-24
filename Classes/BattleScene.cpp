@@ -34,21 +34,6 @@ BattleScene* BattleScene::createScene(int levelId) {
             auto homeScene = MainScene::createScene();
             Director::getInstance()->replaceScene(TransitionFade::create(0.5f, homeScene));
         });
-
-        //test soldier behavior
-//        auto giant = TownHall::GetSoldierTemplate(SoldierType::kGiant)->Create();
-//        auto bomber = TownHall::GetSoldierTemplate(SoldierType::kBomber)->Create();
-//        auto archer = TownHall::GetSoldierTemplate(SoldierType::kArcher)->Create();
-//        auto barbarian = TownHall::GetSoldierTemplate(SoldierType::kBarbarian)->Create();
-//
-//        combatMgr->addChild(giant);
-//        combatMgr->addChild(bomber);
-//        combatMgr->addChild(archer);
-//        combatMgr->addChild(barbarian);
-//
-//        combatMgr->SendSoldier(bomber,cocos2d::Vec2(20,5));
-//        combatMgr->SendSoldier(giant,cocos2d::Vec2(25,25));
-//        combatMgr->SendSoldier(barbarian,cocos2d::Vec2(18,18));
     }
     
     return scene;

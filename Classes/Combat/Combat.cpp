@@ -174,14 +174,14 @@ void CombatManager::SendSoldier(const Soldier* soldier_template, cocos2d::Vec2 s
 }
 
 bool CombatManager::IsCombatEnd() {
-    bool all_soldiers_die = (num_of_live_soldiers_ == 0);
-    for(auto it:soldier_to_use_){
-        if(it.second!=0){
-            all_soldiers_die = false;
-            break;
-        }
-    }
-    if(all_soldiers_die || destroy_degree_==100) {
+//    bool all_soldiers_die = (num_of_live_soldiers_ == 0);
+//    for(auto it:soldier_to_use_){
+//        if(it.second!=0){
+//            all_soldiers_die = false;
+//            break;
+//        }
+//    }
+    if(/*all_soldiers_die ||*/ destroy_degree_==100) {
         return true;
     }
     return false;
