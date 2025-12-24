@@ -186,4 +186,3 @@ bool CombatManager::IsCombatEnd() {
     }
     return false;
 }
-

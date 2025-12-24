@@ -66,24 +66,8 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     map_->addToWorld(this);
     map_->updateYOrder(this);
 
-    auto soldierSize = this->getContentSize();
-    CCLOG("%s size : %f",soldier_template->GetName().c_str(),soldierSize.height);
-    auto hpY = static_cast<float>(soldierSize.height * 1.4);
-    float hp_width = 20.0f,hp_height = hp_width / 10;
-    // 加载血条背景（九宫格）
-    _hpBg = cocos2d::ui::Scale9Sprite::create("UI/slider_bg.png");
-    _hpBg->setContentSize(cocos2d::Size(hp_width, hp_height));
-    _hpBg->setPosition(cocos2d::Vec2(hp_width / 2, hpY)); // 显示在士兵头顶
-    _hpBg->setVisible(false);
-    this->addChild(_hpBg, 10); // 层级高于士兵
-
-    // 加载血条进度条
-    _hpBar = cocos2d::ui::Scale9Sprite::create("UI/slider_progress.png");
-    _hpBar->setContentSize(cocos2d::Size(hp_width,hp_height));
-    _hpBar->setAnchorPoint(cocos2d::Vec2(0, 0.5));
-    _hpBar->setPosition(cocos2d::Vec2(0, hpY));
-    _hpBar->setVisible(false);
-    this->addChild(_hpBar, 11);
+    auto soldier_size = this->getContentSize();
+    hp_bar_ = HpBarComponents::createHpBar(this, soldier_size.height);
 
     this->DoAllMyActions();
 
@@ -91,18 +75,12 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
 }
 
 void SoldierInCombat::TakeDamage(int damage) {
-    if(current_health_==soldier_template_->GetHealth()){
-        _hpBg->setVisible(true);
-        _hpBar->setVisible(true);
-    }
     current_health_ -= damage;
     if (current_health_ < 0){
         current_health_ = 0;
-        Die();
     }
-    float hpPercent = static_cast<float>(current_health_) / static_cast<float>(soldier_template_->GetHealth());
-    // 可选：添加血条平滑动画，更自然
-    _hpBar->runAction(cocos2d::ScaleTo::create(0.2f, hpPercent, 1.0f));
+    hp_bar_.updateHp(current_health_,soldier_template_->GetHealth());
+    if(current_health_==0) Die();
 }
 
 

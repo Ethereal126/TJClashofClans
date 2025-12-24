@@ -7,5 +7,6 @@
 #include "Combat.h"
 #include "SoldierInCombat.h"
 #include "BuildingInCombat.h"
+#include "HpBarUtils.h"
 
 #endif // COMBAT_ALL_H
