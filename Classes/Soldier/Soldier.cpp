@@ -3,6 +3,7 @@
 //
 
 #include "Soldier.h"
+#include "Building/Building.h"
 #include <string>
 
 // 构造函数实现
@@ -27,14 +28,14 @@ Soldier::Soldier(SoldierType type, int health, int damage, float move_speed, flo
             name_ = "Bomber";
             attack_frame_num = 0;
             walk_frame_num = 6;
-            building_preference_ = "WallBuilding";
+            building_preference_ = typeid(WallBuilding);
             size_=1.5f;
             break;
         case SoldierType::kGiant:
             name_ = "Giant";
             attack_frame_num = 8;
             walk_frame_num = 12;
-            building_preference_ = "AttackBuilding";
+            building_preference_ = typeid(AttackBuilding);
             size_=4.0f;
             break;
         default:

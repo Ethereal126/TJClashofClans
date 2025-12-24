@@ -10,13 +10,13 @@ USING_NS_CC;
 
 static std::vector<SoldierTemplate> soldier_templates = {
     SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldiers/Barbarian/Barbarianwalkright1.png",
-                    50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
+                    50, 12, 0.75f, 1.0f, 1.0f, 1, 25, 20),
     SoldierTemplate(SoldierType::kArcher, "Archer","Soldiers/Archer/Archerattackdown1.png",
-                    25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
+                    25, 10, 1.0f, 3.5f, 1.0f, 1, 50, 25),
     SoldierTemplate(SoldierType::kBomber, "Bomber","Soldiers/Giant/Giantattackdown1.png",
-                    20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
+                    20, 10, 1.0f, 1.0f, 1.0f, 2, 1000, 60),
     SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
-                    500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
+                    500, 30, 0.5f, 1.0f, 2.0f, 5, 500, 120)
 };
 
 // ==================== JSON数据读取函数 ====================
@@ -609,7 +609,7 @@ void TownHall::ResetTownHall() {
 
 
 TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture)
-    : Building(name, 1, base * 100, base * 5, base * 60, base * 200, 4, 4,
+    : Building(name, 1, base * 1000, base * 5, base * 60, base * 200, 4, 4,
         position)
     , is_initialized_(false)
     , gold_storage_capacity_(base * 2)
@@ -720,7 +720,7 @@ void TownHall::Upgrade() {
     UpdateLevelLabel();
 
     // 播放升级特效
-    PlayUpgradeEffect();
+    //PlayUpgradeEffect();
 
     // 更新纹理（假设纹理命名规则为 "buildings/TownHallX.png"）
     std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
@@ -1556,6 +1556,16 @@ void TownHall::ShowInfo() const {
 std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
     std::vector<TownHall::BuildingTemplate> templates;
 
+    templates.emplace_back(
+            "TownHall",
+            "buildings/TownHall1.png",
+            200,  // 成本
+            4,    // 宽度
+            4,    // 长度
+            []() -> Building* {
+                return TownHall::Create("TownHall", 1, { 0, 0 }, "buildings/TownHall1.png");
+            }
+    );
     // 金矿
     templates.emplace_back(
         "Gold Mine",

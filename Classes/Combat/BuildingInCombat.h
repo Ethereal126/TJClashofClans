@@ -42,11 +42,11 @@ private:
 
 class AttackBuildingInCombat : public BuildingInCombat{
 public:
+    SoldierInCombat* current_target_;
     static AttackBuildingInCombat* Create(const Building* building_template, MapManager* map);
     bool Init(const Building* building_template,MapManager* map) override;
     void StartAttack();
 private:
-    SoldierInCombat* current_target_;
     int attack_damage_;
     float attack_range_,attack_interval_;
 

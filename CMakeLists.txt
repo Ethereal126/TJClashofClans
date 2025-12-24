@@ -101,6 +101,7 @@ list(APPEND GAME_SOURCE
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
    Classes/MapManager/MapManager.h
+   Classes/Soldier/Soldier.h
    Classes/Building/Building.h
    Classes/UIManager/UIManager.h
    Classes/AudioManager/AudioManager.h
@@ -108,7 +109,6 @@ list(APPEND GAME_HEADER
    Classes/MainScene.h
   # Classes/CombatManager/CombatTest.h
    Classes/Combat/CombatAll.h
-   Classes/Soldier/Soldier.h
    Classes/BattleScene.h
    Classes/TownHall/TownHall.h
    Classes/ResourceStorage/ResourceStorage.h

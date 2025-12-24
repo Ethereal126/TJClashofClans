@@ -98,16 +98,16 @@ bool AttackBuildingInCombat::Init(const Building *building_template, MapManager 
 }
 
 void AttackBuildingInCombat::DealDamageToTarget() {
-    if (current_target_ && current_target_->is_alive_) {
+    if(current_target_) {
         current_target_->TakeDamage(attack_damage_);  // 调用建筑的受伤害方法
+        CCLOG("current soldier health:%d", current_target_->GetCurrentHealth());
     }
-    CCLOG("current soldier health:%d",current_target_->GetCurrentHealth());
 }
 
 void AttackBuildingInCombat::StartAttack() {
     auto single_attack = cocos2d::CallFunc::create([this]() {
         this->ChooseTarget();
-        if(current_target_) this->DealDamageToTarget();
+        this->DealDamageToTarget();
     });
     // 单轮检测：延迟0.1秒 → 执行检测
     auto single_check_loop = cocos2d::Sequence::create(
@@ -120,8 +120,8 @@ void AttackBuildingInCombat::StartAttack() {
 }
 
 void AttackBuildingInCombat::ChooseTarget(){
-    if(current_target_!= nullptr && current_target_->is_alive_) return;
-    auto soldiers = CombatManager::GetInstance()->live_soldiers;
+    if(current_target_) return;
+    auto soldiers = CombatManager::GetInstance()->live_soldiers_;
     if(soldiers.empty()) {
         CCLOG("no target for building");
         current_target_ = nullptr;
@@ -145,14 +145,18 @@ void BuildingInCombat::Die() {
         s->current_target_ = nullptr;
     }
 
+    //更新星级与破坏度
     auto manager = CombatManager::GetInstance();
-    manager->num_of_live_buildings--;
-    if(IsBuildingShouldCount(building_template_)) manager->buildings_should_count_destroyed++;
-    manager->destroy_degree_ = 100*manager->buildings_should_count_destroyed/manager->buildings_should_count;
-    UIManager::getInstance()->updateDestructionPercent(1,manager->destroy_degree_);   // 这里接口参数是星级和摧毁率，我这边先补一个1上去
-    if(typeid(*building_template_)==typeid(TownHall)) manager->stars++;
+    manager->num_of_live_buildings_--;
+    if(IsBuildingShouldCount(building_template_)) manager->buildings_should_count_destroyed_++;
+    auto former = manager->destroy_degree_;
+    manager->destroy_degree_ = 100 * manager->buildings_should_count_destroyed_ / manager->buildings_should_count_;
+    if(former<50 && manager->destroy_degree_>=50) manager->stars_++;
+    if(former<100 && manager->destroy_degree_==100) manager->stars_++;
+    if(typeid(*building_template_)==typeid(TownHall)) manager->stars_++;
+    UIManager::getInstance()->updateDestructionPercent(manager->stars_, manager->destroy_degree_);   // 这里接口参数是星级和摧毁率，我这边先补一个1上去
 
-    CCLOG("live buildings:%d",manager->num_of_live_buildings);
+    CCLOG("live buildings:%d",manager->num_of_live_buildings_);
     if(manager->IsCombatEnd()){
         CCLOG("call EndCombat() from building");
         manager->EndCombat();
@@ -161,18 +165,16 @@ void BuildingInCombat::Die() {
 
     auto it = find(manager->live_buildings_.begin(),manager->live_buildings_.end(),this);
     if(it!=manager->live_buildings_.end()){
-        CCLOG("dead building found,erase it");
         manager->live_buildings_.erase(it);
     }
     else{
-        CCLOG("dead building unfound");
+        CCLOG("dead building not found");
     }
     for(auto s:subscribers){
         s->DoAllMyActions();
     }
 
     this->removeFromParent();
-    CCLOG("building finish Die()");
 }
 
 bool BuildingInCombat::IsBuildingShouldCount(const Building* b) {

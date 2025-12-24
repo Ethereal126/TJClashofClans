@@ -71,9 +71,9 @@ bool CombatManager::Init(MapManager* map){
             live_buildings_.push_back(b);
         }
         if(BuildingInCombat::IsBuildingShouldCount(building)){
-            buildings_should_count++;
+            buildings_should_count_++;
         }
-        num_of_live_buildings++;
+        num_of_live_buildings_++;
     }
     destroy_degree_ = 0;
     state_ = CombatState::kReady;
@@ -123,14 +123,7 @@ void CombatManager::EndCombat() {
     state_ = CombatState::kEnded;
     this->unscheduleUpdate(); // 停止帧检测
 
-    if(destroy_degree_>=50){
-        stars++;
-    }
-    if(destroy_degree_==100){
-        stars++;
-    }
-
-    for(auto it:live_soldiers){
+    for(auto it:live_soldiers_){
         it->stopAllActions();
         it->removeFromParent();
     }
@@ -139,7 +132,7 @@ void CombatManager::EndCombat() {
         it->removeFromParent();
     }
     this->removeFromParent();
-    UIManager::getInstance()->endBattle(stars,destroy_degree_);
+    UIManager::getInstance()->endBattle(stars_, destroy_degree_);
     DestroyInstance();
     CCLOG("CombatManager EndCombat() finished");
 }
@@ -176,7 +169,7 @@ void CombatManager::SendSoldier(const Soldier* soldier_template, cocos2d::Vec2 s
         return;
     }
 
-    live_soldiers.push_back(soldier);
+    live_soldiers_.push_back(soldier);
     num_of_live_soldiers_++;
 }
 
