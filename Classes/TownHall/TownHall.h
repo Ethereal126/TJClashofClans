@@ -128,6 +128,11 @@ public:
     static bool InitializeInstance(const std::string& name, int base,
         cocos2d::Vec2 position, const std::string& texture);
 
+    // 创建方法声明
+    static TownHall* Create(const std::string& name, int base, cocos2d::Vec2 position,
+        const std::string& texture);
+
+
     /**
      * @brief 销毁大本营单例
      * 清理单例实例并释放资源
