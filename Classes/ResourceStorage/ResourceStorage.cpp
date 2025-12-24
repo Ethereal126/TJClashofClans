@@ -24,7 +24,7 @@ ResourceStorage::~ResourceStorage() {
 
 ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec2 position,
     const std::string& texture, const std::string& resourceType)
-    : Building(name, 1, base * 8, base, 0, base * 10, 3, 3, position)
+    : Building(name, 1, base * 8, base, 1, base * 10, 3, 3, position)
     , resourceType_(resourceType)
     , capacity_(base * 100)
     , currentAmount_(0)
@@ -33,7 +33,8 @@ ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec
     , uiLabel_(nullptr)
     , progressBar_(nullptr)
     , storageEffect_(nullptr)
-    , particleEffect_(nullptr){ }
+    , particleEffect_(nullptr) {
+}
 
 ResourceStorage* ResourceStorage::Create(const std::string& name, int base, cocos2d::Vec2 position,
     const std::string& texture, const std::string& resourceType) {
@@ -277,12 +278,12 @@ ProductionBuilding::ProductionBuilding(const std::string& name, int base, cocos2
     const std::string& texture, const std::string& resourceType)
     : ResourceStorage(name, base, position, texture, resourceType)
     , productionRate_(base * 10)
-    {
+{
 }
 
-ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base, 
+ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base,
     cocos2d::Vec2 position,
-    const std::string& texture, 
+    const std::string& texture,
     const std::string& resourceType) {
     auto building = new (std::nothrow) ProductionBuilding(name, base, position, texture, resourceType);
 
@@ -297,9 +298,6 @@ ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base
             // 设置一些默认属性
             if (resourceType == "Gold Storage") {
                 building->setColor(cocos2d::Color3B::YELLOW);
-            }
-            else if (resourceType == "Elixir Storage") {
-                building->setColor(cocos2d::Color3B(200, 100, 255)); // 紫色
             }
 
             cocos2d::log("创建资源建筑: %s (类型: %s, 位置: %f,%f)",

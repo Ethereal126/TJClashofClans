@@ -8,15 +8,14 @@
 #include <sstream>
 USING_NS_CC;
 
-// ==================== 兵种模板定义 ====================
 static std::vector<SoldierTemplate> soldier_templates = {
-    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","others/Barbarian.png",
+    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldiers/Barbarian/Barbarianwalkright1.png",
                     50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
-    SoldierTemplate(SoldierType::kArcher, "Archer","others/Archer.png",
+    SoldierTemplate(SoldierType::kArcher, "Archer","Soldiers/Archer/Archerattackdown1.png",
                     25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
-    SoldierTemplate(SoldierType::kBomber, "Bomber","others/Giant.png",
+    SoldierTemplate(SoldierType::kBomber, "Bomber","Soldiers/Giant/Giantattackdown1.png",
                     20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
-    SoldierTemplate(SoldierType::kGiant, "Giant","others/Bomber.png",
+    SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
                     500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
 
@@ -31,7 +30,7 @@ static std::vector<SoldierTemplate> soldier_templates = {
  * @return 读取成功返回true，失败返回false
  */
 static bool LoadPlayerDataFromJSON(const std::string& file_path,
-                                   int& gold, int& elixir, int& level) {
+    int& gold, int& elixir, int& level) {
     // 参数验证
     if (file_path.empty()) {
         cocos2d::log("错误: JSON文件路径为空");
@@ -41,47 +40,53 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
     // 使用Cocos2d-x的FileUtils处理资源文件路径
     std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
     cocos2d::log("尝试加载JSON文件: %s -> %s", file_path.c_str(), fullPath.c_str());
-    
+
+    // 读取并显示文件内容（仅用于调试）
+    if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
+        cocos2d::log("JSON文件内容: %s", content.c_str());
+    }
+
     // 使用局部变量存储实际使用的路径
-            std::string actualFilePath = file_path;
-            
-            // 如果主路径找不到文件，尝试备用路径
-            if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
-                cocos2d::log("主路径未找到文件，尝试备用路径...");
-                
-                // 尝试的备用路径列表
-                std::vector<std::string> alternativePaths = {
-                    "Resources/archived/player_save.json",
-                    "Resources/archived/player_save.json",
-                    "../Resources/archived/player_save.json",
-                    "../../Resources/archived/player_save.json"
-                };
-                
-                bool found = false;
-                for (const auto& altPath : alternativePaths) {
-                    std::string altFullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(altPath);
-                    if (cocos2d::FileUtils::getInstance()->isFileExist(altFullPath)) {
-                        fullPath = altFullPath;
-                        actualFilePath = altPath;  // 修改局部变量而不是const参数
-                        found = true;
-                        cocos2d::log("使用备用路径找到文件: %s", altFullPath.c_str());
-                        break;
-                    }
-                }
-                
-                if (!found) {
-                    cocos2d::log("错误: 无法找到JSON文件: %s", fullPath.c_str());
-                    cocos2d::log("搜索路径列表:");
-                    const auto& searchPaths = cocos2d::FileUtils::getInstance()->getSearchPaths();
-                    for (const auto& path : searchPaths) {
-                        cocos2d::log("  - %s", path.c_str());
-                    }
-                    return false;
-                }
+    std::string actualFilePath = file_path;
+
+    // 如果主路径找不到文件，尝试备用路径
+    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
+        cocos2d::log("主路径未找到文件，尝试备用路径...");
+
+        // 尝试的备用路径列表
+        std::vector<std::string> alternativePaths = {
+            "Resources/archived/player_save.json",
+            "Resources/archived/player_save.json",
+            "../Resources/archived/player_save.json",
+            "../../Resources/archived/player_save.json"
+        };
+
+        bool found = false;
+        for (const auto& altPath : alternativePaths) {
+            std::string altFullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(altPath);
+            if (cocos2d::FileUtils::getInstance()->isFileExist(altFullPath)) {
+                fullPath = altFullPath;
+                actualFilePath = altPath;  // 修改局部变量而不是const参数
+                found = true;
+                cocos2d::log("使用备用路径找到文件: %s", altFullPath.c_str());
+                break;
             }
-            
-            // 记录实际使用的文件路径
-            cocos2d::log("实际使用的文件路径: %s", actualFilePath.c_str());
+        }
+
+        if (!found) {
+            cocos2d::log("错误: 无法找到JSON文件: %s", fullPath.c_str());
+            cocos2d::log("搜索路径列表:");
+            const auto& searchPaths = cocos2d::FileUtils::getInstance()->getSearchPaths();
+            for (const auto& path : searchPaths) {
+                cocos2d::log("  - %s", path.c_str());
+            }
+            return false;
+        }
+    }
+
+    // 记录实际使用的文件路径
+    cocos2d::log("实际使用的文件路径: %s", actualFilePath.c_str());
 
     // 读取文件内容
     std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
@@ -89,7 +94,7 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
         cocos2d::log("错误: JSON文件为空或读取失败: %s", fullPath.c_str());
         return false;
     }
-    
+
     cocos2d::log("成功读取JSON文件，内容长度: %zu 字节", content.length());
 
     // 解析JSON数据
@@ -101,7 +106,7 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
         // 输出错误位置前后的内容用于调试
         if (error_offset < content.length()) {
             std::string context = content.substr(std::max(0, (int)error_offset - 20),
-                                               std::min(40, (int)content.length() - (int)error_offset));
+                std::min(40, (int)content.length() - (int)error_offset));
             cocos2d::log("错误上下文: ...%s", context.c_str());
         }
         return false;
@@ -136,7 +141,8 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
                     cocos2d::log("警告: 金币数值为负数，已修正为0");
                     gold = 0;
                 }
-            } else if (player_stats["gold"].IsString()) {
+            }
+            else if (player_stats["gold"].IsString()) {
                 // 如果是字符串，尝试转换
                 try {
                     gold = std::stoi(player_stats["gold"].GetString());
@@ -144,15 +150,18 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
                         cocos2d::log("警告: 金币数值为负数，已修正为0");
                         gold = 0;
                     }
-                } catch (...) {
+                }
+                catch (...) {
                     cocos2d::log("无法将金币字符串转换为整数，使用默认值0");
                     gold = 0;
                 }
-            } else {
+            }
+            else {
                 cocos2d::log("金币字段类型无效，使用默认值0");
                 gold = 0;
             }
-        } else {
+        }
+        else {
             cocos2d::log("缺少gold字段，使用默认值0");
             gold = 0;
         }
@@ -166,7 +175,8 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
                     cocos2d::log("警告: 圣水数值为负数，已修正为0");
                     elixir = 0;
                 }
-            } else if (player_stats["elixir"].IsString()) {
+            }
+            else if (player_stats["elixir"].IsString()) {
                 // 如果是字符串，尝试转换
                 try {
                     elixir = std::stoi(player_stats["elixir"].GetString());
@@ -174,15 +184,18 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
                         cocos2d::log("警告: 圣水数值为负数，已修正为0");
                         elixir = 0;
                     }
-                } catch (...) {
+                }
+                catch (...) {
                     cocos2d::log("无法将圣水字符串转换为整数，使用默认值0");
                     elixir = 0;
                 }
-            } else {
+            }
+            else {
                 cocos2d::log("圣水字段类型无效，使用默认值0");
                 elixir = 0;
             }
-        } else {
+        }
+        else {
             cocos2d::log("缺少elixir字段，使用默认值0");
             elixir = 0;
         }
@@ -195,34 +208,40 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
                 if (level <= 0) {
                     cocos2d::log("警告: 大本营等级小于等于0，已修正为1");
                     level = 1;
-                } else if (level > 10) {
+                }
+                else if (level > 10) {
                     cocos2d::log("警告: 大本营等级超过最大值10，已修正为10");
                     level = 10;
                 }
-            } else if (player_stats["level"].IsString()) {
+            }
+            else if (player_stats["level"].IsString()) {
                 // 如果是字符串，尝试转换
                 try {
                     level = std::stoi(player_stats["level"].GetString());
                     if (level <= 0) {
                         cocos2d::log("警告: 大本营等级小于等于0，已修正为1");
                         level = 1;
-                    } else if (level > 10) {
+                    }
+                    else if (level > 10) {
                         cocos2d::log("警告: 大本营等级超过最大值10，已修正为10");
                         level = 10;
                     }
-                } catch (...) {
+                }
+                catch (...) {
                     cocos2d::log("无法将等级字符串转换为整数，使用默认值1");
                     level = 1;
                 }
-            } else {
+            }
+            else {
                 cocos2d::log("等级字段类型无效，使用默认值1");
                 level = 1;
             }
-        } else {
+        }
+        else {
             cocos2d::log("缺少level字段，使用默认值1");
             level = 1;
         }
-        
+
         // 也尝试读取town_hall_level字段（向后兼容）
         if (player_stats.HasMember("town_hall_level") && player_stats["town_hall_level"].IsInt()) {
             level = player_stats["town_hall_level"].GetInt();
@@ -230,7 +249,8 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
             if (level <= 0) {
                 cocos2d::log("警告: 大本营等级小于等于0，已修正为1");
                 level = 1;
-            } else if (level > 10) {
+            }
+            else if (level > 10) {
                 cocos2d::log("警告: 大本营等级超过最大值10，已修正为10");
                 level = 10;
             }
@@ -251,7 +271,7 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
 }
 
 bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
-                                   int gold, int elixir, int level) {
+    int gold, int elixir, int level) {
     // 参数验证
     if (file_path.empty()) {
         cocos2d::log("错误: JSON文件路径为空");
@@ -261,14 +281,14 @@ bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
     // 使用Cocos2d-x的FileUtils处理资源文件路径
     std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
     cocos2d::log("尝试保存JSON文件: %s -> %s", file_path.c_str(), fullPath.c_str());
-    
+
     // 使用局部变量存储实际使用的路径
     std::string actualFilePath = file_path;
-    
+
     // 如果主路径找不到文件，尝试备用路径
     if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
         cocos2d::log("主路径未找到文件，尝试备用路径...");
-        
+
         // 尝试的备用路径列表
         std::vector<std::string> alternativePaths = {
             "Resources/archived/player_save.json",
@@ -276,7 +296,7 @@ bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
             "../Resources/archived/player_save.json",
             "../../Resources/archived/player_save.json"
         };
-        
+
         bool found = false;
         for (const auto& altPath : alternativePaths) {
             std::string altFullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(altPath);
@@ -288,7 +308,7 @@ bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
                 break;
             }
         }
-        
+
         if (!found) {
             cocos2d::log("错误: 无法找到JSON文件，将创建新文件: %s", fullPath.c_str());
             // 如果找不到文件，使用可写路径
@@ -296,11 +316,11 @@ bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
             actualFilePath = "player_save.json";
         }
     }
-    
+
     // 读取现有JSON文件内容（如果存在）
     rapidjson::Document doc;
     std::string content = "";
-    
+
     if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
         content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
         if (!content.empty()) {
@@ -309,138 +329,124 @@ bool TownHall::SavePlayerDataToJSON(const std::string& file_path,
                 cocos2d::log("警告: JSON解析失败，将创建新文档，错误代码: %d", doc.GetParseError());
                 doc.SetObject();
             }
-        } else {
+        }
+        else {
             doc.SetObject();
         }
-    } else {
+    }
+    else {
         doc.SetObject();
     }
-    
+
     // 确保文档是对象类型
     if (!doc.IsObject()) {
         doc.SetObject();
     }
-    
+
     // 创建或更新player_stats对象
     rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
-    
+
     if (!doc.HasMember("player_stats")) {
         rapidjson::Value player_stats(rapidjson::kObjectType);
         doc.AddMember("player_stats", player_stats, allocator);
     }
-    
+
     rapidjson::Value& player_stats = doc["player_stats"];
     if (!player_stats.IsObject()) {
         player_stats.SetObject();
     }
-    
+
     // 检查是否存在player_stats对象
     if (!doc.HasMember("player_stats")) {
         // 如果不存在，创建player_stats对象
         rapidjson::Value playerStats(rapidjson::kObjectType);
         doc.AddMember("player_stats", playerStats, doc.GetAllocator());
     }
-    
+
     // 确保player_stats是对象类型
     if (!doc["player_stats"].IsObject()) {
         doc["player_stats"].SetObject();
     }
-    
+
     // 更新数据
     if (doc["player_stats"].HasMember("gold")) {
         doc["player_stats"]["gold"].SetInt(gold);
-    } else {
+    }
+    else {
         doc["player_stats"].AddMember("gold", gold, allocator);
     }
-    
+
     if (doc["player_stats"].HasMember("elixir")) {
         doc["player_stats"]["elixir"].SetInt(elixir);
-    } else {
+    }
+    else {
         doc["player_stats"].AddMember("elixir", elixir, allocator);
     }
-    
+
     if (doc["player_stats"].HasMember("town_hall_level")) {
         doc["player_stats"]["town_hall_level"].SetInt(level);
-    } else {
+    }
+    else {
         doc["player_stats"].AddMember("town_hall_level", level, allocator);
     }
-    
+
     // 将JSON转换为字符串
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     doc.Accept(writer);
     std::string jsonContent = buffer.GetString();
-    
+
     // 写入文件
     std::ofstream outputFile(fullPath);
     if (!outputFile.is_open()) {
         cocos2d::log("错误: 无法打开文件进行写入: %s", fullPath.c_str());
         return false;
     }
-    
+
     outputFile << jsonContent;
     outputFile.close();
-    
+
     cocos2d::log("成功保存玩家数据到JSON文件: 金币=%d, 圣水=%d, 大本营等级=%d", gold, elixir, level);
     return true;
 }
 
 bool TownHall::UpdatePlayerDataField(const std::string& file_path,
-                                     const std::string& field_name, int value) {
+    const std::string& field_name, int value) {
     // 参数验证
     if (file_path.empty()) {
         cocos2d::log("错误: JSON文件路径为空");
         return false;
     }
-    
+
     if (field_name != "gold" && field_name != "elixir" && field_name != "town_hall_level") {
         cocos2d::log("错误: 不支持的字段名: %s", field_name.c_str());
         return false;
     }
-    
-    // 使用Cocos2d-x的FileUtils处理资源文件路径
-    std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
-    cocos2d::log("尝试更新JSON字段: %s -> %s", file_path.c_str(), fullPath.c_str());
-    
-    // 使用局部变量存储实际使用的路径
-    std::string actualFilePath = file_path;
-    
-    // 如果主路径找不到文件，尝试备用路径
-    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
-        cocos2d::log("主路径未找到文件，尝试备用路径...");
-        
-        // 尝试的备用路径列表
-        std::vector<std::string> alternativePaths = {
-            "Resources/archived/player_save.json",
-            "archived/player_save.json",
-            "../Resources/archived/player_save.json",
-            "../../Resources/archived/player_save.json"
-        };
-        
-        bool found = false;
-        for (const auto& altPath : alternativePaths) {
-            std::string altFullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(altPath);
-            if (cocos2d::FileUtils::getInstance()->isFileExist(altFullPath)) {
-                fullPath = altFullPath;
-                actualFilePath = altPath;
-                found = true;
-                cocos2d::log("使用备用路径找到文件: %s", altFullPath.c_str());
-                break;
-            }
-        }
-        
-        if (!found) {
-            cocos2d::log("错误: 无法找到JSON文件，将创建新文件: %s", fullPath.c_str());
-            // 如果找不到文件，使用可写路径
+
+    // 如果传入的是完整路径，直接使用；否则尝试从Resources目录查找
+    std::string fullPath = file_path;
+
+    // 检查是否是绝对路径（包含可写路径）
+    if (file_path.find(cocos2d::FileUtils::getInstance()->getWritablePath()) == std::string::npos) {
+        // 如果不是绝对路径，尝试从Resources目录查找
+        fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
+
+        // 如果Resources目录找不到，使用可写路径
+        if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
             fullPath = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
-            actualFilePath = "player_save.json";
+            cocos2d::log("Resources目录未找到文件，使用可写路径: %s", fullPath.c_str());
         }
     }
-    
+
+    cocos2d::log("尝试更新JSON字段: %s -> %s", file_path.c_str(), fullPath.c_str());
+
+    // 使用局部变量存储实际使用的路径
+    std::string actualFilePath = file_path;
+
     // 读取现有JSON文件内容（如果存在）
     rapidjson::Document doc;
     std::string content = "";
-    
+
     if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
         content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
         if (!content.empty()) {
@@ -449,68 +455,71 @@ bool TownHall::UpdatePlayerDataField(const std::string& file_path,
                 cocos2d::log("警告: JSON解析失败，将创建新文档，错误代码: %d", doc.GetParseError());
                 doc.SetObject();
             }
-        } else {
+        }
+        else {
             doc.SetObject();
         }
-    } else {
+    }
+    else {
         doc.SetObject();
     }
-    
+
     // 确保文档是对象类型
     if (!doc.IsObject()) {
         doc.SetObject();
     }
-    
+
     // 创建或更新player_stats对象
     rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
-    
+
     if (!doc.HasMember("player_stats")) {
         rapidjson::Value player_stats(rapidjson::kObjectType);
         doc.AddMember("player_stats", player_stats, allocator);
     }
-    
+
     rapidjson::Value& player_stats = doc["player_stats"];
     if (!player_stats.IsObject()) {
         player_stats.SetObject();
     }
-    
+
     // 检查是否存在player_stats对象
     if (!doc.HasMember("player_stats")) {
         // 如果不存在，创建player_stats对象
         rapidjson::Value playerStats(rapidjson::kObjectType);
         doc.AddMember("player_stats", playerStats, doc.GetAllocator());
     }
-    
+
     // 确保player_stats是对象类型
     if (!doc["player_stats"].IsObject()) {
         doc["player_stats"].SetObject();
     }
-    
+
     // 更新player_stats对象内的指定字段
     rapidjson::Value fieldName(field_name.c_str(), allocator);
-    
+
     if (doc["player_stats"].HasMember(fieldName)) {
         doc["player_stats"][fieldName].SetInt(value);
-    } else {
+    }
+    else {
         doc["player_stats"].AddMember(fieldName, value, allocator);
     }
-    
+
     // 将JSON转换为字符串
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     doc.Accept(writer);
     std::string jsonContent = buffer.GetString();
-    
+
     // 写入文件
     std::ofstream outputFile(fullPath);
     if (!outputFile.is_open()) {
         cocos2d::log("错误: 无法打开文件进行写入: %s", fullPath.c_str());
         return false;
     }
-    
+
     outputFile << jsonContent;
     outputFile.close();
-    
+
     cocos2d::log("成功更新JSON字段: %s = %d", field_name.c_str(), value);
     return true;
 }
@@ -545,7 +554,7 @@ TownHall* TownHall::Create(const std::string& name, int base,
 }
 
 TownHall* TownHall::GetInstance() {
-    InitializeInstance("大本营", 1, {0,0}, "buildings/TownHall1.png");
+    InitializeInstance("大本营", 1, { 0,0 }, "buildings/TownHall1.png");
     return instance_;
 }
 
@@ -609,6 +618,7 @@ void TownHall::ResetTownHall() {
 }
 
 
+
 TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture)
     : Building(name, 1, base * 100, base * 5, base * 60, base * 200, 4, 4,
         position)
@@ -633,7 +643,38 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     int json_elixir = 0;
     int json_level = base; // 使用base作为默认等级
 
-    std::string json_file_path = "archived/player_save.json";
+    // 每次启动时都从Resources目录重新复制JSON文件，确保使用最新配置
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
+    std::string source_path = "archived/player_save.json";
+
+    // 总是从Resources目录复制初始文件，确保使用最新配置
+    if (cocos2d::FileUtils::getInstance()->isFileExist(source_path)) {
+        // 读取Resources目录中的JSON文件内容
+        std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(source_path);
+
+        // 将内容写入可写路径
+        std::ofstream outFile(json_file_path);
+        if (outFile.is_open()) {
+            outFile << content;
+            outFile.close();
+            cocos2d::log("已将Resources目录中的JSON文件复制到可写路径: %s", json_file_path.c_str());
+
+            // 输出复制的文件内容用于调试
+            cocos2d::log("复制的JSON内容: %s", content.c_str());
+        }
+        else {
+            cocos2d::log("无法打开可写路径文件进行写入: %s", json_file_path.c_str());
+        }
+    }
+    else {
+        cocos2d::log("Resources目录中找不到源文件: %s", source_path.c_str());
+    }
+
+    // 添加额外的强制重新加载选项，可通过构造函数参数控制
+    // 如果构造函数传入force_reload_from_resources参数为true，则强制重新复制
+    // 这个功能可以在需要重置玩家数据时使用
+    // 例如：TownHall("大本营", 1, {0,0}, "buildings/TownHall1.png", true) // 强制重新加载
+    // 注意：这需要修改构造函数签名以添加force_reload_from_resources参数
 
     bool json_load_success = false;
 
@@ -647,12 +688,39 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
             elixir_ = json_elixir;
 
             cocos2d::log("从JSON文件成功初始化大本营数据: 金币=%d, 圣水=%d, 等级=%d",
-                        json_gold, json_elixir, level_);
+                json_gold, json_elixir, level_);
+
+            // 将圣水值分配给储罐（如果有）
+            // 注意：这需要在储罐被添加到TownHall之后调用，所以我们需要延迟执行
+            // 使用scheduleOnce确保在下一帧执行，此时所有建筑已经加载完成
+            auto distributeElixir = [this, json_elixir](float) {
+                if (!elixir_storages_.empty() && json_elixir > 0) {
+                    int remaining = json_elixir;
+                    for (auto* storage : elixir_storages_) {
+                        if (remaining <= 0) break;
+
+                        int capacity = storage->GetCapacity();
+                        int current = storage->GetCurrentAmount();
+                        int space = capacity - current;
+
+                        if (space > 0) {
+                            int add = std::min(remaining, space);
+                            storage->AddResource(add);
+                            remaining -= add;
+                        }
+                    }
+                    cocos2d::log("已将%d圣水分配到储罐中", json_elixir - remaining);
+                }
+                };
+
+            // 延迟执行，确保所有建筑已经加载完成
+            this->scheduleOnce(distributeElixir, 0.1f, "distribute_elixir");
 
             // 根据等级更新纹理
             std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
             this->setTexture(new_texture);
-        } else {
+        }
+        else {
             // JSON读取失败，使用默认值
             cocos2d::log("JSON文件读取失败，使用默认值初始化大本营");
             level_ = base;
@@ -682,7 +750,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     is_initialized_ = true;
 
     cocos2d::log("大本营 %s 初始化完成 - 等级: %d, 金币: %d, 圣水: %d",
-                name.c_str(), level_, gold_, elixir_);
+        name.c_str(), level_, gold_, elixir_);
 }
 
 TownHall::~TownHall() {
@@ -979,11 +1047,11 @@ int TownHall::UpgradeAllWalls() {
             continue;
         }
 
-        
+
         // 计算升级成本（简化处理）
         int upgrade_cost = wall->GetNextBuildCost();
 
-            // 检查资源是否足够（这里只检查金币）
+        // 检查资源是否足够（这里只检查金币）
         if (SpendGold(upgrade_cost)) {
             wall->StartUpgrade(wall->GetNextBuildTime());
             upgraded_count++;
@@ -995,7 +1063,7 @@ int TownHall::UpgradeAllWalls() {
                 wall->GetName().c_str());
             break; // 资源不足，停止批量升级
         }
-        
+
     }
 
     cocos2d::log("批量升级完成，开始升级 %d 个城墙", upgraded_count);
@@ -1155,9 +1223,10 @@ int TownHall::AddGold() {
 
     //更新大本营金币数量
     gold_ += actual_add;
-    
+
     // 保存更新后的金币数量到JSON文件
-    std::string json_file_path = "archived/player_save.json";
+    // 使用可写路径确保文件可以被正确更新
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
     if (!UpdatePlayerDataField(json_file_path, "gold", gold_)) {
         cocos2d::log("警告：保存金币数据到JSON文件失败");
     }
@@ -1195,9 +1264,10 @@ bool TownHall::SpendGold(int amount) {
 
     //更新大本营金币数量
     gold_ = GetTotalGoldFromStorages();
-    
+
     // 保存更新后的金币数量到JSON文件
-    std::string json_file_path = "archived/player_save.json";
+    // 使用可写路径确保文件可以被正确更新
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
     if (!UpdatePlayerDataField(json_file_path, "gold", gold_)) {
         cocos2d::log("警告：保存金币数据到JSON文件失败");
     }
@@ -1210,11 +1280,11 @@ bool TownHall::SpendGold(int amount) {
 int TownHall::AddElixir() {
     int amount = 0;
 
-	for (const auto& collector : elixir_collectors_) {
-		if (collector && collector->IsActive()) {
-			amount += collector->CalculateTimeProductionProduct();
-		}
-	}
+    for (const auto& collector : elixir_collectors_) {
+        if (collector && collector->IsActive()) {
+            amount += collector->CalculateTimeProductionProduct();
+        }
+    }
 
     if (amount <= 0) {
         return 0;
@@ -1248,9 +1318,10 @@ int TownHall::AddElixir() {
 
     //更新大本营圣水数量
     elixir_ += actual_add;
-    
+
     // 保存更新后的圣水数量到JSON文件
-    std::string json_file_path = "archived/player_save.json";
+    // 使用可写路径确保文件可以被正确更新
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
     if (!UpdatePlayerDataField(json_file_path, "elixir", elixir_)) {
         cocos2d::log("警告：保存圣水数据到JSON文件失败");
     }
@@ -1286,9 +1357,10 @@ bool TownHall::SpendElixir(int amount) {
 
     //更新大本营圣水数量
     elixir_ = GetTotalElixirFromStorages();
-    
+
     // 保存更新后的圣水数量到JSON文件
-    std::string json_file_path = "archived/player_save.json";
+    // 使用可写路径确保文件可以被正确更新
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
     if (!UpdatePlayerDataField(json_file_path, "elixir", elixir_)) {
         cocos2d::log("警告：保存圣水数据到JSON文件失败");
     }
@@ -1565,7 +1637,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,    // 宽度
         3,    // 长度
         []() -> Building* {
-            return SourceBuilding::Create("Gold Mine", 1, { 0, 0 }, "buildings/goldmine.png", "Gold");
+            return SourceBuilding::Create("Gold Mine", 15, { 0, 0 }, "buildings/goldmine.png", "Gold");
         }
     );
 
@@ -1577,7 +1649,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return SourceBuilding::Create("Elixir Collector", 1, { 0, 0 }, "buildings/elixirmine0.png", "Elixir");
+            return SourceBuilding::Create("Elixir Collector", 15, { 0, 0 }, "buildings/elixirmine0.png", "Elixir");
         }
     );
 
@@ -1589,7 +1661,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return ProductionBuilding::Create("Gold Storage", 1, { 0, 0 },"buildings/goldpool1.png","Gold Storage");
+            return ProductionBuilding::Create("Gold Storage", 15, { 0, 0 }, "buildings/goldpool1.png", "Gold Storage");
         }
     );
 
@@ -1601,7 +1673,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return ProductionBuilding::Create("Elixir Storage", 1, { 0, 0 },"buildings/elixirpool2.png","Elixir Storage");
+            return ProductionBuilding::Create("Elixir Storage", 15, { 0, 0 }, "buildings/elixirpool2.png", "Elixir Storage");
         }
     );
 
@@ -1613,7 +1685,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return TrainingBuilding::Create("Barrack", 1, { 0, 0 }, "buildings/barrack.png", 50, 2);
+            return TrainingBuilding::Create("Barrack", 15, { 0, 0 }, "buildings/barrack.png", 50, 2);
         }
     );
 
@@ -1626,7 +1698,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         4,
         []() -> Building* {
             // 调用 TrainingBuilding 的 InitializeInstance 函数
-            return TrainingBuilding::Create("Training Camp", 2, { 0, 0 },
+            return TrainingBuilding::Create("Training Camp", 15, { 0, 0 },
                 "buildings/trainingcamp.png", 10, 20);
         }
     );
@@ -1639,7 +1711,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         1,    // 宽度
         1,    // 长度
         []() -> Building* {
-            return WallBuilding::Create("Wall", 1, { 0, 0 }, "buildings/wall1.png");
+            return WallBuilding::Create("Wall", 15, { 0, 0 }, "buildings/wall1.png");
         }
     );
 
@@ -1651,7 +1723,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 7, 5, 20);
+            return AttackBuilding::Create("Archer Tower", 10, { 0, 0 }, "buildings/archertower.png", 7, 5, 20);
         }
     );
 
@@ -1663,7 +1735,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Cannon", 1, { 0, 0 }, "buildings/cannon1.png", 7, 10, 50);
+            return AttackBuilding::Create("Cannon", 10, { 0, 0 }, "buildings/cannon1.png", 7, 10, 50);
         }
     );
 
@@ -1682,7 +1754,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         20,   // 训练时间（秒）
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建野蛮人
-            return new Soldier(SoldierType::kBarbarian, 45, 8, 1.0f, 0.4f, 1.0f);
+            return new Soldier(SoldierType::kBarbarian, 25, 100, 1.0f, 0.4f, 1.0f);
         }
     );
 
@@ -1695,7 +1767,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         25,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建弓箭手
-            return new Soldier(SoldierType::kArcher, 20, 7, 0.8f, 3.5f, 1.0f);
+            return new Soldier(SoldierType::kArcher, 22, 70, 0.8f, 3.5f, 1.0f);
         }
     );
 
@@ -1708,11 +1780,11 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         120,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建巨人
-            return new Soldier(SoldierType::kGiant, 300, 22, 0.6f, 1.0f, 2.0f);
+            return new Soldier(SoldierType::kGiant, 30, 200, 0.6f, 1.0f, 2.0f);
         }
     );
 
-    
+
     soldiers.emplace_back(
         SoldierType::kBomber,
         "Bomber",
@@ -1722,10 +1794,10 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         60,
         []() -> Soldier* {
             // 需要先在 SoldierType 枚举中添加 WallBreaker
-            return new Soldier(SoldierType::kBomber, 20, 6, 1.2f, 0.4f, 1.0f);
+            return new Soldier(SoldierType::kBomber, 19, 60, 1.2f, 0.4f, 1.0f);
         }
     );
-    
+
 
     return soldiers;
 }

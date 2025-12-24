@@ -25,8 +25,8 @@
  * @param level 输出参数，读取到的大本营等级
  * @return 读取成功返回true，失败返回false
  */
-    static bool LoadPlayerDataFromJSON(const std::string& file_path,
-        int& gold, int& elixir, int& level);
+static bool LoadPlayerDataFromJSON(const std::string& file_path,
+    int& gold, int& elixir, int& level);
 
 /**
  * @brief TownHall类
@@ -44,7 +44,7 @@ private:
      * @param texture 大本营当前等级使用的贴图路径。
      */
     TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture);
-    
+
     /**
      * @brief 私有析构函数
      * 清理UI组件
@@ -85,7 +85,7 @@ protected:
     cocos2d::Sprite* flag_sprite_;    // 可选：显示部落旗帜的子节点
     cocos2d::Label* level_label_;    // 显示大本营等级的文本标签
 
-	// ==================== 内部辅助函数 ====================
+    // ==================== 内部辅助函数 ====================
     void UpdateArmyCapacityFromBarracks();
     int GetTotalArmyCapacityFromBarracks() const;
 
@@ -157,6 +157,8 @@ public:
      * 重置所有资源和管理列表，恢复到初始状态
      */
     void ResetTownHall();
+
+
 
     /**
      * @brief 重写升级接口
@@ -515,7 +517,7 @@ public:
      */
     virtual void ShowInfo() const override;
 
-    
+
     struct BuildingTemplate {
         std::string name_;
         std::string icon_path_;
