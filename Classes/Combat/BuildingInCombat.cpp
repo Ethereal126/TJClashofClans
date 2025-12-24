@@ -49,10 +49,8 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     }
 
     this->position_ = building_template->GetPosition();
-    this->setPosition(map->vecToWorld(position_));
-
-    // 根据地图缩放系数调整建筑大小
-    this->setScale(0.5f * map->getGridScaleFactor()); 
+    map_->setupNodeOnMap(this,static_cast<int>(position_.x),static_cast<int>(position_.y),
+                         building_template_->GetWidth(),building_template_->GetLength());
 
     CCLOG("Building init success");
     return true;

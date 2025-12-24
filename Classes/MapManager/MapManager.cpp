@@ -92,7 +92,7 @@ bool MapManager::init(int width, int length, int gridSize, TerrainType terrainTy
     // 初始化网格数据
     initGrids();
     // 预加载所有可能的士兵动画，防止队友代码因找不到动画而崩溃
-    preloadAllSoldierAnimations();
+    //reloadAllSoldierAnimations();
     // 设置输入监听
     setupInputListener();
     return true;
@@ -179,31 +179,6 @@ void MapManager::preloadAllSoldierAnimations() {
                     }
                 }
             }
-        }
-    }
-
-    // 预加载死亡动画 (这是最关键的崩溃修复点！)
-    // 队友在 Die() 中硬编码寻找 "Soldier_Death"，但他的加载函数里漏掉了这个动画的创建。
-    if (!animCache->getAnimation("Soldier_Death")) {
-        cocos2d::Vector<cocos2d::SpriteFrame*> deathFrames;
-        
-        // 尝试从 Barbarian 或 Archer 的资源里随便找一帧作为死亡占位符
-        // 这样即便士兵死了没有动画，程序也不会崩溃
-        std::vector<std::string> fallbackNames = {"Barbarianwalkdown1.png", "Archerwalkdown1.png"};
-        for (const auto& frameName : fallbackNames) {
-            auto frame = cocos2d::SpriteFrameCache::getInstance()->getSpriteFrameByName(frameName);
-            if (frame) {
-                deathFrames.pushBack(frame);
-                break; 
-            }
-        }
-
-        if (!deathFrames.empty()) {
-            auto anim = cocos2d::Animation::createWithSpriteFrames(deathFrames, 0.5f);
-            animCache->addAnimation(anim, "Soldier_Death");
-            CCLOG("SUCCESS: Preloaded dummy Soldier_Death animation to prevent crash.");
-        } else {
-            CCLOG("WARNING: Could not even create dummy Soldier_Death animation!");
         }
     }
 }
@@ -321,6 +296,7 @@ void MapManager::setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int w
     node->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
 
     // 2. 设置缩放适配格子
+    CCLOG("width:%d,length:%d",width,length);
     auto sprite = dynamic_cast<cocos2d::Sprite*>(node);
     if (sprite && sprite->getContentSize().width > 0) {
         // 考虑网格的缩放系数 _gridScaleX
@@ -910,18 +886,24 @@ bool MapManager::loadFromJSONObject(const rapidjson::Value& mapData) {
             int gx = bJson["x"].GetInt();
             int gy = bJson["y"].GetInt();
             int level = bJson.HasMember("level") ? bJson["level"].GetInt() : 1;
+            CCLOG("load building '%s' : (%d,%d),level%d",type.c_str(),gx,gy,level);
 
             // Find matching template
             for (const auto& t : templates) {
                 if (t.name_ == type) {
+                    CCLOG("template founded when loading : %s",type.c_str());
                     Building* building = t.createFunc();
                     if (building) {
+                        building->SetMapPosition({static_cast<float>(gx),static_cast<float>(gy)});
                         // Set level (assuming UpgradeToLevel exists or calling Upgrade multiple times)
                         for(int l = 1; l < level; ++l) building->Upgrade();
                         
-                        if (!placeBuilding(building, gx, gy)) {
-                            building->release(); // Failed to place
-                        }
+//                        if (!placeBuilding(building, gx, gy)) {
+//                            building->release(); // Failed to place
+//                        }
+                        PushBuilding(building);
+                        building->setVisible(false);
+                        this->addChild(building);
                     }
                     break;
                 }
@@ -945,13 +927,19 @@ bool MapManager::loadFromJSONObject(const rapidjson::Value& mapData) {
 
 bool MapManager::loadMapData(const std::string& filePath) {
     std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(filePath);
-    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) return false;
+    if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)){
+        CCLOG("file not found");
+        return false;
+    }
 
     std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
     rapidjson::Document doc;
     doc.Parse(content.c_str());
 
-    if (doc.HasParseError()) return false;
+    if (doc.HasParseError()){
+        CCLOG("parse error");
+        return false;
+    }
 
     // If it's the full save file, the map layout is under "map_layout"
     if (doc.HasMember("map_layout")) {

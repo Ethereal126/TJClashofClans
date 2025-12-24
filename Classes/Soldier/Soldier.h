@@ -17,7 +17,7 @@ enum class SoldierType {
     kSoldierTypes
 };
 
-class Soldier {
+class Soldier : public cocos2d::Node{
 public:
     // 构造函数
     Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, float attack_delay);

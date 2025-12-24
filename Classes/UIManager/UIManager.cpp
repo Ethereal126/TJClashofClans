@@ -1810,6 +1810,9 @@ void UIManager::enterBattleMode(MapManager* battleMap) {
     // 设置触摸监听（用于在地图上放置士兵）
     setupBattleTouchListener();
 
+    CombatManager::InitializeInstance(battleMap);
+    auto manager = CombatManager::GetInstance();
+
     CCLOG("UIManager: Entered battle mode");
 }
 

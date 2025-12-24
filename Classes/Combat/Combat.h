@@ -32,6 +32,7 @@ public:
     int stars = 0,destroy_degree_ = 0,buildings_should_count=0,buildings_should_count_destroyed=0;
 
     static CombatManager* InitializeInstance(MapManager* map); // 初始化单例（仅第一次调用有效）
+    static void DestroyInstance();
     static CombatManager* GetInstance();// 获取单例（已初始化则直接返回）
 
     //在接收到交互指令后，将士兵加入到战斗中；
