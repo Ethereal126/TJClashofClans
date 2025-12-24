@@ -479,7 +479,9 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
             }//ptr指向超出攻击范围的第一个点
             // 此时 ptr 指向的是我们要保留的倒数第二个点
             // 删除 ptr 后一点之后的所有点
-            auto start_erase = std::next(std::next(ptr));
+            auto last_to_keep = std::next(ptr);
+            if (last_to_keep == path.end()) break;
+            auto start_erase = std::next(last_to_keep);
             if (start_erase != path.end()) {
                 path.erase(start_erase, path.end());
             }
