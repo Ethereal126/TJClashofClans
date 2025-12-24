@@ -9,8 +9,10 @@
     "width": 20,
     "length": 20,
     "buildings": [
+      { "type": "TownHall", "x": 15, "y": 15, "level": 2 },
       { "type": "Gold Mine", "x": 8, "y": 12, "level": 2 },
       { "type": "Archer Tower", "x": 12, "y": 8, "level": 1 },
+      { "type": "Cannon", "x": 3, "y": 10, "level": 1 },
       { "type": "Wall", "x": 3, "y": 4, "level": 2 },
       { "type": "Wall", "x": 4, "y": 4, "level": 2 },
       { "type": "Wall", "x": 5, "y": 4, "level": 2 },
