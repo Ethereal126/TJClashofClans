@@ -27,9 +27,9 @@ class CombatManager :public cocos2d::Node {
 public:
     std::vector<std::pair<Soldier*,int>> soldier_to_use_;
     std::vector<BuildingInCombat*> live_buildings_;
-    std::vector<SoldierInCombat*> live_soldiers;
-    int num_of_live_soldiers_ = 0,num_of_live_buildings = 0;
-    int stars = 0,destroy_degree_ = 0,buildings_should_count=0,buildings_should_count_destroyed=0;
+    std::vector<SoldierInCombat*> live_soldiers_;
+    int num_of_live_soldiers_ = 0,num_of_live_buildings_ = 0;
+    int stars_ = 0,destroy_degree_ = 0,buildings_should_count_=0,buildings_should_count_destroyed_=0;
 
     static CombatManager* InitializeInstance(MapManager* map); // 初始化单例（仅第一次调用有效）
     static void DestroyInstance();

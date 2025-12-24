@@ -24,7 +24,7 @@ ResourceStorage::~ResourceStorage() {
 
 ResourceStorage::ResourceStorage(const std::string& name, int base, cocos2d::Vec2 position,
     const std::string& texture, const std::string& resourceType)
-    : Building(name, 1, base * 8, base, 0, base * 10, 3, 3, position)
+    : Building(name, 1, base * 80, base, 0, base * 10, 3, 3, position)
     , resourceType_(resourceType)
     , capacity_(base * 100)
     , currentAmount_(0)

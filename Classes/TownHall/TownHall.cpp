@@ -10,13 +10,13 @@ USING_NS_CC;
 
 static std::vector<SoldierTemplate> soldier_templates = {
     SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldiers/Barbarian/Barbarianwalkright1.png",
-                    50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
+                    50, 12, 0.75f, 1.0f, 1.0f, 1, 25, 20),
     SoldierTemplate(SoldierType::kArcher, "Archer","Soldiers/Archer/Archerattackdown1.png",
-                    25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
+                    25, 10, 1.0f, 3.0f, 1.0f, 1, 50, 25),
     SoldierTemplate(SoldierType::kBomber, "Bomber","Soldiers/Giant/Giantattackdown1.png",
-                    20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
+                    20, 10, 1.0f, 1.0f, 1.0f, 2, 1000, 60),
     SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
-                    500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
+                    500, 30, 0.5f, 1.0f, 2.0f, 5, 500, 120)
 };
 
 // ==================== JSON数据读取函数 ====================
@@ -1626,7 +1626,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 7, 1, 50);
+            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 1.0f, 10, 5.0f);
         }
     );
 
