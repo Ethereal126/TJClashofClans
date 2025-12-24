@@ -638,7 +638,13 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     , flag_sprite_(nullptr)
     , level_label_(nullptr) {
 
-    // 从JSON文件读取玩家数据
+    // 首先尝试从UserDefault加载资源数据
+    cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
+    int saved_gold = userDefault->getIntegerForKey("player_gold", -1);
+    int saved_elixir = userDefault->getIntegerForKey("player_elixir", -1);
+    bool use_user_default = (saved_gold != -1 && saved_elixir != -1);
+    
+    // 从JSON文件读取玩家数据（备用）
     int json_gold = 0;
     int json_elixir = 0;
     int json_level = base; // 使用base作为默认等级
@@ -647,84 +653,128 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
     std::string source_path = "archived/player_save.json";
 
-    // 总是从Resources目录复制初始文件，确保使用最新配置
-    if (cocos2d::FileUtils::getInstance()->isFileExist(source_path)) {
-        // 读取Resources目录中的JSON文件内容
-        std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(source_path);
-
-        // 将内容写入可写路径
-        std::ofstream outFile(json_file_path);
-        if (outFile.is_open()) {
-            outFile << content;
-            outFile.close();
-            cocos2d::log("已将Resources目录中的JSON文件复制到可写路径: %s", json_file_path.c_str());
-
-            // 输出复制的文件内容用于调试
-            cocos2d::log("复制的JSON内容: %s", content.c_str());
-        }
-        else {
-            cocos2d::log("无法打开可写路径文件进行写入: %s", json_file_path.c_str());
-        }
-    }
-    else {
-        cocos2d::log("Resources目录中找不到源文件: %s", source_path.c_str());
-    }
-
-    // 添加额外的强制重新加载选项，可通过构造函数参数控制
-    // 如果构造函数传入force_reload_from_resources参数为true，则强制重新复制
-    // 这个功能可以在需要重置玩家数据时使用
-    // 例如：TownHall("大本营", 1, {0,0}, "buildings/TownHall1.png", true) // 强制重新加载
-    // 注意：这需要修改构造函数签名以添加force_reload_from_resources参数
-
     bool json_load_success = false;
 
     try {
-        json_load_success = LoadPlayerDataFromJSON(json_file_path, json_gold, json_elixir, json_level);
-
-        if (json_load_success) {
-            // 使用从JSON文件读取的数据
-            level_ = json_level;
-            gold_ = json_gold;
-            elixir_ = json_elixir;
-
-            cocos2d::log("从JSON文件成功初始化大本营数据: 金币=%d, 圣水=%d, 等级=%d",
-                json_gold, json_elixir, level_);
-
-            // 将圣水值分配给储罐（如果有）
-            // 注意：这需要在储罐被添加到TownHall之后调用，所以我们需要延迟执行
-            // 使用scheduleOnce确保在下一帧执行，此时所有建筑已经加载完成
-            auto distributeElixir = [this, json_elixir](float) {
-                if (!elixir_storages_.empty() && json_elixir > 0) {
-                    int remaining = json_elixir;
-                    for (auto* storage : elixir_storages_) {
-                        if (remaining <= 0) break;
-
-                        int capacity = storage->GetCapacity();
-                        int current = storage->GetCurrentAmount();
-                        int space = capacity - current;
-
-                        if (space > 0) {
-                            int add = std::min(remaining, space);
-                            storage->AddResource(add);
-                            remaining -= add;
-                        }
-                    }
-                    cocos2d::log("已将%d圣水分配到储罐中", json_elixir - remaining);
-                }
-                };
-
-            // 延迟执行，确保所有建筑已经加载完成
-            this->scheduleOnce(distributeElixir, 0.1f, "distribute_elixir");
-
+        if (use_user_default) {
+            // 如果UserDefault中有保存的值，则使用这些值
+            gold_ = saved_gold;
+            elixir_ = saved_elixir;
+            level_ = userDefault->getIntegerForKey("player_townhall_level", base);
+            
+            cocos2d::log("从UserDefault加载资源数据: 金币=%d, 圣水=%d, 等级=%d", gold_, elixir_, level_);
+            
             // 根据等级更新纹理
             std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
             this->setTexture(new_texture);
+        } else {
+            // 如果UserDefault中没有数据，则从JSON文件加载
+            cocos2d::log("UserDefault中没有资源数据，从JSON文件加载");
+            
+            // ✅ 只在第一次没有存档文件时，才从Resources复制一份初始存档
+            if (!cocos2d::FileUtils::getInstance()->isFileExist(json_file_path)) {
+                if (cocos2d::FileUtils::getInstance()->isFileExist(source_path)) {
+                    std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(source_path);
+
+                    std::ofstream outFile(json_file_path, std::ios::out | std::ios::trunc);
+                    if (outFile.is_open()) {
+                        outFile << content;
+                        outFile.close();
+                        cocos2d::log("首次创建存档：从Resources复制到可写路径: %s", json_file_path.c_str());
+                    }
+                    else {
+                        cocos2d::log("无法创建可写路径存档文件: %s", json_file_path.c_str());
+                    }
+                }
+                else {
+                    cocos2d::log("Resources目录中找不到源文件: %s", source_path.c_str());
+                }
+            }
+            else {
+                cocos2d::log("已存在存档，跳过复制覆盖: %s", json_file_path.c_str());
+            }
+
+            // （强烈建议）打印你真正读写的存说明确路径，避免你盯着Resources那份看
+            cocos2d::log("SAVE FILE PATH = %s", json_file_path.c_str());
+
+
+            // 添加额外的强制重新加载选项，可通过构造函数参数控制
+            // 如果构造函数传入force_reload_from_resources参数为true，则强制重新复制
+            // 这个功能可以在需要重置玩家数据时使用
+            // 例如：TownHall("大本营", 1, {0,0}, "buildings/TownHall1.png", true) // 强制重新加载
+            // 注意：这需要修改构造函数签名以添加force_reload_from_resources参数
+
+            json_load_success = LoadPlayerDataFromJSON(json_file_path, json_gold, json_elixir, json_level);
+
+            if (json_load_success) {
+                // 使用从JSON文件读取的数据
+                level_ = json_level;
+                gold_ = json_gold;
+                elixir_ = json_elixir;
+
+                cocos2d::log("从JSON文件成功初始化大本营数据: 金币=%d, 圣水=%d, 等级=%d",
+                    json_gold, json_elixir, level_);
+
+                // 将圣水值分配给储罐（如果有）
+                // 注意：这需要在储罐被添加到TownHall之后调用，所以我们需要延迟执行
+                // 使用scheduleOnce确保在下一帧执行，此时所有建筑已经加载完成
+                auto distributeElixir = [this, json_elixir](float) {
+                    if (!elixir_storages_.empty() && json_elixir > 0) {
+                        int remaining = json_elixir;
+                        for (auto* storage : elixir_storages_) {
+                            if (remaining <= 0) break;
+
+                            int capacity = storage->GetCapacity();
+                            int current = storage->GetCurrentAmount();
+                            int space = capacity - current;
+
+                            if (space > 0) {
+                                int add = std::min(remaining, space);
+                                storage->AddResource(add);
+                                remaining -= add;
+                            }
+                        }
+                        cocos2d::log("已将%d圣水分配到储罐中", json_elixir - remaining);
+                    }
+                    };
+
+                // 延迟执行，确保所有建筑已经加载完成
+                this->scheduleOnce(distributeElixir, 0.1f, "distribute_elixir");
+
+                // 根据等级更新纹理
+                std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
+                this->setTexture(new_texture);
+            }
+            else {
+                // JSON读取失败，使用默认值
+                cocos2d::log("JSON文件读取失败，使用默认值初始化大本营");
+                level_ = base;
+                this->setTexture(texture);
+            }
         }
-        else {
-            // JSON读取失败，使用默认值
-            cocos2d::log("JSON文件读取失败，使用默认值初始化大本营");
-            level_ = base;
-            this->setTexture(texture);
+        
+        // 如果从UserDefault加载了数据，也需要分配圣水到储罐
+        if (use_user_default && !elixir_storages_.empty() && saved_elixir > 0) {
+            auto distributeElixir = [this, saved_elixir](float) {
+                int remaining = saved_elixir;
+                for (auto* storage : elixir_storages_) {
+                    if (remaining <= 0) break;
+
+                    int capacity = storage->GetCapacity();
+                    int current = storage->GetCurrentAmount();
+                    int space = capacity - current;
+
+                    if (space > 0) {
+                        int add = std::min(remaining, space);
+                        storage->AddResource(add);
+                        remaining -= add;
+                    }
+                }
+                cocos2d::log("已将%d圣水从UserDefault分配到储罐中", saved_elixir - remaining);
+            };
+            
+            // 延迟执行，确保所有建筑已经加载完成
+            this->scheduleOnce(distributeElixir, 0.1f, "distribute_elixir_from_userdefault");
         }
     }
     catch (const std::exception& e) {
@@ -796,10 +846,11 @@ void TownHall::Upgrade() {
     this->setTexture(new_texture);
 
     // 保存更新后的大本营等级到JSON文件
-    std::string json_file_path = "archived/player_save.json";
-    if (!UpdatePlayerDataField(json_file_path, "level", level_)) {
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "town_hall_level", level_)) {
         cocos2d::log("警告：保存大本营等级数据到JSON文件失败");
     }
+
 
     cocos2d::log("%s 升级到等级 %d，金币池上限: %d，圣水池上限: %d，金矿上限: %d，圣水收集器上限: %d，训练营上限: %d，军队容量: %d",
         name_.c_str(), level_, gold_storage_capacity_, elixir_storage_capacity_,
@@ -1223,7 +1274,13 @@ int TownHall::AddGold() {
 
     //更新大本营金币数量
     gold_ += actual_add;
-
+    
+    // 使用UserDefault强制保存资源数据
+    cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
+    userDefault->setIntegerForKey("player_gold", gold_);
+    userDefault->setIntegerForKey("player_townhall_level", level_);
+    userDefault->flush(); // 立即写入磁盘
+    
     // 保存更新后的金币数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1231,7 +1288,6 @@ int TownHall::AddGold() {
         cocos2d::log("警告：保存金币数据到JSON文件失败");
     }
 
-    //返回存入金币数
     cocos2d::log("存入金币: %d，剩余可存入: %d", actual_add, remaining);
     return actual_add;
 }
@@ -1264,7 +1320,13 @@ bool TownHall::SpendGold(int amount) {
 
     //更新大本营金币数量
     gold_ = GetTotalGoldFromStorages();
-
+    
+    // 使用UserDefault强制保存资源数据
+    cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
+    userDefault->setIntegerForKey("player_gold", gold_);
+    userDefault->setIntegerForKey("player_townhall_level", level_);
+    userDefault->flush(); // 立即写入磁盘
+    
     // 保存更新后的金币数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1318,7 +1380,13 @@ int TownHall::AddElixir() {
 
     //更新大本营圣水数量
     elixir_ += actual_add;
-
+    
+    // 使用UserDefault强制保存资源数据
+    cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
+    userDefault->setIntegerForKey("player_elixir", elixir_);
+    userDefault->setIntegerForKey("player_townhall_level", level_);
+    userDefault->flush(); // 立即写入磁盘
+    
     // 保存更新后的圣水数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1357,7 +1425,13 @@ bool TownHall::SpendElixir(int amount) {
 
     //更新大本营圣水数量
     elixir_ = GetTotalElixirFromStorages();
-
+    
+    // 使用UserDefault强制保存资源数据
+    cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
+    userDefault->setIntegerForKey("player_elixir", elixir_);
+    userDefault->setIntegerForKey("player_townhall_level", level_);
+    userDefault->flush(); // 立即写入磁盘
+    
     // 保存更新后的圣水数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1369,7 +1443,7 @@ bool TownHall::SpendElixir(int amount) {
     return true;
 }
 
-void TownHall::AddGoldStorage(GoldStorage* gold_storage) {
+void TownHall::AddGoldStorage(ProductionBuilding* gold_storage) {
     if (!gold_storage) {
         return;
     }
@@ -1389,7 +1463,7 @@ void TownHall::AddGoldStorage(GoldStorage* gold_storage) {
     }
 }
 
-void TownHall::RemoveGoldStorage(GoldStorage* gold_storage) {
+void TownHall::RemoveGoldStorage(ProductionBuilding* gold_storage) {
     if (!gold_storage) {
         return;
     }
@@ -1402,7 +1476,7 @@ void TownHall::RemoveGoldStorage(GoldStorage* gold_storage) {
     }
 }
 
-void TownHall::AddElixirStorage(ElixirStorage* elixir_storage) {
+void TownHall::AddElixirStorage(ProductionBuilding* elixir_storage) {
     if (!elixir_storage) {
         return;
     }
@@ -1422,7 +1496,7 @@ void TownHall::AddElixirStorage(ElixirStorage* elixir_storage) {
     }
 }
 
-void TownHall::RemoveElixirStorage(ElixirStorage* elixir_storage) {
+void TownHall::RemoveElixirStorage(ProductionBuilding* elixir_storage) {
     if (!elixir_storage) {
         return;
     }

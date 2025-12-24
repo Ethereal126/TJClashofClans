@@ -74,8 +74,8 @@ protected:
     std::vector<WallBuilding*> walls_;         // 管理的城墙列表
 
     // ==================== 资源池管理相关属性 ====================
-    std::vector<GoldStorage*> gold_storages_;           // 管理的金币池列表
-    std::vector<ElixirStorage*> elixir_storages_;       // 管理的圣水池列表
+    std::vector<ProductionBuilding*> gold_storages_;           // 管理的金币池列表
+    std::vector<ProductionBuilding*> elixir_storages_;       // 管理的圣水池列表
     std::vector<SourceBuilding*> gold_mines_;           // 管理的金矿列表
     std::vector<SourceBuilding*> elixir_collectors_;    // 管理的圣水收集器列表
     std::vector<TrainingBuilding*> barracks_;           // 管理的训练营列表
@@ -224,25 +224,25 @@ public:
      * @brief 添加金币池到管理列表
      * @param gold_storage 金币池指针
      */
-    void AddGoldStorage(GoldStorage* gold_storage);
+    void AddGoldStorage(ProductionBuilding* gold_storage);
 
     /**
      * @brief 从管理列表中移除金币池
      * @param gold_storage 金币池指针
      */
-    void RemoveGoldStorage(GoldStorage* gold_storage);
+    void RemoveGoldStorage(ProductionBuilding* gold_storage);
 
     /**
      * @brief 添加圣水池到管理列表
      * @param elixir_storage 圣水池指针
      */
-    void AddElixirStorage(ElixirStorage* elixir_storage);
+    void AddElixirStorage(ProductionBuilding* elixir_storage);
 
     /**
      * @brief 从管理列表中移除圣水池
      * @param elixir_storage 圣水池指针
      */
-    void RemoveElixirStorage(ElixirStorage* elixir_storage);
+    void RemoveElixirStorage(ProductionBuilding* elixir_storage);
 
     /**
      * @brief 计算所有金币池中的金币总数
