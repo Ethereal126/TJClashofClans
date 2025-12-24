@@ -8,14 +8,15 @@
 #include <sstream>
 USING_NS_CC;
 
+// ==================== 兵种模板定义 ====================
 static std::vector<SoldierTemplate> soldier_templates = {
-    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldiers/Barbarian/Barbarianwalkright1.png",
+    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","others/Barbarian.png",
                     50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
-    SoldierTemplate(SoldierType::kArcher, "Archer","Soldiers/Archer/Archerattackdown1.png",
+    SoldierTemplate(SoldierType::kArcher, "Archer","others/Archer.png",
                     25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
-    SoldierTemplate(SoldierType::kBomber, "Bomber","Soldiers/Giant/Giantattackdown1.png",
+    SoldierTemplate(SoldierType::kBomber, "Bomber","others/Giant.png",
                     20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
-    SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
+    SoldierTemplate(SoldierType::kGiant, "Giant","others/Bomber.png",
                     500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
 
