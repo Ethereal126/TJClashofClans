@@ -25,8 +25,8 @@
  * @param level 输出参数，读取到的大本营等级
  * @return 读取成功返回true，失败返回false
  */
-    static bool LoadPlayerDataFromJSON(const std::string& file_path,
-        int& gold, int& elixir, int& level);
+static bool LoadPlayerDataFromJSON(const std::string& file_path,
+    int& gold, int& elixir, int& level);
 
 /**
  * @brief TownHall类
@@ -44,7 +44,7 @@ private:
      * @param texture 大本营当前等级使用的贴图路径。
      */
     TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture);
-    
+
     /**
      * @brief 私有析构函数
      * 清理UI组件
@@ -74,8 +74,8 @@ protected:
     std::vector<WallBuilding*> walls_;         // 管理的城墙列表
 
     // ==================== 资源池管理相关属性 ====================
-    std::vector<GoldStorage*> gold_storages_;           // 管理的金币池列表
-    std::vector<ElixirStorage*> elixir_storages_;       // 管理的圣水池列表
+    std::vector<ProductionBuilding*> gold_storages_;           // 管理的金币池列表
+    std::vector<ProductionBuilding*> elixir_storages_;       // 管理的圣水池列表
     std::vector<SourceBuilding*> gold_mines_;           // 管理的金矿列表
     std::vector<SourceBuilding*> elixir_collectors_;    // 管理的圣水收集器列表
     std::vector<TrainingBuilding*> barracks_;           // 管理的训练营列表
@@ -85,7 +85,7 @@ protected:
     cocos2d::Sprite* flag_sprite_;    // 可选：显示部落旗帜的子节点
     cocos2d::Label* level_label_;    // 显示大本营等级的文本标签
 
-	// ==================== 内部辅助函数 ====================
+    // ==================== 内部辅助函数 ====================
     void UpdateArmyCapacityFromBarracks();
     int GetTotalArmyCapacityFromBarracks() const;
 
@@ -158,6 +158,8 @@ public:
      */
     void ResetTownHall();
 
+
+
     /**
      * @brief 重写升级接口
      * 在基类 Building::Upgrade 的基础上，额外提升资源容量、军队容量等属性，
@@ -222,25 +224,25 @@ public:
      * @brief 添加金币池到管理列表
      * @param gold_storage 金币池指针
      */
-    void AddGoldStorage(GoldStorage* gold_storage);
+    void AddGoldStorage(ProductionBuilding* gold_storage);
 
     /**
      * @brief 从管理列表中移除金币池
      * @param gold_storage 金币池指针
      */
-    void RemoveGoldStorage(GoldStorage* gold_storage);
+    void RemoveGoldStorage(ProductionBuilding* gold_storage);
 
     /**
      * @brief 添加圣水池到管理列表
      * @param elixir_storage 圣水池指针
      */
-    void AddElixirStorage(ElixirStorage* elixir_storage);
+    void AddElixirStorage(ProductionBuilding* elixir_storage);
 
     /**
      * @brief 从管理列表中移除圣水池
      * @param elixir_storage 圣水池指针
      */
-    void RemoveElixirStorage(ElixirStorage* elixir_storage);
+    void RemoveElixirStorage(ProductionBuilding* elixir_storage);
 
     /**
      * @brief 计算所有金币池中的金币总数
@@ -515,7 +517,7 @@ public:
      */
     virtual void ShowInfo() const override;
 
-    
+
     struct BuildingTemplate {
         std::string name_;
         std::string icon_path_;
