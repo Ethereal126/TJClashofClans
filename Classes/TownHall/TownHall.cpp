@@ -10,13 +10,13 @@ USING_NS_CC;
 
 static std::vector<SoldierTemplate> soldier_templates = {
     SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldiers/Barbarian/Barbarianwalkright1.png",
-                    50, 12, 0.75f, 1.0f, 1.0f, 1, 25, 20),
+                    50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
     SoldierTemplate(SoldierType::kArcher, "Archer","Soldiers/Archer/Archerattackdown1.png",
-                    25, 10, 1.0f, 3.0f, 1.0f, 1, 50, 25),
+                    25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
     SoldierTemplate(SoldierType::kBomber, "Bomber","Soldiers/Giant/Giantattackdown1.png",
-                    20, 10, 1.0f, 1.0f, 1.0f, 2, 1000, 60),
+                    20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
     SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
-                    500, 30, 0.5f, 1.0f, 2.0f, 5, 500, 120)
+                    500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
 
 // ==================== JSON数据读取函数 ====================
@@ -519,6 +519,29 @@ bool TownHall::UpdatePlayerDataField(const std::string& file_path,
 
 // 在文件开头添加静态成员初始化
 TownHall* TownHall::instance_ = nullptr;
+
+TownHall* TownHall::Create(const std::string& name, int base,
+    cocos2d::Vec2 position,
+    const std::string& texture) {
+    auto building = new (std::nothrow) TownHall(name, base, position, texture);
+
+    if (building) {
+        if (building->initWithFile(texture)) {
+            // 标记为自动释放（Cocos2d-x的内存管理机制）
+            building->autorelease();
+
+            cocos2d::log("创建大本营: %s (类型: %s, 位置: %f,%f)",
+                name.c_str(), position.x, position.y);
+            return building;
+        }
+
+        // 初始化失败，删除对象
+        delete building;
+    }
+
+    cocos2d::log("创建大本营失败: %s", name.c_str());
+    return nullptr;
+}
 
 TownHall* TownHall::GetInstance() {
     InitializeInstance("大本营", 1, {0,0}, "buildings/TownHall1.png");
@@ -1619,6 +1642,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         }
     );
 
+    // 箭塔
     templates.emplace_back(
         "Archer Tower",
         "buildings/archertower.png",
@@ -1626,7 +1650,19 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 1.0f, 10, 5.0f);
+            return AttackBuilding::Create("Archer Tower", 1, { 0, 0 }, "buildings/archertower.png", 7, 5, 20);
+        }
+    );
+
+    // 加农炮
+    templates.emplace_back(
+        "Cannon",
+        "buildings/cannon1.png",
+        350,
+        2,
+        2,
+        []() -> Building* {
+            return AttackBuilding::Create("Cannon", 1, { 0, 0 }, "buildings/cannon1.png", 7, 10, 50);
         }
     );
 
