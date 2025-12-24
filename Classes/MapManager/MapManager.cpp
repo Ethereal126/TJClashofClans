@@ -272,6 +272,9 @@ void MapManager::addToWorld(cocos2d::Node* node, int zOrder) {
     if (_worldNode && node) {
         _worldNode->addChild(node, zOrder);
     }
+    else{
+        CCLOG("node addToWorld() failed");
+    }
 }
 
 

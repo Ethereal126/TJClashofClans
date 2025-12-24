@@ -39,7 +39,6 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     }
 
     // 3.设置兵种属性
-    is_alive_ = true;
     soldier_template_ = soldier_template;
     position_ = spawn_pos;
     current_health_ = soldier_template->GetHealth();
@@ -57,9 +56,11 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
         return false;
     }
     this->setPosition(map_->vecToWorld(spawn_pos));
-    map_->addToWorld(this);
+    this->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
     // 根据地图缩放系数调整士兵大小，保持视觉比例
-    this->setScale(0.5f * map_->getGridScaleFactor()); 
+    this->setScale(0.5f * map_->getGridScaleFactor());
+    map_->addToWorld(this);
+    map_->updateYOrder(this);
 
     this->DoAllMyActions();
 
@@ -208,38 +209,45 @@ void SoldierInCombat::DoAllMyActions(){
     }
 }
 
-// -------------------------- 死亡动画实现 --------------------------
-void SoldierInCombat::Die() {
-    if (!is_alive_) return;
+// -------------------------- 死亡实现 --------------------------
+void SoldierInCombat::NotifyManagerDie(){
+    auto manager = CombatManager::GetInstance();
+    if (manager) {
+        manager->num_of_live_soldiers_--;
+        for(auto it = manager->live_soldiers_.begin(); it != manager->live_soldiers_.end(); ++it){
+            if(*it == this){
+                manager->live_soldiers_.erase(it);
+                break;
+            }
+        }
 
-    is_alive_ = false;
+        for(auto it:manager->live_buildings_){
+            if(typeid(*it)== typeid(AttackBuildingInCombat)){
+                auto b = dynamic_cast<AttackBuildingInCombat*>(it);
+                if(b->current_target_==this){
+                    b->current_target_ = nullptr;
+                }
+            }
+        }
+
+        if(manager->IsCombatEnd()){
+            CCLOG("call EndCombat() from soldier");
+            manager->EndCombat();
+        }
+    }
+}
+
+void SoldierInCombat::Die() {
+    CCLOG("soldier die started");
     this->stopAllActions();  // 停止所有当前动作
 
     auto remove_self = cocos2d::CallFunc::create([this]() {
-        auto manager = CombatManager::GetInstance();
-        if (manager) {
-            for(auto it = manager->live_soldiers.begin(); it != manager->live_soldiers.end(); ++it){
-                if(*it == this){
-                    manager->live_soldiers.erase(it);
-                    break;
-                }
-            }
+        if (current_target_){
+            auto it = std::find(current_target_->subscribers.begin(),
+                                current_target_->subscribers.end(),this);
+            if (it != current_target_->subscribers.end()) current_target_->subscribers.erase(it);
         }
-        if (current_target_) {
-            for(auto it = current_target_->subscribers.begin(); it != current_target_->subscribers.end(); ++it){
-                if(*it == this){
-                    current_target_->subscribers.erase(it);
-                    break;
-                }
-            }
-        }
-        if (manager) {
-            manager->num_of_live_soldiers_--;
-            if(manager->IsCombatEnd()){
-                CCLOG("call EndCombat() from soldier");
-                manager->EndCombat();
-            }
-        }
+        NotifyManagerDie();
         this->removeFromParent();
     });
     this->runAction(remove_self);
@@ -378,7 +386,8 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(cocos2d::Vec2 start_tile,cocos2d
 
     if(building_width!=1 || building_length!=1){
         std::vector<cocos2d::Vec2> candidates;
-        int x_min = end_tile.x,y_min = end_tile.y,x_max = end_tile.x+building_width,y_max = end_tile.y+building_length;
+        int x_min = floor(end_tile.x),y_min = floor(end_tile.y),
+            x_max = x_min+building_width-1,y_max = y_min+building_length-1;
         // 1. 下边
         for (int x = x_min; x <= x_max; x += 1) candidates.emplace_back(x, y_min);
         // 2. 上边
@@ -406,6 +415,7 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(cocos2d::Vec2 start_tile,cocos2d
 
         // 3.2 若到达终点，回溯路径
         if (current.tile_pos.distance(end_tile)<=soldier_range) {
+            CCLOG("end tile:(%f,%f),soldier_range:%f",end_tile.x,end_tile.y,soldier_range);
             std::vector<cocos2d::Vec2> path;
             cocos2d::Vec2 temp_pos = current.tile_pos;
             // 回溯父节点直到起点
@@ -460,7 +470,6 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
         CCLOG("empty path");
     }
     LogPath(path);
-
     for(auto ptr = path.begin();ptr != path.end();ptr++){
         if(!map_->IsGridAvailable(*ptr)){
             CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
@@ -468,11 +477,11 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
             while(ptr != path.begin() && ptr->distance(new_target) <= this->soldier_template_->GetAttackRange()){
                 --ptr;
             }//ptr指向超出攻击范围的第一个点
-            // 此时 ptr 指向的是我们要保留的最后一个点
-            // 删除 ptr 之后的所有点
-            auto next_it = std::next(ptr);
-            if (next_it != path.end()) {
-                path.erase(next_it, path.end());
+            // 此时 ptr 指向的是我们要保留的倒数第二个点
+            // 删除 ptr 后一点之后的所有点
+            auto start_erase = std::next(std::next(ptr));
+            if (start_erase != path.end()) {
+                path.erase(start_erase, path.end());
             }
             break;
         }
@@ -536,15 +545,16 @@ BuildingInCombat* SoldierInCombat::GetNextTarget() {
 
     BuildingInCombat* target = *std::min_element(buildings.begin(),buildings.end(),
                                                  [&](BuildingInCombat* a,BuildingInCombat* b){
-        std::string ta = a->building_template_->GetName(),tb = b->building_template_->GetName();
-        std::string preference = this->soldier_template_->building_preference_;
-        bool aIsTarget = (ta == preference),bIsTarget = (tb == preference);
-
-        CCLOG("a:%s,b:%s,preference:%s",ta.c_str(),tb.c_str(),preference.c_str());
-
-        if (aIsTarget != bIsTarget) {
-            return aIsTarget;
+        if(this->soldier_template_->building_preference_.has_value()) {
+            std::type_index ta = typeid(*a->building_template_),tb = typeid(*b->building_template_);
+            std::type_index preference = this->soldier_template_->building_preference_.value();
+            bool aIsTarget = (ta == preference), bIsTarget = (tb == preference);
+            CCLOG("a:%s,b:%s,preference:%s", ta.name(), tb.name(), preference.name());
+            if (aIsTarget != bIsTarget) {
+                return aIsTarget;
+            }
         }
+
         return this->position_.distance(a->position_) < this->position_.distance(b->position_);
     });
     target->subscribers.push_back(this);
