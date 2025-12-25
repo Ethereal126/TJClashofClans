@@ -6,8 +6,6 @@
     "reward_elixir": 2000
   },
   "map_layout": {
-    "width": 25,
-    "length": 25,
     "buildings": [
       { "type": "TownHall", "x": 11, "y": 11, "level": 2 },
       { "type": "ArcherTower", "x": 11, "y": 15, "level": 2 },

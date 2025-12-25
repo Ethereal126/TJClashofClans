@@ -23,6 +23,7 @@ MainScene* MainScene::createScene() {
     auto ui = UIManager::getInstance();
     if (ui->init(scene)) {
         ui->showPanel(UIPanelType::GameHUD, UILayer::HUD);
+        AudioManager::getInstance()->playMusic(false);
 
         ui->setUICallback("OnEnterPlacementMode", [map]() {
             auto building = UIManager::getInstance()->getPendingPlacementBuilding();

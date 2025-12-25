@@ -1,6 +1,7 @@
 ﻿#include "MapManager.h"
 #include "TownHall/TownHall.h"
 #include "UIManager/UIManager.h"
+#include "Combat/Combat.h"
 #include <algorithm>
 #include <cmath>
 
@@ -42,8 +43,8 @@ bool MapManager::init(int width, int length, int gridSize, TerrainType terrainTy
     if (!cocos2d::Node::init()) return false;
 
     // 校准后的参数
-    _gridOffsetX = 0.0f;
-    _gridOffsetY = -210.0f;
+    _gridOffsetX = -2.5f;
+    _gridOffsetY = -219.0f;
     _gridScaleX = 2.3f;
     _gridScaleY = 2.33f;
 
@@ -106,6 +107,15 @@ void MapManager::initGrids() {
     if (_noDeploy.size() != _width) _noDeploy.assign(_width, std::vector<bool>(_length, false));
     _buildings.clear();
 
+    // 创建禁区可视化节点 (仅在战斗地图使用)
+    if (_terrainType == TerrainType::Battle) {
+        if (!_noDeployVisual) {
+            _noDeployVisual = cocos2d::DrawNode::create();
+            _worldNode->addChild(_noDeployVisual, -100); // 放在背景之上，建筑之下
+        }
+        _noDeployVisual->clear();
+    }
+
     // 加载大的地图背景图 (map_bg.png 现在包含平地和森林)
     const std::string bgPath = "tile/map_bg.png";
     if (!_bgSprite) {
@@ -118,70 +128,70 @@ void MapManager::initGrids() {
     }
 }
 
-void MapManager::preloadAllSoldierAnimations() {
-    // 1. 定义需要预加载的士兵及其模板数据（这里需要你确保这些数据与游戏初始化时一致）
-    // 注意：这里我们模拟队友的加载过程，但不触碰他的静态变量，
-    // 因为 AnimationCache::addAnimation 如果发现同名动画已存在，会自动跳过或覆盖，是安全的。
+// void MapManager::preloadAllSoldierAnimations() {
+//     // 1. 定义需要预加载的士兵及其模板数据（这里需要你确保这些数据与游戏初始化时一致）
+//     // 注意：这里我们模拟队友的加载过程，但不触碰他的静态变量，
+//     // 因为 AnimationCache::addAnimation 如果发现同名动画已存在，会自动跳过或覆盖，是安全的。
     
-    struct PreloadData {
-        std::string name;
-        int walkFrames;
-        int attackFrames;
-    };
-    std::vector<PreloadData> soldiers = {
-        {"Barbarian", 8, 8}, 
-        {"Archer", 8, 8},
-        {"Giant", 8, 8},
-        {"Bomber", 8, 8}
-    };
+//     struct PreloadData {
+//         std::string name;
+//         int walkFrames;
+//         int attackFrames;
+//     };
+//     std::vector<PreloadData> soldiers = {
+//         {"Barbarian", 8, 8}, 
+//         {"Archer", 8, 8},
+//         {"Giant", 8, 8},
+//         {"Bomber", 8, 8}
+//     };
 
-    auto frameCache = cocos2d::SpriteFrameCache::getInstance();
-    auto animCache = cocos2d::AnimationCache::getInstance();
-    std::vector<std::string> directions = {"up", "down", "left", "right"};
+//     auto frameCache = cocos2d::SpriteFrameCache::getInstance();
+//     auto animCache = cocos2d::AnimationCache::getInstance();
+//     std::vector<std::string> directions = {"up", "down", "left", "right"};
 
-    for (const auto& s : soldiers) {
-        std::string plist = "Soldiers/" + s.name + "/anims.plist";
-        std::string png = "Soldiers/" + s.name + "/anims.png";
+//     for (const auto& s : soldiers) {
+//         std::string plist = "Soldiers/" + s.name + "/anims.plist";
+//         std::string png = "Soldiers/" + s.name + "/anims.png";
         
-        if (cocos2d::FileUtils::getInstance()->isFileExist(plist)) {
-            frameCache->addSpriteFramesWithFile(plist, png);
+//         if (cocos2d::FileUtils::getInstance()->isFileExist(plist)) {
+//             frameCache->addSpriteFramesWithFile(plist, png);
             
-            // 预加载行走动画 (完全匹配队友的命名：name + "walk" + dir)
-            for (const auto& dir : directions) {
-                std::string animName = s.name + "walk" + dir;
-                if (!animCache->getAnimation(animName)) {
-                    cocos2d::Vector<cocos2d::SpriteFrame*> frames;
-                    for (int i = 1; i <= s.walkFrames; ++i) {
-                        std::string frameName = animName + std::to_string(i) + ".png";
-                        auto frame = frameCache->getSpriteFrameByName(frameName);
-                        if (frame) frames.pushBack(frame);
-                    }
-                    if (!frames.empty()) {
-                        auto anim = cocos2d::Animation::createWithSpriteFrames(frames, 0.1f);
-                        animCache->addAnimation(anim, animName);
-                    }
-                }
-            }
+//             // 预加载行走动画 (完全匹配队友的命名：name + "walk" + dir)
+//             for (const auto& dir : directions) {
+//                 std::string animName = s.name + "walk" + dir;
+//                 if (!animCache->getAnimation(animName)) {
+//                     cocos2d::Vector<cocos2d::SpriteFrame*> frames;
+//                     for (int i = 1; i <= s.walkFrames; ++i) {
+//                         std::string frameName = animName + std::to_string(i) + ".png";
+//                         auto frame = frameCache->getSpriteFrameByName(frameName);
+//                         if (frame) frames.pushBack(frame);
+//                     }
+//                     if (!frames.empty()) {
+//                         auto anim = cocos2d::Animation::createWithSpriteFrames(frames, 0.1f);
+//                         animCache->addAnimation(anim, animName);
+//                     }
+//                 }
+//             }
 
-            // 预加载攻击动画 (完全匹配队友的命名：name + "attack" + dir)
-            for (const auto& dir : directions) {
-                std::string animName = s.name + "attack" + dir;
-                if (!animCache->getAnimation(animName)) {
-                    cocos2d::Vector<cocos2d::SpriteFrame*> frames;
-                    for (int i = 1; i <= s.attackFrames; ++i) {
-                        std::string frameName = animName + std::to_string(i) + ".png";
-                        auto frame = frameCache->getSpriteFrameByName(frameName);
-                        if (frame) frames.pushBack(frame);
-                    }
-                    if (!frames.empty()) {
-                        auto anim = cocos2d::Animation::createWithSpriteFrames(frames, 0.1f);
-                        animCache->addAnimation(anim, animName);
-                    }
-                }
-            }
-        }
-    }
-}
+//             // 预加载攻击动画 (完全匹配队友的命名：name + "attack" + dir)
+//             for (const auto& dir : directions) {
+//                 std::string animName = s.name + "attack" + dir;
+//                 if (!animCache->getAnimation(animName)) {
+//                     cocos2d::Vector<cocos2d::SpriteFrame*> frames;
+//                     for (int i = 1; i <= s.attackFrames; ++i) {
+//                         std::string frameName = animName + std::to_string(i) + ".png";
+//                         auto frame = frameCache->getSpriteFrameByName(frameName);
+//                         if (frame) frames.pushBack(frame);
+//                     }
+//                     if (!frames.empty()) {
+//                         auto anim = cocos2d::Animation::createWithSpriteFrames(frames, 0.1f);
+//                         animCache->addAnimation(anim, animName);
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
 
 std::pair<int, int> MapManager::getMapSize() const {
     return { _width, _length };
@@ -252,6 +262,7 @@ void MapManager::updateBuildingGrids(Building* building, int gridX, int gridY, b
 	const int bw = building ? building->GetWidth() : 1;
 	const int bh = building ? building->GetLength() : 1;
 
+    // 1. 更新建筑占位和逻辑状态
     for (int x = gridX; x < gridX + bw; ++x) {
         for (int y = gridY; y < gridY + bh; ++y) {
             if (!isValidGrid(x, y)) continue;
@@ -262,6 +273,25 @@ void MapManager::updateBuildingGrids(Building* building, int gridX, int gridY, b
             else {
                 _gridStates[x][y] = GridState::Empty;
                 _gridBuildings[x][y] = nullptr;
+            }
+        }
+    }
+
+    // 2. 更新士兵部署禁区 (仅在战斗地图生效)
+    if (_terrainType == TerrainType::Battle) {
+        // 范围：建筑占据的格子 + 周围一圈 (缓冲区)
+        for (int x = gridX - 1; x <= gridX + bw; ++x) {
+            for (int y = gridY - 1; y <= gridY + bh; ++y) {
+                if (!isValidGrid(x, y)) continue;
+                
+                if (occupy) {
+                    _noDeploy[x][y] = true;
+                } else {
+                    // 暂时简单处理：移除建筑时取消禁区
+                    // 注意：如果多个建筑禁区重叠，这里可能会误删邻近建筑的禁区
+                    // 但战斗地图建筑通常是静态加载的，不会在运行时移动
+                    _noDeploy[x][y] = false;
+                }
             }
         }
     }
@@ -293,21 +323,32 @@ bool MapManager::placeBuilding(Building* building, int gridX, int gridY) {
 void MapManager::setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int width, int length) {
     if (!node) return;
 
-    // 1. 设置位置（相对 worldNode）
+    // 1. 设置位置（相对 worldNode）和锚点
     node->setPosition(gridToWorld(gridX, gridY));
     node->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
 
     // 2. 设置缩放适配格子
-    CCLOG("width:%d,length:%d",width,length);
     auto sprite = dynamic_cast<cocos2d::Sprite*>(node);
     if (sprite && sprite->getContentSize().width > 0) {
-        // 考虑网格的缩放系数 _gridScaleX
-        float visualWidth = (width + length) * (_gridSize * 0.5f * _gridScaleX);
-        // 考虑网格的缩放系数 _gridScaleY
-        float visualHeight = (width + length) * (_gridSize * 0.5f * _gridScaleY);
-        float scale = std::min(visualWidth / sprite->getContentSize().width,
-                               visualHeight / sprite->getContentSize().height);
-        node->setScale(scale);
+        // 核心逻辑：如果传入了有效的占地尺寸 (width > 0)，则执行网格适配缩放
+        // 这样可以同时兼顾 Building 和普通障碍物
+        if (width > 0 && length > 0) {
+            float gridHalfWidth = _gridSize * 0.5f * _gridScaleX;
+            float visualWidthOnMap = (width + length) * gridHalfWidth;
+            
+            // 核心调整：确保主场景 Building 和战斗场景 BuildingInCombat 使用相同的缩放系数
+            // 我们通过检查节点名称或尝试转换来识别它们
+            bool isBuilding = dynamic_cast<Building*>(node) != nullptr || 
+                              (node->getName() == "BuildingInCombat") ||
+                              (dynamic_cast<BuildingInCombat*>(node) != nullptr);
+
+            float fitFactor = isBuilding ? 0.6f : 1.0f; 
+            float targetWidth = visualWidthOnMap * fitFactor;
+            
+            float scale = targetWidth / sprite->getContentSize().width;
+            node->setScale(scale);
+        }
+        // 如果没有传入尺寸（比如士兵调用时传 0），则不在此处处理缩放，保持其原始大小
     }
 
     // 3. 遮挡关系处理 (Y-Sorting)
@@ -331,6 +372,11 @@ bool MapManager::removeBuilding(int gridX, int gridY) {
 
     auto it = std::find(_buildings.begin(), _buildings.end(), b);
     if (it != _buildings.end()) _buildings.erase(it);
+
+    // 自动保存
+    if (!_currentSavePath.empty() && _terrainType == TerrainType::Home) {
+        saveMapData(_currentSavePath);
+    }
     return true;
 }
 
@@ -347,6 +393,11 @@ bool MapManager::moveBuilding(int fromX, int fromY, int toX, int toY) {
     updateBuildingGrids(b, toX, toY, true);
 
     setupNodeOnMap(b, toX, toY, bw, bh);
+
+    // 自动保存
+    if (!_currentSavePath.empty() && _terrainType == TerrainType::Home) {
+        saveMapData(_currentSavePath);
+    }
     return true;
 }
 
@@ -430,6 +481,10 @@ void MapManager::removeObstacle(int gridX, int gridY) {
             sprite->removeFromParent();
             _gridObstacles[gridX][gridY] = nullptr;
         }
+        // 自动保存
+        if (!_currentSavePath.empty() && _terrainType == TerrainType::Home) {
+            saveMapData(_currentSavePath);
+        }
     }
 }
 
@@ -473,12 +528,6 @@ void MapManager::enterPlacementMode(Building* building, int cost) {
 
     // 设置建筑为半透明预览状态
     _pendingBuilding->setOpacity(180);
-    _pendingBuilding->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
-    _worldNode->addChild(_pendingBuilding, 1000);
-
-    // 创建格子高亮绘制节点
-    _placementHighlight = cocos2d::DrawNode::create();
-    _worldNode->addChild(_placementHighlight, 999);
 
     // 初始位置放在地图中央
     int buildingWidth = _pendingBuilding->GetWidth();
@@ -486,9 +535,15 @@ void MapManager::enterPlacementMode(Building* building, int cost) {
     _placementGridX = _width / 2 - buildingWidth / 2;
     _placementGridY = _length / 2 - buildingHeight / 2;
 
-    // 更新预览显示
-    cocos2d::Vec2 worldPos = gridToWorld(_placementGridX, _placementGridY);
-    _pendingBuilding->setPosition(worldPos);
+    // 使用统一接口设置初始位置、缩放和遮挡
+    setupNodeOnMap(_pendingBuilding, _placementGridX, _placementGridY, buildingWidth, buildingHeight);
+    _worldNode->addChild(_pendingBuilding, 1000); // 预览时给予较高的初始 ZOrder
+
+    // 创建格子高亮绘制节点
+    _placementHighlight = cocos2d::DrawNode::create();
+    _worldNode->addChild(_placementHighlight, 999);
+
+    // 检查是否可放置
     _canPlaceAtCurrentPos = isRangeAvailable(_placementGridX, _placementGridY,
         buildingWidth, buildingHeight);
     drawPlacementHighlight();
@@ -539,13 +594,26 @@ bool MapManager::confirmPlacement() {
     // 恢复建筑不透明
     _pendingBuilding->setOpacity(255);
 
+    // 确保最终位置和缩放正确
+    setupNodeOnMap(_pendingBuilding, _placementGridX, _placementGridY, _pendingBuilding->GetWidth(), _pendingBuilding->GetLength());
+    _pendingBuilding->SetPosition({_placementGridX, _placementGridY});
+
     // 注册到格子系统
     updateBuildingGrids(_pendingBuilding, _placementGridX, _placementGridY, true);
     _buildings.push_back(_pendingBuilding);
 
-    //TownHall* townHall = TownHall::GetInstance();
-    //townHall->SpendGold(_pendingBuildingCost);
-    CCLOG("Building placed! Cost: %d gold (TODO: deduct from resources)", _pendingBuildingCost);
+    TownHall* townHall = TownHall::GetInstance();
+    if (townHall->SpendGold(_pendingBuildingCost)) {
+        // 更新资源栏显示
+        UIManager::getInstance()->updateResourceDisplay(ResourceType::Gold, townHall->GetGold());
+    }    
+    CCLOG("Building placed! Cost: %d gold", _pendingBuildingCost);
+
+    // 如果设置了保存路径且是主场景，则自动保存
+    if (!_currentSavePath.empty() && _terrainType == TerrainType::Home) {
+        saveMapData(_currentSavePath);
+        CCLOG("Auto-saved map to: %s", _currentSavePath.c_str());
+    }
 
     // 清理放置模式状态（不删除建筑，因为已放置成功）
     Building* placedBuilding = _pendingBuilding;
@@ -587,9 +655,10 @@ void MapManager::updatePlacementPreview(const cocos2d::Vec2& touchPos) {
     _placementGridX = newGridX;
     _placementGridY = newGridY;
 
-    // 更新建筑位置
-    cocos2d::Vec2 worldPos = gridToWorld(_placementGridX, _placementGridY);
-    _pendingBuilding->setPosition(worldPos);
+    // 使用统一接口更新建筑位置、缩放和 Y-Sorting
+    setupNodeOnMap(_pendingBuilding, _placementGridX, _placementGridY, buildingWidth, buildingHeight);
+    // 预览过程中可以保持较高的 ZOrder 避免被已有建筑完全遮挡，或者跟随 Y-Sorting
+    // 这里 setupNodeOnMap 内部会调用 updateYOrder
 
     // 检查是否可放置
     _canPlaceAtCurrentPos = isRangeAvailable(_placementGridX, _placementGridY,
@@ -787,6 +856,10 @@ void MapManager::setupInputListener() {
     _inputListener->onTouchEnded = [this](cocos2d::Touch* touch, cocos2d::Event*) {
         if (_isPlacementMode) return;
         if (!_isMapDragging) {
+            // 如果是战斗模式，禁止点击建筑弹出面板
+            if (UIManager::getInstance()->isInBattleMode()) {
+                return;
+            }
             auto gridIdx = worldToGrid(touch->getLocation());
 
             if (isValidGrid(gridIdx.first, gridIdx.second)) {
@@ -900,12 +973,19 @@ bool MapManager::loadFromJSONObject(const rapidjson::Value& mapData) {
                         // Set level (assuming UpgradeToLevel exists or calling Upgrade multiple times)
                         for(int l = 1; l < level; ++l) building->Upgrade();
                         
-//                        if (!placeBuilding(building, gx, gy)) {
-//                            building->release(); // Failed to place
-//                        }
-                        PushBuilding(building);
-                        building->setVisible(false);
-                        this->addChild(building);
+                        // 关键改动：如果不是主场景（战斗模式），我们只记录建筑数据，不进行实际的渲染和网格占用
+                        // 战斗中的建筑渲染由 CombatManager 负责创建对应的 BuildingInCombat 节点
+                        if (_terrainType == TerrainType::Home) {
+                            placeBuilding(building, gx, gy);
+                        } else {
+                            // 战斗模式下，只需将建筑添加到列表供 CombatManager 读取
+                            _buildings.push_back(building);
+                            // 依然需要更新网格数据以便战斗逻辑查询
+                            updateBuildingGrids(building, gx, gy, true);
+                            // 建筑本身不需要显示，因为 Combat 会创建新的 Sprite
+                            building->setVisible(false);
+                            this->addChild(building);
+                        }
                     }
                     break;
                 }
@@ -924,13 +1004,66 @@ bool MapManager::loadFromJSONObject(const rapidjson::Value& mapData) {
         }
     }
 
+    // 地图加载完成后，更新一次禁区可视化
+    if (_terrainType == TerrainType::Battle) {
+        updateNoDeployVisual();
+    }
+
     return true;
 }
 
+void MapManager::updateNoDeployVisual() {
+    if (!_noDeployVisual || _terrainType != TerrainType::Battle) return;
+
+    _noDeployVisual->clear();
+
+    float halfW = _gridSize * 0.5f * _gridScaleX;
+    float quarterH = _gridSize * 0.25f * _gridScaleY;
+
+    // 遍历所有格子，绘制禁区
+    for (int x = 0; x < _width; ++x) {
+        for (int y = 0; y < _length; ++y) {
+            if (_noDeploy[x][y]) {
+                cocos2d::Vec2 center = gridToWorld(x, y);
+                
+                // 绘制菱形的四个顶点
+                cocos2d::Vec2 vertices[4] = {
+                    cocos2d::Vec2(center.x, center.y + quarterH),   // 上
+                    cocos2d::Vec2(center.x + halfW, center.y),      // 右
+                    cocos2d::Vec2(center.x, center.y - quarterH),   // 下
+                    cocos2d::Vec2(center.x - halfW, center.y)       // 左
+                };
+
+                // 使用非常透明的红色 (Alpha = 60/255)
+                _noDeployVisual->drawSolidPoly(vertices, 4, cocos2d::Color4F(1.0f, 0.0f, 0.0f, 0.2f));
+            }
+        }
+    }
+}
+
 bool MapManager::loadMapData(const std::string& filePath) {
-    std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(filePath);
+    _currentSavePath = filePath; // 记录保存路径以便后续自动保存
+    
+    // 1. 构造可写目录下的绝对路径
+    std::string writablePath = cocos2d::FileUtils::getInstance()->getWritablePath();
+    std::string fullPath = writablePath + filePath;
+    // 确保路径末尾有斜杠
+    if (!writablePath.empty() && writablePath.back() != '/' && writablePath.back() != '\\') {
+        writablePath += "/";
+    }
+    
+    // 2. 检查可写目录是否存在该存档
+    bool existsInWritable = cocos2d::FileUtils::getInstance()->isFileExist(fullPath);
+    
+    // 3. 如果可写目录没有，才去资源目录找初始地图
+    if (!existsInWritable) {
+        fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(filePath);
+    }
+    
+    CCLOG("MapManager: Loading map from absolute path: %s (%s)", fullPath.c_str(), existsInWritable ? "Player Progress" : "Initial Template");
+
     if (!cocos2d::FileUtils::getInstance()->isFileExist(fullPath)){
-        CCLOG("file not found");
+        CCLOG("MapManager: Load file not found: %s", fullPath.c_str());
         return false;
     }
 
@@ -954,9 +1087,34 @@ bool MapManager::loadMapData(const std::string& filePath) {
 bool MapManager::saveMapData(const std::string& filePath) const {
     rapidjson::Document doc;
     
-    const std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(filePath);
-    if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
-        const std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
+    // 优先从可写目录读取现有存档以保留 player_stats
+    std::string writablePath = cocos2d::FileUtils::getInstance()->getWritablePath();
+    // 确保路径末尾有斜杠
+    if (!writablePath.empty() && writablePath.back() != '/' && writablePath.back() != '\\') {
+        writablePath += "/";
+    }
+    std::string fullPath = writablePath + filePath;
+    
+    // 自动创建子目录 (例如 archived/)
+    size_t lastSlash = fullPath.find_last_of("/\\");
+    if (lastSlash != std::string::npos) {
+        std::string dirPath = fullPath.substr(0, lastSlash);
+        if (!cocos2d::FileUtils::getInstance()->isDirectoryExist(dirPath)) {
+            cocos2d::FileUtils::getInstance()->createDirectory(dirPath);
+            CCLOG("MapManager: Created directory %s", dirPath.c_str());
+        }
+    }
+    
+    CCLOG("MapManager: Attempting to save to absolute path: %s", fullPath.c_str());
+    
+    // 如果可写目录没文件，尝试从资源目录读
+    std::string readPath = fullPath;
+    if (!cocos2d::FileUtils::getInstance()->isFileExist(readPath)) {
+        readPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(filePath);
+    }
+
+    if (cocos2d::FileUtils::getInstance()->isFileExist(readPath)) {
+        const std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(readPath);
         doc.Parse(content.c_str());
         if (doc.HasParseError() || !doc.IsObject()) {
             doc.SetObject();
@@ -968,19 +1126,18 @@ bool MapManager::saveMapData(const std::string& filePath) const {
     rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
 
     rapidjson::Value mapLayout(rapidjson::kObjectType);
-    mapLayout.AddMember("width", _width, allocator);
-    mapLayout.AddMember("length", _length, allocator);
-    mapLayout.AddMember("grid_size", _gridSize, allocator);
 
     rapidjson::Value buildingsArray(rapidjson::kArrayType);
     for (auto b : _buildings) {
         rapidjson::Value bObj(rapidjson::kObjectType);
-        bObj.AddMember("type", rapidjson::Value(b->GetName().c_str(), allocator).Move(), allocator);
+        
+        rapidjson::Value nameVal;
+        nameVal.SetString(b->GetName().c_str(), allocator);
+        bObj.AddMember("type", nameVal, allocator);
 
-        // 使用 worldToVec 获取本地坐标对应的格子，因为 b->getPosition() 是相对 _worldNode 的
-        auto vecPos = worldToVec(b->getPosition());
-        bObj.AddMember("x", (int)std::floor(vecPos.x), allocator);
-        bObj.AddMember("y", (int)std::floor(vecPos.y), allocator);
+        auto pos = b->GetPosition(); 
+        bObj.AddMember("x", (int)pos.x, allocator);
+        bObj.AddMember("y", (int)pos.y, allocator);
         bObj.AddMember("level", b->GetLevel(), allocator);
 
         buildingsArray.PushBack(bObj, allocator);
@@ -992,7 +1149,6 @@ bool MapManager::saveMapData(const std::string& filePath) const {
         for (int y = 0; y < _length; ++y) {
             if (_gridStates[x][y] == GridState::Obstacle) {
                 rapidjson::Value oObj(rapidjson::kObjectType);
-                oObj.AddMember("type", rapidjson::Value("Obstacle", allocator).Move(), allocator);
                 oObj.AddMember("x", x, allocator);
                 oObj.AddMember("y", y, allocator);
                 obstaclesArray.PushBack(oObj, allocator);
@@ -1010,8 +1166,14 @@ bool MapManager::saveMapData(const std::string& filePath) const {
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     doc.Accept(writer);
 
-    return cocos2d::FileUtils::getInstance()->writeStringToFile(buffer.GetString(), filePath);
-
+    // 写入到可写路径（保证有权限）
+    bool success = cocos2d::FileUtils::getInstance()->writeStringToFile(buffer.GetString(), fullPath);
+    if (success) {
+        CCLOG("MapManager: Auto-saved to %s", fullPath.c_str());
+    } else {
+        CCLOG("MapManager: ERROR failed to save to %s", fullPath.c_str());
+    }
+    return success;
 }
 
 std::vector<cocos2d::Vec2> MapManager::GetSurroundings(const cocos2d::Vec2& pos) const{

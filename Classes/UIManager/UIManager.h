@@ -204,6 +204,9 @@ public:
     // 是否处于战斗模式
     bool isInBattleMode() const { return _isBattleMode; }
 
+    // 检查所有士兵是否已部署完毕
+    bool areAllTroopsDeployed() const;
+
     // 结束战斗（由 Combat 调用，显示结算界面）
     void endBattle(int stars, int destroyPercent);
 

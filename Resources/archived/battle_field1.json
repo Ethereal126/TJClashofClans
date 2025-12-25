@@ -6,8 +6,6 @@
     "reward_elixir": 800
   },
   "map_layout": {
-    "width": 20,
-    "length": 20,
     "buildings": [
       { "type": "TownHall", "x": 15, "y": 15, "level": 2 },
       { "type": "Gold Mine", "x": 8, "y": 12, "level": 2 },

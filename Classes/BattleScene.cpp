@@ -27,6 +27,7 @@ BattleScene* BattleScene::createScene(int levelId) {
     auto ui = UIManager::getInstance();
     if (ui->init(scene)) {
         ui->enterBattleMode(map);
+        AudioManager::getInstance()->playMusic(true);
         combatMgr->StartCombat();
         ui->setUICallback("OnRequestEndBattle", []() {
             AudioManager::getInstance()->playMusic(false);
