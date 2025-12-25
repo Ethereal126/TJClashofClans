@@ -26,6 +26,7 @@ SoldierInCombat::~SoldierInCombat() {
 }
 
 // -------------------------- 初始化实现 --------------------------
+
 bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map) {
     // 1. 调用父类Sprite::init()确保渲染节点初始化
     if (!cocos2d::Sprite::init()) {
@@ -47,6 +48,9 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     if (!is_animation_loaded_[static_cast<int>(this->soldier_template_->GetSoldierType())]) {
         LoadSoldierAnimations();
     }
+    auto soldierAnim = cocos2d::AnimationCache::getInstance()->getAnimation(this->soldier_template_->GetName()+"walkdown");
+    auto firstFrame = soldierAnim->getFrames().at(0)->getSpriteFrame();
+    this->setSpriteFrame(firstFrame);
 
     // 4. 设置初始状态
     map_ = map;
@@ -62,6 +66,9 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
     map_->addToWorld(this);
     map_->updateYOrder(this);
 
+    auto soldier_size = this->getContentSize();
+    hp_bar_ = HpBarComponents::createHpBar(this, soldier_size.height);
+
     this->DoAllMyActions();
 
     return true;
@@ -71,8 +78,9 @@ void SoldierInCombat::TakeDamage(int damage) {
     current_health_ -= damage;
     if (current_health_ < 0){
         current_health_ = 0;
-        Die();
     }
+    hp_bar_.updateHp(current_health_,soldier_template_->GetHealth());
+    if(current_health_==0) Die();
 }
 
 
@@ -472,14 +480,16 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
     LogPath(path);
     for(auto ptr = path.begin();ptr != path.end();ptr++){
         if(!map_->IsGridAvailable(*ptr)){
-            CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
+            //CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
             auto new_target = *ptr;
             while(ptr != path.begin() && ptr->distance(new_target) <= this->soldier_template_->GetAttackRange()){
                 --ptr;
             }//ptr指向超出攻击范围的第一个点
             // 此时 ptr 指向的是我们要保留的倒数第二个点
             // 删除 ptr 后一点之后的所有点
-            auto start_erase = std::next(std::next(ptr));
+            auto last_to_keep = std::next(ptr);
+            if (last_to_keep == path.end()) break;
+            auto start_erase = std::next(last_to_keep);
             if (start_erase != path.end()) {
                 path.erase(start_erase, path.end());
             }

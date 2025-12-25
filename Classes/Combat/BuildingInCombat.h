@@ -37,7 +37,7 @@ public:
 private:
     int current_health_;
     MapManager* map_;
-
+    HpBarComponents hp_bar_;
 };
 
 class AttackBuildingInCombat : public BuildingInCombat{
@@ -50,7 +50,7 @@ private:
     int attack_damage_;
     float attack_range_,attack_interval_;
 
-    void DealDamageToTarget();
+    void DealDamageToTarget() const;
     void ChooseTarget();
 };
 

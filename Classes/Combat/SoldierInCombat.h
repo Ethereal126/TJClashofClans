@@ -9,9 +9,9 @@
 #include "cocos-ext.h"
 #include "Soldier/Soldier.h"
 #include "MapManager/MapManager.h"
+#include "HpBarUtils.h"
 
 class BuildingInCombat;
-
 
 class SoldierInCombat : public cocos2d::Sprite{
 public:
@@ -34,6 +34,7 @@ public:
 protected:
     int current_health_;
     static const std::string direction_names[4];
+    HpBarComponents hp_bar_;
 
     ~SoldierInCombat() override;
     void MoveToTargetAndStartAttack();

@@ -92,6 +92,7 @@ list(APPEND GAME_SOURCE
     Classes/AudioManager/AudioManager.cpp
     Classes/BattleScene.cpp
     Classes/Combat/Combat.cpp
+    Classes/Combat/HpBarUtils.cpp
     Classes/Soldier/Soldier.cpp
     Classes/TownHall/TownHall.cpp
     Classes/UIManager/UIManager.cpp

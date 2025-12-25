@@ -52,6 +52,10 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     map_->setupNodeOnMap(this,static_cast<int>(position_.x),static_cast<int>(position_.y),
                          building_template_->GetWidth(),building_template_->GetLength());
 
+
+    auto building_size = this->getContentSize();
+    hp_bar_ = HpBarComponents::createHpBar(this,building_size.height);
+
     CCLOG("Building init success");
     return true;
 }
@@ -61,6 +65,9 @@ bool BuildingInCombat::TakeDamage(int damage) {
     current_health_ -= damage;
     if (current_health_ <= 0) {
         current_health_ = 0;
+    }
+    hp_bar_.updateHp(current_health_,this->building_template_->GetHealth());
+    if(current_health_==0) {
         Die();
         return false;
     }
@@ -97,7 +104,7 @@ bool AttackBuildingInCombat::Init(const Building *building_template, MapManager 
     return true;
 }
 
-void AttackBuildingInCombat::DealDamageToTarget() {
+void AttackBuildingInCombat::DealDamageToTarget() const {
     if(current_target_) {
         current_target_->TakeDamage(attack_damage_);  // 调用建筑的受伤害方法
         CCLOG("current soldier health:%d", current_target_->GetCurrentHealth());

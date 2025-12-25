@@ -644,7 +644,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     int saved_gold = userDefault->getIntegerForKey("player_gold", -1);
     int saved_elixir = userDefault->getIntegerForKey("player_elixir", -1);
     bool use_user_default = (saved_gold != -1 && saved_elixir != -1);
-    
+
     // 从JSON文件读取玩家数据（备用）
     int json_gold = 0;
     int json_elixir = 0;
@@ -662,16 +662,16 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
             gold_ = saved_gold;
             elixir_ = saved_elixir;
             level_ = userDefault->getIntegerForKey("player_townhall_level", base);
-            
+
             cocos2d::log("从UserDefault加载资源数据: 金币=%d, 圣水=%d, 等级=%d", gold_, elixir_, level_);
-            
+
             // 根据等级更新纹理
             std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
             this->setTexture(new_texture);
         } else {
             // 如果UserDefault中没有数据，则从JSON文件加载
             cocos2d::log("UserDefault中没有资源数据，从JSON文件加载");
-            
+
             // ✅ 只在第一次没有存档文件时，才从Resources复制一份初始存档
             if (!cocos2d::FileUtils::getInstance()->isFileExist(json_file_path)) {
                 if (cocos2d::FileUtils::getInstance()->isFileExist(source_path)) {
@@ -753,7 +753,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
                 this->setTexture(texture);
             }
         }
-        
+
         // 如果从UserDefault加载了数据，也需要分配圣水到储罐
         if (use_user_default && !elixir_storages_.empty() && saved_elixir > 0) {
             auto distributeElixir = [this, saved_elixir](float) {
@@ -773,7 +773,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
                 }
                 cocos2d::log("已将%d圣水从UserDefault分配到储罐中", saved_elixir - remaining);
             };
-            
+
             // 延迟执行，确保所有建筑已经加载完成
             this->scheduleOnce(distributeElixir, 0.1f, "distribute_elixir_from_userdefault");
         }
@@ -1281,7 +1281,7 @@ int TownHall::AddGold() {
     userDefault->setIntegerForKey("player_gold", gold_);
     userDefault->setIntegerForKey("player_townhall_level", level_);
     userDefault->flush(); // 立即写入磁盘
-    
+
     // 保存更新后的金币数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1327,7 +1327,7 @@ bool TownHall::SpendGold(int amount) {
     userDefault->setIntegerForKey("player_gold", gold_);
     userDefault->setIntegerForKey("player_townhall_level", level_);
     userDefault->flush(); // 立即写入磁盘
-    
+
     // 保存更新后的金币数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1387,7 +1387,7 @@ int TownHall::AddElixir() {
     userDefault->setIntegerForKey("player_elixir", elixir_);
     userDefault->setIntegerForKey("player_townhall_level", level_);
     userDefault->flush(); // 立即写入磁盘
-    
+
     // 保存更新后的圣水数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1432,7 +1432,7 @@ bool TownHall::SpendElixir(int amount) {
     userDefault->setIntegerForKey("player_elixir", elixir_);
     userDefault->setIntegerForKey("player_townhall_level", level_);
     userDefault->flush(); // 立即写入磁盘
-    
+
     // 保存更新后的圣水数量到JSON文件
     // 使用可写路径确保文件可以被正确更新
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -1808,7 +1808,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 10, { 0, 0 }, "buildings/archertower.png", 7, 5, 20);
+            return AttackBuilding::Create("Archer Tower", 10, { 0, 0 }, "buildings/archertower.png", 1, 10, 10);
         }
     );
 
@@ -1820,7 +1820,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Cannon", 10, { 0, 0 }, "buildings/cannon1.png", 7, 10, 50);
+            return AttackBuilding::Create("Cannon", 10, { 0, 0 }, "buildings/cannon1.png", 0.8, 7, 9);
         }
     );
 
@@ -1850,7 +1850,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         20,   // 训练时间（秒）
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建野蛮人
-            return new Soldier(SoldierType::kBarbarian, 25, 100, 1.0f, 0.4f, 1.0f);
+            return new Soldier(SoldierType::kBarbarian, 50, 12, 0.75f, 1.0f, 1.0f);
         }
     );
 
@@ -1863,7 +1863,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         25,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建弓箭手
-            return new Soldier(SoldierType::kArcher, 22, 70, 0.8f, 3.5f, 1.0f);
+            return new Soldier(SoldierType::kArcher, 25, 10, 1.0f, 3.5f, 1.0f);
         }
     );
 
@@ -1876,10 +1876,9 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         120,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建巨人
-            return new Soldier(SoldierType::kGiant, 30, 200, 0.6f, 1.0f, 2.0f);
+            return new Soldier(SoldierType::kGiant, 500, 30, 0.5f, 1.0f, 2.0f);
         }
     );
-
 
     soldiers.emplace_back(
         SoldierType::kBomber,
@@ -1890,10 +1889,9 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         60,
         []() -> Soldier* {
             // 需要先在 SoldierType 枚举中添加 WallBreaker
-            return new Soldier(SoldierType::kBomber, 19, 60, 1.2f, 0.4f, 1.0f);
+            return new Soldier(SoldierType::kBomber, 20, 10, 1.0f, 1.0, 1.0f);
         }
     );
-
 
     return soldiers;
 }
