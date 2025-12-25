@@ -1707,6 +1707,18 @@ void TownHall::ShowInfo() const {
 std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
     std::vector<TownHall::BuildingTemplate> templates;
 
+    // 大本营
+    templates.emplace_back(
+        "TownHall",
+        "buildings/TownHall1.png",
+        200,  // 成本
+        4,    // 宽度
+        4,    // 长度
+        []() -> Building* {
+            return TownHall::Create("TownHall", 1, { 0, 0 }, "buildings/TownHall1.png");
+        }
+    );
+
     // 金矿
     templates.emplace_back(
         "Gold Mine",
