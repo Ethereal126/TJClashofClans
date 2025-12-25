@@ -1,0 +1,23 @@
+﻿#pragma once
+#ifndef __TOWN_HALL_IN_COMBAT_H__
+#define __TOWN_HALL_IN_COMBAT_H__
+#include "Building/Building.h"
+
+/**
+ * @brief TownHallInCombat类
+ * 表示战斗中的大本营建筑，继承自Building类。
+ * 该类用于战斗场景中，具有基本的建筑属性和功能。
+ */
+class TownHallInCombat : public Building {
+private:
+	std::string texture_;
+public:
+	TownHallInCombat(int level, int base, int width, int length, cocos2d::Vec2 position);
+
+	~TownHallInCombat();
+
+	static TownHallInCombat* Create(int level, cocos2d::Vec2 position);
+
+	virtual void Upgrade() override;
+};
+#endif // __TOWN_HALL_IN_COMBAT_H__

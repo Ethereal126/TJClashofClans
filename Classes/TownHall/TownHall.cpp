@@ -9,13 +9,13 @@
 USING_NS_CC;
 
 static std::vector<SoldierTemplate> soldier_templates = {
-    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","Soldiers/Barbarian/Barbarianwalkright1.png",
+    SoldierTemplate(SoldierType::kBarbarian, "Barbarian","others/Barbarian.png",
                     50, 12, 1.0f, 1.0f, 1.0f, 1, 25, 20),
-    SoldierTemplate(SoldierType::kArcher, "Archer","Soldiers/Archer/Archerattackdown1.png",
+    SoldierTemplate(SoldierType::kArcher, "Archer","others/Archer.png",
                     25, 10, 1.5f, 3.5f, 1.0f, 1, 50, 25),
-    SoldierTemplate(SoldierType::kBomber, "Bomber","Soldiers/Giant/Giantattackdown1.png",
+    SoldierTemplate(SoldierType::kBomber, "Bomber","others/Bomber.png",
                     20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
-    SoldierTemplate(SoldierType::kGiant, "Giant","Soldiers/Bomber/Bomberwalkdown1.png",
+    SoldierTemplate(SoldierType::kGiant, "Giant","others/Giant.png",
                     500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
 };
 
@@ -1813,6 +1813,17 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         }
     );
 
+    // 战斗大本营
+    templates.emplace_back(
+        "TownHall",
+        "buildings/TownHall1.png",
+        350,
+        2,
+        2,
+        []() -> Building* {
+            return TownHallInCombat::Create(1, { 0, 0 });
+        }
+    );
     return templates;
 }
 
@@ -1822,7 +1833,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kBarbarian,
         "Barbarian",
-        "Soldiers/Barbarian/Barbarianwalkright1.png",
+        "others/Barbarian.png",
         1,    // 人口消耗
         25,   // 训练费用（金币）
         20,   // 训练时间（秒）
@@ -1835,7 +1846,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kArcher,
         "Archer",
-        "Soldiers/Archer/Archerattackdown1.png",
+        "others/Archer.png",
         1,
         50,
         25,
@@ -1848,7 +1859,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kGiant,
         "Giant",
-        "Soldiers/Giant/Giantattackdown1.png",
+        "others/Giant.png",
         2,
         500,
         120,
@@ -1862,7 +1873,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
     soldiers.emplace_back(
         SoldierType::kBomber,
         "Bomber",
-        "Soldiers/Bomber/Bomberwalkdown1.png",
+        "others/Bomber.png",
         1,
         1000,
         60,

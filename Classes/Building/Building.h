@@ -189,7 +189,7 @@ public:
      * @return 以 int 形式返回的建筑下一级防御。
      */
     int GetNextDefense() {
-        return static_cast<int>(defense_ * (1.1 + 0.2 * level_));
+        return static_cast<int>(10 * static_cast<int>((defense_ * (level_ + 2) / (level_ + 1)) / 10));
     }
 
     /**
@@ -290,7 +290,6 @@ class AttackBuilding : public Building {
 public:
     float attack_interval_,attack_range_;
     int attack_damage_;
-
 
     /**
      * @brief 构造函数
