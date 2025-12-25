@@ -1618,14 +1618,6 @@ void TownHall::UpdateLevelLabel() {
 }
 
 void TownHall::PlayUpgradeEffect() {
-    // 播放粒子特效
-    auto particles = ParticleSystemQuad::create("particles/upgrade.plist");
-    if (particles) {
-        particles->setPosition(Vec2::ZERO);
-        particles->setAutoRemoveOnFinish(true);
-        this->addChild(particles);
-    }
-
     // 播放缩放动画
     auto scale_up = ScaleTo::create(0.3f, 1.2f);
     auto scale_down = ScaleTo::create(0.3f, 1.0f);
