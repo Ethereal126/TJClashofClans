@@ -1812,18 +1812,6 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
             return AttackBuilding::Create("Cannon", 10, { 0, 0 }, "buildings/cannon1.png", 7, 10, 50);
         }
     );
-
-    // 战斗大本营
-    templates.emplace_back(
-        "TownHall",
-        "buildings/TownHall1.png",
-        350,
-        2,
-        2,
-        []() -> Building* {
-            return TownHallInCombat::Create(1, { 0, 0 });
-        }
-    );
     return templates;
 }
 

@@ -342,7 +342,11 @@ void WallBuilding::WallBuilding::Upgrade() {
     Building::Upgrade();
 
     // 更新墙体纹理（假设命名规则为 "wallX.png"）
-    std::string new_texture = "buildings/wall" + std::to_string(level_) + ".png";
+    std::string new_texture;
+    if(level_ <= 2)
+         new_texture = "buildings/wall" + std::to_string(level_) + ".png";
+    else
+		std::string new_texture = "buildings/wall2.png";
     this->setTexture(new_texture);
 
     // 根据等级改变颜色（可选视觉效果）
