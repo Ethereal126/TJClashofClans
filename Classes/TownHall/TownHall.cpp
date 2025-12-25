@@ -1768,11 +1768,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-<<<<<<< HEAD
-            return TrainingBuilding::Create("Barrack", 15, { 0, 0 }, "buildings/barrack.png", 50, 2);
-=======
-            return TrainingBuilding::Create("Barracks", 1, { 0, 0 }, "buildings/barrack.png", 50, 2);
->>>>>>> 2b633ee (feature / 添加音频，解决士兵放置不准确的问题，加入士兵是否放置完的函数，完善UI实现，实现了存档的读取和保存，实现了建筑大小的自适应)
+            return TrainingBuilding::Create("Barracks", 15, { 0, 0 }, "buildings/barrack.png", 50, 2);
         }
     );
 
