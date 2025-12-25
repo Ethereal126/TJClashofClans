@@ -18,7 +18,6 @@ public:
     cocos2d::Vec2 position_;
     const Soldier* soldier_template_;
     MapManager* map_;
-    bool is_alive_;
 
     static SoldierInCombat* Create(const Soldier* soldier_template, const cocos2d::Vec2& spawn_pos,MapManager* map);
     // 初始化函数
@@ -44,6 +43,7 @@ protected:
     void DealSplashDamage(const cocos2d::Vec2& pos);
     void UpdatePosition();
     BuildingInCombat* GetNextTarget();
+    void NotifyManagerDie();
 
     cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& start_map_pos,const cocos2d::Vec2& target_map_pos);
     void RedirectPath(std::vector<cocos2d::Vec2>& path);

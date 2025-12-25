@@ -17,6 +17,7 @@ static std::vector<SoldierTemplate> soldier_templates = {
                     20, 10, 1.2f, 1.0f, 1.0f, 2, 1000, 60),
     SoldierTemplate(SoldierType::kGiant, "Giant","others/Giant.png",
                     500, 30, 0.6f, 1.0f, 2.0f, 5, 500, 120)
+
 };
 
 // ==================== JSON数据读取函数 ====================
@@ -620,7 +621,7 @@ void TownHall::ResetTownHall() {
 
 
 TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::string texture)
-    : Building(name, 1, base * 100, base * 5, base * 60, base * 200, 4, 4,
+    : Building(name, 1, base * 1000, base * 5, base * 60, base * 200, 4, 4,
         position)
     , is_initialized_(false)
     , gold_storage_capacity_(base * 2)
@@ -839,7 +840,7 @@ void TownHall::Upgrade() {
     UpdateLevelLabel();
 
     // 播放升级特效
-    PlayUpgradeEffect();
+    //PlayUpgradeEffect();
 
     // 更新纹理（假设纹理命名规则为 "buildings/TownHallX.png"）
     std::string new_texture = "buildings/TownHall" + std::to_string(level_) + ".png";
@@ -1703,6 +1704,16 @@ void TownHall::ShowInfo() const {
 std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
     std::vector<TownHall::BuildingTemplate> templates;
 
+    templates.emplace_back(
+            "TownHall",
+            "buildings/TownHall1.png",
+            200,  // 成本
+            4,    // 宽度
+            4,    // 长度
+            []() -> Building* {
+                return TownHall::Create("TownHall", 1, { 0, 0 }, "buildings/TownHall1.png");
+            }
+    );
     // 金矿
     templates.emplace_back(
         "Gold Mine",

@@ -46,10 +46,9 @@ BattleScene* BattleScene::createScene(int levelId) {
         combatMgr->addChild(archer);
         combatMgr->addChild(barbarian);
 
-        combatMgr->SendSoldier(bomber,cocos2d::Vec2(1,2));
-        combatMgr->SendSoldier(giant,cocos2d::Vec2(20,20));
-        combatMgr->SendSoldier(archer,cocos2d::Vec2(2,2));
-        combatMgr->SendSoldier(barbarian,cocos2d::Vec2(18,18));
+        combatMgr->SendSoldier(bomber,cocos2d::Vec2(20,5));
+        combatMgr->SendSoldier(giant,cocos2d::Vec2(25,25));
+//        combatMgr->SendSoldier(barbarian,cocos2d::Vec2(18,18));
     }
     
     return scene;

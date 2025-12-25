@@ -8,6 +8,8 @@
 #include <cocos2d.h>
 #include <string>
 #include <vector>
+#include <optional>
+#include <typeindex>
 
 enum class SoldierType {
     kBarbarian,  // 野蛮人
@@ -21,7 +23,7 @@ class Soldier : public cocos2d::Node{
 public:
     // 构造函数
     Soldier(SoldierType type, int health, int damage, float move_speed, float attack_range, float attack_delay);
-    std::string building_preference_;
+    std::optional<std::type_index> building_preference_ = std::nullopt;
     int walk_frame_num,attack_frame_num;
     float size_;
     
