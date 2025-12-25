@@ -215,7 +215,7 @@ Node* UIManager::createLoadingScreen() {
 
 void UIManager::showLoadingScreen() {
     showPanel(UIPanelType::LoadingScreen, UILayer::Loading, true);
-
+    AudioManager::getInstance()->playIntro();
     auto node = getPanel(UIPanelType::LoadingScreen);
     if (node) {
         float* progress = new float(0.0f);
@@ -915,6 +915,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
         collectBtn->addClickEventListener([this](Ref* sender) {
             if (_selectedBuilding) {
                 CCLOG("Collecting resources from building: %s", _selectedBuilding->GetName().c_str());
+                AudioManager::getInstance()->playResourceCollect();
                 TownHall* th = TownHall::GetInstance();
                 th->AddElixir();
                 th->AddGold();                
@@ -1682,8 +1683,14 @@ void UIManager::selectBattleTroop(int index, const std::string& troopName) {
     auto panel = getPanel(UIPanelType::BattleHUD);
     if (!panel) return;
 
+    // 如果点击的是已经选中的士兵，则取消选中
+    if (_selectedTroopIndex == index) {
+        deselectBattleTroop();
+        return;
+    }
+
     // 取消之前的选中状态
-    if (_selectedTroopIndex >= 0 && _selectedTroopIndex != index) {
+    if (_selectedTroopIndex >= 0) {
         auto prevContainer = panel->getChildByName("troopBtn_" + std::to_string(_selectedTroopIndex));
         if (prevContainer) {
             auto prevBorder = prevContainer->getChildByName("selectBorder");
@@ -1816,6 +1823,20 @@ void UIManager::enterBattleMode(MapManager* battleMap) {
     CCLOG("UIManager: Entered battle mode");
 }
 
+bool UIManager::areAllTroopsDeployed() const {
+    if (!_isBattleMode) return false;
+    
+    // 如果没有任何士兵配置，视为已“部署”完（没有可部署的）
+    if (_battleTroopNames.empty()) return true;
+
+    for (const auto& pair : _battleTroopCounts) {
+        if (pair.second > 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void UIManager::exitBattleMode() {
     if (!_isBattleMode) return;
 
@@ -1888,8 +1909,9 @@ bool UIManager::deploySoldierAt(const cocos2d::Vec2& screenPos) {
         return false;
     }
 
-    // 屏幕坐标 → 地图本地坐标 → Vec 坐标
-    Vec2 localPos = _currentBattleMap->convertToNodeSpace(screenPos);
+    // 屏幕坐标 → 地图世界容器本地坐标 → Vec 坐标
+    // 使用 getWorldNode() 确保转换时考虑了地图的拖拽偏移和缩放倍率
+    Vec2 localPos = _currentBattleMap->getWorldNode()->convertToNodeSpace(screenPos);
     Vec2 vecPos = _currentBattleMap->worldToVec(localPos);
 
     // 转为格子坐标检查
@@ -1972,6 +1994,13 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent) {
     title->setPosition(Vec2(panelSize.width / 2, panelSize.height - 50 * _scaleFactor));
     title->setColor(resultColor);
     panel->addChild(title, 1);
+
+    // 播放胜负音效
+    if (stars > 0) {
+        AudioManager::getInstance()->playWin();
+    } else {
+        AudioManager::getInstance()->playLost();
+    }
 
     // 星级显示
     float starSize = 35 * _scaleFactor;
@@ -2086,15 +2115,18 @@ void UIManager::showUpgradeProgress(Building* building, float totalTime, float r
 
     if (parent) {
         // 放置在建筑上方（使用本地坐标）
+        // 增加偏移量并确保 Z-order 足够高
+        float offset = building->getContentSize().height / 2 + 30 * _scaleFactor;
         overlay->setPosition(Vec2(building->getPositionX() - overlay->getContentSize().width / 2,
-            building->getPositionY() + building->getContentSize().height / 2 + 10 * _scaleFactor));
-        parent->addChild(overlay, static_cast<int>(UILayer::HUD));
+            building->getPositionY() + offset));
+        parent->addChild(overlay, 10000); // 使用极高的 Z-order
     } else {
         // 放置在建筑上方（使用世界坐标）
         Vec2 buildingWorldPos = building->getParent()->convertToWorldSpace(building->getPosition());
+        float offset = building->getContentSize().height / 2 + 30 * _scaleFactor;
         overlay->setPosition(Vec2(buildingWorldPos.x - overlay->getContentSize().width / 2,
-            buildingWorldPos.y + building->getContentSize().height / 2 + 10 * _scaleFactor));
-        _rootScene->addChild(overlay, static_cast<int>(UILayer::HUD));
+            buildingWorldPos.y + offset));
+        _rootScene->addChild(overlay, static_cast<int>(UILayer::Tips)); // 使用 Tips 层，层级更高
     }
     _upgradeProgressNodes[building] = overlay;
 

@@ -145,6 +145,12 @@ public:
     cocos2d::Vec2 GetPosition() const;
 
     /**
+     * @brief 设置建筑位置
+     * @param position 以 std::pair<int, int> 形式传入的建筑坐标。
+     */
+    void SetPosition(std::pair<int, int> position);
+    
+    /**
      * @brief 获取建筑宽度
      * @return 以 int 形式返回的建筑宽度。
      */

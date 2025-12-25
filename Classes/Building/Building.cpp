@@ -201,6 +201,14 @@ cocos2d::Vec2 Building::GetPosition() const {
     return position_;
 }
 
+/**
+ * @brief 设置建筑地图坐标
+ * @param position 以std::pair<int, int>形式传入的位置坐标。
+ */
+void Building::SetPosition(std::pair<int, int> position) {
+    this->position_ = cocos2d::Vec2(position.first, position.second);
+}
+
 // ==================== SourceBuilding 成员函数的实现 ====================
 
 /**

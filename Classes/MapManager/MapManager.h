@@ -70,8 +70,8 @@ public:
 
     void setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int width, int length);
 
-    // 预加载动画资源
-    void preloadAllSoldierAnimations();
+    // // 预加载动画资源
+    // void preloadAllSoldierAnimations();
     
     // 将世界坐标转换为格子坐标
     // 内部会自动处理 _worldNode 的拖拽和缩放转换
@@ -188,11 +188,14 @@ private:
     // 维护一个所有建筑的列表，方便遍历
     std::vector<Building*> _buildings;
 
+    std::string _currentSavePath;               // 当前地图的保存路径
+
     // ========== 放置模式相关成员 ==========
     bool _isPlacementMode = false;              // 是否处于放置模式
     Building* _pendingBuilding = nullptr;       // 待放置的建筑实例
     int _pendingBuildingCost = 0;               // 待放置建筑的费用
     cocos2d::DrawNode* _placementHighlight = nullptr;   // 格子高亮绘制节点
+    cocos2d::DrawNode* _noDeployVisual = nullptr;       // 战斗禁区可视化节点
     cocos2d::Node* _placementUINode = nullptr;          // 确认/取消按钮容器
     cocos2d::ui::Button* _confirmBtn = nullptr;         // 确认按钮
     cocos2d::ui::Button* _cancelBtn = nullptr;          // 取消按钮
@@ -233,7 +236,7 @@ private:
     void createPlacementUI();                   // 创建确认/取消按钮
     void removePlacementUI();                   // 移除UI
     void updateConfirmButtonState();            // 更新确认按钮状态
-
+    void updateNoDeployVisual();                // 更新禁区可视化显示
     // 清理地图所有建筑和障碍物
     void clearMap();
 
