@@ -16,6 +16,7 @@
 #include "json/document.h"
 #include "json/writer.h"
 #include "json/stringbuffer.h"
+#include "TownHallinCombat/TownHallinCombat.h"
 
 /**
  * @brief 从JSON文件中读取玩家数据

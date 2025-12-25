@@ -96,10 +96,12 @@ std::string Building::GetBuildingImagePath() const {
  * 根据传入伤害计算实际伤害值并扣减生命，至少造成 1 点伤害。
  */
 void Building::TakeDamage(int damage) {
-    int actualDamage = damage - defense_;
-    if (actualDamage < 1) actualDamage = 1; // 至少造成1点伤害
+    int actualDamage = damage;
+    if (actualDamage < 1) 
+        actualDamage = 1; // 至少造成1点伤害
     health_ -= actualDamage;
-    if (health_ < 0) health_ = 0;
+    if (health_ < 0) 
+        health_ = 0;
 }
 
 /**
