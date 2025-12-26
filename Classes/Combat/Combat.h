@@ -25,7 +25,6 @@ enum class CombatState {
 //负责统筹管理整个战斗过程，仅包含最基本的需求
 class CombatManager :public cocos2d::Node {
 public:
-    std::vector<std::pair<Soldier*,int>> soldier_to_use_;
     std::vector<BuildingInCombat*> live_buildings_;
     std::vector<SoldierInCombat*> live_soldiers_;
     int num_of_live_soldiers_ = 0,num_of_live_buildings_ = 0;

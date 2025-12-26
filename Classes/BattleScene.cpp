@@ -29,9 +29,10 @@ BattleScene* BattleScene::createScene(int levelId) {
         ui->enterBattleMode(map);
         AudioManager::getInstance()->playMusic(true);
         combatMgr->StartCombat();
-        ui->setUICallback("OnRequestEndBattle", []() {
+        ui->setUICallback("OnRequestEndBattle", [combatMgr]() {
             AudioManager::getInstance()->playMusic(false);
             UIManager::getInstance()->exitBattleMode();
+            combatMgr->EndCombat();
             auto homeScene = MainScene::createScene();
             Director::getInstance()->replaceScene(TransitionFade::create(0.5f, homeScene));
         });

@@ -5,6 +5,7 @@
 #include "cocos2d.h"
 #include "audio/include/AudioEngine.h"
 #include <string>
+#include "Soldier/Soldier.h"
 
 enum class AudioID {
     // 背景音乐
@@ -43,7 +44,9 @@ public:
     void playBarbarian()      { playEffect(AudioID::SFX_Barbarian); }
     void playGiant()          { playEffect(AudioID::SFX_Giant); }
     void playBomber()         { playEffect(AudioID::SFX_Bomber); }
+    void playSoldierAttack(SoldierType type);
     void playCannon()          { playEffect(AudioID::SFX_Cannon); }
+    void playBuildingAttack(const std::string& type);
     void playBuildingDestroy(){ playEffect(AudioID::SFX_Building_Destroy); }
     void playDie()            { playEffect(AudioID::SFX_Die); }
     void playResourceCollect(){ playEffect(AudioID::SFX_Collect_Resource); }

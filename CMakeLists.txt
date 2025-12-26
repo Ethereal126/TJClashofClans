@@ -98,6 +98,7 @@ list(APPEND GAME_SOURCE
     Classes/UIManager/UIManager.cpp
     Classes/MainScene.cpp
     Classes/ResourceStorage/ResourceStorage.cpp
+        Classes/TownHallTemplate/TownHallTemplate.cpp
 )
 list(APPEND GAME_HEADER
    Classes/AppDelegate.h
@@ -113,7 +114,7 @@ list(APPEND GAME_HEADER
    Classes/BattleScene.h
    Classes/TownHall/TownHall.h
    Classes/ResourceStorage/ResourceStorage.h
-
+        Classes/TownHallTemplate/TownHallTemplate.cpp
 )
 
 if(ANDROID)

@@ -114,7 +114,10 @@ void AttackBuildingInCombat::DealDamageToTarget() const {
 void AttackBuildingInCombat::StartAttack() {
     auto single_attack = cocos2d::CallFunc::create([this]() {
         this->ChooseTarget();
-        this->DealDamageToTarget();
+        if(current_target_) {
+            this->DealDamageToTarget();
+            AudioManager::getInstance()->playBuildingAttack(this->building_template_->GetName());
+        }
     });
     // 单轮检测：延迟0.1秒 → 执行检测
     auto single_check_loop = cocos2d::Sequence::create(
@@ -160,7 +163,7 @@ void BuildingInCombat::Die() {
     manager->destroy_degree_ = 100 * manager->buildings_should_count_destroyed_ / manager->buildings_should_count_;
     if(former<50 && manager->destroy_degree_>=50) manager->stars_++;
     if(former<100 && manager->destroy_degree_==100) manager->stars_++;
-    if(typeid(*building_template_)==typeid(TownHall)) manager->stars_++;
+    if(typeid(*building_template_)==typeid(TownHallTemplate)) manager->stars_++;
     UIManager::getInstance()->updateDestructionPercent(manager->stars_, manager->destroy_degree_);   // 这里接口参数是星级和摧毁率，我这边先补一个1上去
 
     CCLOG("live buildings:%d",manager->num_of_live_buildings_);
@@ -182,6 +185,7 @@ void BuildingInCombat::Die() {
     }
 
     this->removeFromParent();
+    AudioManager::getInstance()->playBuildingDestroy();
 }
 
 bool BuildingInCombat::IsBuildingShouldCount(const Building* b) {

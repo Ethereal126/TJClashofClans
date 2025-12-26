@@ -1,4 +1,5 @@
 #include "AudioManager/AudioManager.h"
+#include "Soldier/Soldier.h"
 
 USING_NS_CC;
 
@@ -64,6 +65,35 @@ void AudioManager::setMusicVolume(float volume) {
 
 void AudioManager::setSoundEffectVolume(float volume) {
     _sfxVolume = std::clamp(volume, 0.0f, 1.0f);
+}
+
+void AudioManager::playSoldierAttack(SoldierType type) {
+    switch(type){
+        case SoldierType::kArcher:
+            playArcher();
+            break;
+        case SoldierType::kBarbarian:
+            playBarbarian();
+            break;
+        case SoldierType::kBomber:
+            playBomber();
+            break;
+        case SoldierType::kGiant:
+            playGiant();
+            break;
+        case SoldierType::kSoldierTypes:
+            CCLOG("warning : playSoldierAttack() should not choose kSoldierTypes as a type");
+            break;
+    }
+}
+
+void AudioManager::playBuildingAttack(const std::string& type) {
+    if(type == "Archer Tower") {
+        playArcher();
+    }
+    if(type == "Cannon"){
+        playCannon();
+    }
 }
 
 

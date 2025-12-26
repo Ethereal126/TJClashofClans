@@ -1,4 +1,4 @@
-﻿#include "TownHallinCombat/TownHallinCombat.h"
+﻿#include "TownHallTemplate/TownHallTemplate.h"
 #include <string>
 #include <stdexcept>
 
@@ -14,7 +14,8 @@ USING_NS_CC;
  * @param length 建筑长度
  * @param position 建筑位置坐标
  */
-TownHallInCombat::TownHallInCombat(int level, int base = 20, int width = 4, int length = 4, cocos2d::Vec2 position = {0, 0})
+TownHallTemplate::TownHallTemplate(int level, int base = 20, int width = 4, int length = 4, cocos2d::Vec2 position = {0,
+                                                                                                                      0})
     : Building("TownHall", level, 8 * base, base, base / 20, base * 20, width, length, position)
 {
     if (level <= 0) {
@@ -39,7 +40,7 @@ TownHallInCombat::TownHallInCombat(int level, int base = 20, int width = 4, int 
  * @brief TownHallinCombat析构函数
  * 清理战斗中的大本营资源
  */
-TownHallInCombat::~TownHallInCombat()
+TownHallTemplate::~TownHallTemplate()
 {
     // 当前无需特殊清理操作
 }
@@ -55,7 +56,7 @@ TownHallInCombat::~TownHallInCombat()
  * @param position 建筑位置坐标
  * @return 创建的TownHallinCombat实例指针，失败返回nullptr
  */
-TownHallInCombat* TownHallInCombat::Create(int level, cocos2d::Vec2 position)
+TownHallTemplate* TownHallTemplate::Create(int level, cocos2d::Vec2 position)
 {
     try {
         if (level <= 0) {
@@ -64,7 +65,7 @@ TownHallInCombat* TownHallInCombat::Create(int level, cocos2d::Vec2 position)
         }
 
         // 创建实例
-        TownHallInCombat* instance = new (std::nothrow) TownHallInCombat(level);
+        TownHallTemplate* instance = new (std::nothrow) TownHallTemplate(level);
         instance->autorelease();
 
         if (!instance) {
@@ -79,9 +80,10 @@ TownHallInCombat* TownHallInCombat::Create(int level, cocos2d::Vec2 position)
             return nullptr;
         }
 
-        // 设置建筑位置和锚点
-        instance->setPosition(position);
-        instance->setAnchorPoint(cocos2d::Vec2(0.5f, 0.5f));
+        //napper:设置操作未对坐标转换等做适配，属于后期步骤应当处理的内容，此处应当删除
+//        // 设置建筑位置和锚点
+//        instance->setPosition(position);
+//        instance->setAnchorPoint(cocos2d::Vec2(0.5f, 0.5f));
 
         cocos2d::log("成功创建TownHallinCombat: (等级%d)", level);
         return instance;
@@ -97,7 +99,7 @@ TownHallInCombat* TownHallInCombat::Create(int level, cocos2d::Vec2 position)
     }
 }
 
-void TownHallInCombat::Upgrade() {
+void TownHallTemplate::Upgrade() {
 	// 调用基类升级
 	Building::Upgrade();
 	// 更新大本营纹理（假设命名规则为 "TownHallX.png"）
