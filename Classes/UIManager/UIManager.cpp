@@ -1378,7 +1378,7 @@ Node* UIManager::createArmyTraining(Building* building) {
         // ===== 右侧：可选士兵 =====
         auto rightItem = Node::create();
         rightItem->setContentSize(Size(iconSize, iconSize));
-        rightItem->setPosition(Vec2(xPos, yPos + 10 * _scaleFactor));
+        rightItem->setPosition(Vec2(xPos, yPos));
         rightItem->setName("right_" + tmpl.name_);
 
         // 右侧图标
@@ -1570,7 +1570,7 @@ Node* UIManager::createBattleHUD() {
         // 士兵按钮容器
         auto btnContainer = Node::create();
         btnContainer->setContentSize(Size(btnSize + 6 * _scaleFactor, btnSize + 6 * _scaleFactor));
-        btnContainer->setPosition(Vec2(startX + i * (btnSize + btnMargin), bottomBarHeight / 2));
+        btnContainer->setPosition(Vec2(startX + i * (btnSize + btnMargin), bottomBarHeight / 6));
         btnContainer->setName("troopBtn_" + std::to_string(i));
 
         // 选中边框（默认隐藏）
