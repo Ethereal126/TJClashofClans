@@ -150,6 +150,14 @@ public:
 
     //napper:设为公有以供士兵类调用
     void updateYOrder(cocos2d::Node* node);
+
+    // 获取地图奖励信息
+    int getBaseGoldReward() const { return _baseGoldReward; }
+    int getBaseElixirReward() const { return _baseElixirReward; }
+
+    // 更新建筑占用的格子状态
+    void updateBuildingGrids(Building* building, int gridX, int gridY, bool occupy);
+    
 protected:
     MapManager();
     virtual ~MapManager();
@@ -164,10 +172,9 @@ protected:
     // 获取格子状态
     GridState getGridState(int gridX, int gridY) const;
 
-    // 更新建筑占用的格子状态
-    void updateBuildingGrids(Building* building, int gridX, int gridY, bool occupy);
-
 private:
+    int _baseGoldReward = 0;
+    int _baseElixirReward = 0;
     int _width;               // 地图宽度（格子数）
     int _length;              // 地图高度（格子数）
     int _gridSize;            // 每个格子的像素大小

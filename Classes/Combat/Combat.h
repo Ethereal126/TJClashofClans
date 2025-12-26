@@ -42,6 +42,10 @@ public:
     void PauseCombat();
     void ResumeCombat();
     void EndCombat();
+    // 获取当前战斗已持续的时间
+    float getCombatTime() const { return combat_time_; }
+    float getRemainingTime() const { return std::max(0.0f, kMaxCombatTime - combat_time_); }
+
 
 protected:
     // 禁止外部直接构造/析构，仅通过 InitializeInstance/Destroy 管理
@@ -57,7 +61,7 @@ private:
     float combat_time_ = 0.0f;
     const float kMaxCombatTime = 300.0f;
 
-    void Update(float dt);
+    virtual void update(float dt) override;
 };
 
 

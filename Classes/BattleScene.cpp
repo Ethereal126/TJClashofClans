@@ -4,6 +4,7 @@
 #include "UIManager/UIManager.h"
 #include "Combat/Combat.h"
 #include "AudioManager/AudioManager.h"
+#include "ReplayScene.h"
 
 using namespace cocos2d;
 
@@ -26,6 +27,7 @@ BattleScene* BattleScene::createScene(int levelId) {
 
     auto ui = UIManager::getInstance();
     if (ui->init(scene)) {
+        ui->setCurrentLevelId(levelId); 
         ui->enterBattleMode(map);
         AudioManager::getInstance()->playMusic(true);
         combatMgr->StartCombat();
@@ -35,6 +37,17 @@ BattleScene* BattleScene::createScene(int levelId) {
             combatMgr->EndCombat();
             auto homeScene = MainScene::createScene();
             Director::getInstance()->replaceScene(TransitionFade::create(0.5f, homeScene));
+        });
+        ui->setUICallback("OnRequestReplay", []() {
+            auto ui = UIManager::getInstance();
+            int levelId = ui->getCurrentLevelId();
+            auto steps = ui->getRecordedSteps();
+            
+            // 销毁当前战斗实例，准备重播
+            CombatManager::DestroyInstance();
+            
+            auto replayScene = ReplayScene::createScene(levelId, steps);
+            Director::getInstance()->replaceScene(TransitionFade::create(0.5f, replayScene));
         });
     }
     

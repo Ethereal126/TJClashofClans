@@ -1077,6 +1077,11 @@ bool MapManager::loadMapData(const std::string& filePath) {
     }
 
     // If it's the full save file, the map layout is under "map_layout"
+    if (doc.HasMember("level_info") && doc["level_info"].IsObject()) {
+        const auto& info = doc["level_info"];
+        if (info.HasMember("reward_gold")) _baseGoldReward = info["reward_gold"].GetInt();
+        if (info.HasMember("reward_elixir")) _baseElixirReward = info["reward_elixir"].GetInt();
+    }
     if (doc.HasMember("map_layout")) {
         return loadFromJSONObject(doc["map_layout"]);
     }
