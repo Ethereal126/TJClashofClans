@@ -1708,7 +1708,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         4,    // 宽度
         4,    // 长度
         []() -> Building* {
-            return TownHall::Create("TownHall", 1, { 0, 0 }, "buildings/TownHall1.png");
+            return TownHallTemplate::Create(1, {0, 0});
         }
     );
 
@@ -1806,7 +1806,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Archer Tower", 10, { 0, 0 }, "buildings/archertower.png", 7, 5, 20);
+            return AttackBuilding::Create("Archer Tower", 10, { 0, 0 }, "buildings/archertower.png", 0.8, 7, 10);
         }
     );
 
@@ -1818,7 +1818,7 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         2,
         2,
         []() -> Building* {
-            return AttackBuilding::Create("Cannon", 10, { 0, 0 }, "buildings/cannon1.png", 7, 10, 50);
+            return AttackBuilding::Create("Cannon", 10, { 0, 0 }, "buildings/cannon1.png", 1.0, 10, 9);
         }
     );
     return templates;
@@ -1836,7 +1836,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         20,   // 训练时间（秒）
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建野蛮人
-            return new Soldier(SoldierType::kBarbarian, 25, 100, 1.0f, 0.4f, 1.0f);
+            return new Soldier(SoldierType::kBarbarian, 50, 5, 1.0f, 1.0f, 1.0f);
         }
     );
 
@@ -1849,7 +1849,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         25,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建弓箭手
-            return new Soldier(SoldierType::kArcher, 22, 70, 0.8f, 3.5f, 1.0f);
+            return new Soldier(SoldierType::kArcher, 25, 3, 1.5f, 3.5f, 1.0f);
         }
     );
 
@@ -1862,7 +1862,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         120,
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建巨人
-            return new Soldier(SoldierType::kGiant, 30, 200, 0.6f, 1.0f, 2.0f);
+            return new Soldier(SoldierType::kGiant, 500, 5, 0.5f, 1.0f, 2.0f);
         }
     );
 
@@ -1876,7 +1876,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         60,
         []() -> Soldier* {
             // 需要先在 SoldierType 枚举中添加 WallBreaker
-            return new Soldier(SoldierType::kBomber, 19, 60, 1.2f, 0.4f, 1.0f);
+            return new Soldier(SoldierType::kBomber, 20, 5, 1.5f, 1.0f, 1.0f);
         }
     );
 

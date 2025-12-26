@@ -216,7 +216,7 @@ void Building::SetPosition(std::pair<int, int> position) {
  * 按给定基数 base 初始化资源建筑的生命、防御、建造时间和成本，并设置纹理。
  */
 SourceBuilding::SourceBuilding(std::string name, int base, cocos2d::Vec2 position, std::string texture)
-    : Building(name, 1, 160 * base, 2 * base,
+    : Building(name, 1, 8 * base,base,
         base, base * 500, 3, 3, position),
     production_rate_(base * 50), creationTime_(0.0) {
     // 初始化创建时间为当前系统时间
@@ -303,7 +303,7 @@ void SourceBuilding::ShowInfo() const {
  */
 WallBuilding::WallBuilding(std::string name, int base, cocos2d::Vec2 position,
     std::string texture)
-    : Building(name, 1, 150 * base, 2 * base,  // 墙体生命值较高，防御值较高
+    : Building(name, 1, 8 * base, base,  // 墙体生命值较高，防御值较高
         base * 2, base * 150, 1, 1, position) {  // 墙体占用1x1格子
 
     this->setTexture(texture);
@@ -468,7 +468,7 @@ void AttackBuilding::ShowInfo() const {
  */
 TrainingBuilding::TrainingBuilding(std::string name, int base, cocos2d::Vec2 position,
     std::string texture, int capacity, int speed)
-    : Building(name, 1, 8 * base, 2 * base,
+    : Building(name, 1, 8 * base, base,
         base * 3, base * 400, 3, 3, position),
     training_capacity_(capacity),
     training_speed_(speed),

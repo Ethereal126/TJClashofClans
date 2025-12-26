@@ -256,6 +256,7 @@ void SoldierInCombat::Die() {
             if (it != current_target_->subscribers.end()) current_target_->subscribers.erase(it);
         }
         NotifyManagerDie();
+        AudioManager::getInstance()->playDie();
         this->removeFromParent();
     });
     this->runAction(remove_self);
@@ -277,6 +278,7 @@ void SoldierInCombat::Attack(const cocos2d::Vec2& pos) {
     auto animate = cocos2d::Animate::create(attack_anim);
     auto single_attack = cocos2d::CallFunc::create([this]() {
         this->DealDamageToBuilding(current_target_);
+        AudioManager::getInstance()->playSoldierAttack(this->soldier_template_->GetSoldierType());
     });
     auto anim_and_delay = cocos2d::Sequence::create(
             set_dir,
@@ -292,8 +294,9 @@ void SoldierInCombat::Attack(const cocos2d::Vec2& pos) {
 void SoldierInCombat::BomberAttack(const cocos2d::Vec2& pos) {
     auto delta = current_target_->position_ - pos;
     auto animate = cocos2d::CallFunc::create([this, delta,pos]() {
-        cocos2d::DelayTime::create(this->soldier_template_->GetAttackDelay()),
-        DealSplashDamage(pos),
+        cocos2d::DelayTime::create(this->soldier_template_->GetAttackDelay());
+        DealSplashDamage(pos);
+        AudioManager::getInstance()->playSoldierAttack(this->soldier_template_->GetSoldierType());
         Die();
     });
     this->runAction(animate);

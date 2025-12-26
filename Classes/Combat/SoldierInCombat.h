@@ -10,6 +10,7 @@
 #include "Soldier/Soldier.h"
 #include "MapManager/MapManager.h"
 #include "HpBarUtils.h"
+#include "AudioManager/AudioManager.h"
 
 class BuildingInCombat;
 

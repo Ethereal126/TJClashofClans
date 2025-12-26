@@ -10,6 +10,7 @@
 #include "MapManager/MapManager.h"
 #include "UIManager/UIManager.h"
 #include "TownHall/TownHall.h"
+#include "TownHallTemplate/TownHallTemplate.h"
 #include "Combat.h"
 
 class BuildingInCombat : public cocos2d::Sprite{
