@@ -138,13 +138,20 @@ void CombatManager::EndCombat() {
 }
 
 // 每帧更新：核心检测逻辑（Cocos 帧循环驱动）
-void CombatManager::Update(float dt) {
+void CombatManager::update(float dt) {
     if (state_ != CombatState::kFighting){
         CCLOG("Update() when not fighting");
         return;
     }
 
     combat_time_ += dt;
+    
+    // 更新UI
+    UIManager::getInstance()->update(dt);
+
+    // 驱动回放逻辑（如果是回放模式）
+    UIManager::getInstance()->updateReplay();
+
     if (combat_time_ >= kMaxCombatTime) {
         EndCombat();
         return;
