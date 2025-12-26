@@ -963,7 +963,7 @@ int TownHall::GetTotalTrainingBuildingCount() const {
 
 // ==================== 军营管理（特指Barracks） ====================
 
-void TownHall::AddBarracks(Barracks* barracks) {
+void TownHall::AddBarracks(TrainingBuilding* barracks) {
     if (!barracks) return;
 
     auto it = std::find(all_barracks_.begin(), all_barracks_.end(), barracks);
@@ -1251,6 +1251,7 @@ int TownHall::AddGold() {
         }
     }
 
+    /*
     // 获取总金币容量（金币池容量总和）
     int max_capacity = GetTotalGoldCapacity();
     int current_total = gold_;
@@ -1276,7 +1277,9 @@ int TownHall::AddGold() {
             remaining -= add_to_storage;
         }
     }
-
+    */
+    
+    int actual_add = amount;
     //更新大本营金币数量
     gold_ += actual_add;
     
@@ -1293,7 +1296,7 @@ int TownHall::AddGold() {
         cocos2d::log("警告：保存金币数据到JSON文件失败");
     }
 
-    cocos2d::log("存入金币: %d，剩余可存入: %d", actual_add, remaining);
+    cocos2d::log("存入金币: %d", actual_add);
     return actual_add;
 }
 
@@ -1304,7 +1307,7 @@ bool TownHall::SpendGold(int amount) {
     }
 
     // 获取总金币
-    int total_gold = GetTotalGoldFromStorages();
+    int total_gold = gold_;
     if (total_gold < amount) {
         cocos2d::log("金币不足，需要: %d，现有: %d", amount, total_gold);
         return false;
@@ -1324,7 +1327,7 @@ bool TownHall::SpendGold(int amount) {
     }
 
     //更新大本营金币数量
-    gold_ = GetTotalGoldFromStorages();
+    gold_ -= amount;
     
     // 使用UserDefault强制保存资源数据
     cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
@@ -1357,6 +1360,7 @@ int TownHall::AddElixir() {
         return 0;
     }
 
+    /*
     // 获取总圣水容量（圣水池容量总和）
     int max_capacity = GetTotalElixirCapacity();
     int current_total = elixir_;
@@ -1382,6 +1386,8 @@ int TownHall::AddElixir() {
             remaining -= add_to_storage;
         }
     }
+    */    
+	int actual_add = amount;
 
     //更新大本营圣水数量
     elixir_ += actual_add;
@@ -1399,7 +1405,7 @@ int TownHall::AddElixir() {
         cocos2d::log("警告：保存圣水数据到JSON文件失败");
     }
 
-    cocos2d::log("存入圣水: %d，剩余可存入: %d", actual_add, remaining);
+    cocos2d::log("存入圣水: %d", actual_add);
     return actual_add;
 }
 
@@ -1409,7 +1415,7 @@ bool TownHall::SpendElixir(int amount) {
     }
 
     // 获取总圣水
-    int total_elixir = GetTotalElixirFromStorages();
+    int total_elixir = elixir_;
     if (total_elixir < amount) {
         cocos2d::log("圣水不足，需要: %d，现有: %d", amount, total_elixir);
         return false;
@@ -1429,7 +1435,7 @@ bool TownHall::SpendElixir(int amount) {
     }
 
     //更新大本营圣水数量
-    elixir_ = GetTotalElixirFromStorages();
+    elixir_ -= amount;
     
     // 使用UserDefault强制保存资源数据
     cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
@@ -1720,7 +1726,9 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,    // 宽度
         3,    // 长度
         []() -> Building* {
-            return SourceBuilding::Create("Gold Mine", 15, { 0, 0 }, "buildings/goldmine.png", "Gold");
+            auto temp = SourceBuilding::Create("Gold Mine", 15, { 0, 0 }, "buildings/goldmine.png", "Gold");
+            TownHall::GetInstance()->AddGoldMine(temp);
+            return temp;
         }
     );
 
@@ -1732,7 +1740,9 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return SourceBuilding::Create("Elixir Collector", 15, { 0, 0 }, "buildings/elixirmine0.png", "Elixir");
+            auto temp = SourceBuilding::Create("Elixir Collector", 15, { 0, 0 }, "buildings/elixirmine0.png", "Elixir");
+			TownHall::GetInstance()->AddElixirCollector(temp);
+            return temp;
         }
     );
 
@@ -1744,7 +1754,9 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return ProductionBuilding::Create("Gold Storage", 15, { 0, 0 }, "buildings/goldpool1.png", "Gold Storage");
+            auto temp = ProductionBuilding::Create("Gold Storage", 15, { 0, 0 }, "buildings/goldpool1.png", "Gold Storage");
+			TownHall::GetInstance()->AddGoldStorage(temp);
+            return temp;
         }
     );
 
@@ -1756,7 +1768,9 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return ProductionBuilding::Create("Elixir Storage", 15, { 0, 0 }, "buildings/elixirpool2.png", "Elixir Storage");
+            auto temp = ProductionBuilding::Create("Elixir Storage", 15, { 0, 0 }, "buildings/elixirpool2.png", "Elixir Storage");
+			TownHall::GetInstance()->AddElixirStorage(temp);
+            return temp;
         }
     );
 
@@ -1768,7 +1782,9 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         3,
         []() -> Building* {
-            return TrainingBuilding::Create("Barracks", 15, { 0, 0 }, "buildings/barrack.png", 50, 2);
+			auto temp = TrainingBuilding::Create("Barracks", 15, { 0, 0 }, "buildings/barrack.png", 50, 2);
+			TownHall::GetInstance()->AddBarracks(temp);
+            return temp;
         }
     );
 
