@@ -2176,7 +2176,7 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent, bool isReplay
     // 奖励显示 (仅在非回放模式下显示)
     int earnedGold = 0;
     int earnedElixir = 0;
-    if (_currentBattleMap && !_isReplayMode) {
+    if (_currentBattleMap && !isReplay) {
         int baseGold = _currentBattleMap->getBaseGoldReward();
         int baseElixir = _currentBattleMap->getBaseElixirReward();
         earnedGold = baseGold * destroyPercent / 100;
@@ -2221,16 +2221,14 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent, bool isReplay
     confirmBtn->setContentSize(Size(140 * _scaleFactor, 50 * _scaleFactor));
     confirmBtn->setScale9Enabled(true);
     confirmBtn->setPosition(Vec2(panelSize.width / 2 - 80 * _scaleFactor, 35 * _scaleFactor ));
-    confirmBtn->addClickEventListener([this, earnedGold, earnedElixir](Ref* sender) {
-        // 增加玩家资源
-        auto townHall = TownHall::GetInstance();
-        if (townHall) {
-            // townHall->AddGold(earnedGold);
-            // townHall->AddElixir(earnedElixir);
-            
-            // 更新资源栏显示
-            updateResourceDisplay(ResourceType::Gold, townHall->GetGold());
-            updateResourceDisplay(ResourceType::Elixir, townHall->GetElixir());
+    confirmBtn->addClickEventListener([this, earnedGold, earnedElixir, isReplay](Ref* sender) {
+        // 增加玩家资源 (仅在非回放模式下)
+        if (!isReplay) {
+            auto townHall = TownHall::GetInstance();
+            if (townHall) {
+                townHall->AddGold(earnedGold);
+                townHall->AddElixir(earnedElixir);
+            }
         }
 
         // 隐藏结算面板
