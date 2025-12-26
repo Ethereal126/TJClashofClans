@@ -198,7 +198,10 @@ public:
      * @param amount 要增加的金币数量。
      * @return 实际成功存入的金币数量（可能受容量限制小于 amount）。
      */
+	 //用于收取资源
     int AddGold();
+     //用于获取战斗奖励
+	bool AddGold(int amount);
 
     /**
      * @brief 消耗大本营中的金币
@@ -212,7 +215,10 @@ public:
      * @param amount 要增加的圣水数量。
      * @return 实际成功存入的圣水数量。
      */
+	 //用于收取资源
     int AddElixir();
+	//用于获取战斗奖励
+	bool AddElixir(int amount);
 
     /**
      * @brief 消耗大本营中的圣水

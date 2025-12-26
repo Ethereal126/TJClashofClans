@@ -1346,6 +1346,30 @@ bool TownHall::SpendGold(int amount) {
     return true;
 }
 
+bool TownHall::AddGold(int amount) {
+    if (amount <= 0) {
+        return false;
+    }
+
+    //更新大本营金币数量
+    gold_ += amount;
+
+    // 使用UserDefault强制保存资源数据
+    cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
+    userDefault->setIntegerForKey("player_gold", gold_);
+    userDefault->setIntegerForKey("player_townhall_level", level_);
+    userDefault->flush(); // 立即写入磁盘
+
+    // 保存更新后的金币数量到JSON文件
+    // 使用可写路径确保文件可以被正确更新
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "gold", gold_)) {
+        cocos2d::log("警告：保存金币数据到JSON文件失败");
+    }
+
+    cocos2d::log("获取金币: %d", amount);
+    return true;
+}
 
 int TownHall::AddElixir() {
     int amount = 0;
@@ -1451,6 +1475,31 @@ bool TownHall::SpendElixir(int amount) {
     }
 
     cocos2d::log("消耗圣水: %d，剩余: %d", amount, total_elixir - amount);
+    return true;
+}
+
+bool TownHall::AddElixir(int amount) {
+    if (amount <= 0) {
+        return false;
+    }
+
+    //更新大本营圣水数量
+    elixir_ += amount;
+
+    // 使用UserDefault强制保存资源数据
+    cocos2d::UserDefault* userDefault = cocos2d::UserDefault::getInstance();
+    userDefault->setIntegerForKey("player_elixir", elixir_);
+    userDefault->setIntegerForKey("player_townhall_level", level_);
+    userDefault->flush(); // 立即写入磁盘
+
+    // 保存更新后的圣水数量到JSON文件
+    // 使用可写路径确保文件可以被正确更新
+    std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
+    if (!UpdatePlayerDataField(json_file_path, "elixir", elixir_)) {
+        cocos2d::log("警告：保存圣水数据到JSON文件失败");
+    }
+
+    cocos2d::log("获取圣水: %d", amount);
     return true;
 }
 
