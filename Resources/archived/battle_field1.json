@@ -7,12 +7,12 @@
   },
   "map_layout": {
     "buildings": [
-      { "type": "TownHall", "x": 15, "y": 15, "level": 2 },
+      { "type": "TownHall", "x": 20, "y": 20, "level": 2 },
       { "type": "Gold Mine", "x": 8, "y": 12, "level": 2 },
       { "type": "Archer Tower", "x": 12, "y": 8, "level": 2 },
       { "type": "Gold Storage", "x": 3, "y": 6, "level": 2 },
-      { "type": "Training Camp", "x": 12, "y": 12, "level": 2 },
-      { "type": "Cannon", "x": 3, "y": 10, "level": 2 },
+      { "type": "Training Camp", "x": 25, "y": 12, "level": 2 },
+      { "type": "Cannon", "x": 23, "y": 3, "level": 2 },
       { "type": "Wall", "x": 3, "y": 4, "level": 2 },
       { "type": "Wall", "x": 4, "y": 4, "level": 2 },
       { "type": "Wall", "x": 5, "y": 4, "level": 2 },

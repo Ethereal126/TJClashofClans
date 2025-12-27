@@ -92,8 +92,6 @@ bool MapManager::init(int width, int length, int gridSize, TerrainType terrainTy
     }
     // 初始化网格数据
     initGrids();
-    // 预加载所有可能的士兵动画，防止队友代码因找不到动画而崩溃
-    //reloadAllSoldierAnimations();
     // 设置输入监听
     setupInputListener();
     return true;
@@ -128,70 +126,6 @@ void MapManager::initGrids() {
     }
 }
 
-// void MapManager::preloadAllSoldierAnimations() {
-//     // 1. 定义需要预加载的士兵及其模板数据（这里需要你确保这些数据与游戏初始化时一致）
-//     // 注意：这里我们模拟队友的加载过程，但不触碰他的静态变量，
-//     // 因为 AnimationCache::addAnimation 如果发现同名动画已存在，会自动跳过或覆盖，是安全的。
-    
-//     struct PreloadData {
-//         std::string name;
-//         int walkFrames;
-//         int attackFrames;
-//     };
-//     std::vector<PreloadData> soldiers = {
-//         {"Barbarian", 8, 8}, 
-//         {"Archer", 8, 8},
-//         {"Giant", 8, 8},
-//         {"Bomber", 8, 8}
-//     };
-
-//     auto frameCache = cocos2d::SpriteFrameCache::getInstance();
-//     auto animCache = cocos2d::AnimationCache::getInstance();
-//     std::vector<std::string> directions = {"up", "down", "left", "right"};
-
-//     for (const auto& s : soldiers) {
-//         std::string plist = "Soldiers/" + s.name + "/anims.plist";
-//         std::string png = "Soldiers/" + s.name + "/anims.png";
-        
-//         if (cocos2d::FileUtils::getInstance()->isFileExist(plist)) {
-//             frameCache->addSpriteFramesWithFile(plist, png);
-            
-//             // 预加载行走动画 (完全匹配队友的命名：name + "walk" + dir)
-//             for (const auto& dir : directions) {
-//                 std::string animName = s.name + "walk" + dir;
-//                 if (!animCache->getAnimation(animName)) {
-//                     cocos2d::Vector<cocos2d::SpriteFrame*> frames;
-//                     for (int i = 1; i <= s.walkFrames; ++i) {
-//                         std::string frameName = animName + std::to_string(i) + ".png";
-//                         auto frame = frameCache->getSpriteFrameByName(frameName);
-//                         if (frame) frames.pushBack(frame);
-//                     }
-//                     if (!frames.empty()) {
-//                         auto anim = cocos2d::Animation::createWithSpriteFrames(frames, 0.1f);
-//                         animCache->addAnimation(anim, animName);
-//                     }
-//                 }
-//             }
-
-//             // 预加载攻击动画 (完全匹配队友的命名：name + "attack" + dir)
-//             for (const auto& dir : directions) {
-//                 std::string animName = s.name + "attack" + dir;
-//                 if (!animCache->getAnimation(animName)) {
-//                     cocos2d::Vector<cocos2d::SpriteFrame*> frames;
-//                     for (int i = 1; i <= s.attackFrames; ++i) {
-//                         std::string frameName = animName + std::to_string(i) + ".png";
-//                         auto frame = frameCache->getSpriteFrameByName(frameName);
-//                         if (frame) frames.pushBack(frame);
-//                     }
-//                     if (!frames.empty()) {
-//                         auto anim = cocos2d::Animation::createWithSpriteFrames(frames, 0.1f);
-//                         animCache->addAnimation(anim, animName);
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
 
 std::pair<int, int> MapManager::getMapSize() const {
     return { _width, _length };
@@ -342,8 +276,8 @@ void MapManager::setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int w
     if (!node) return;
 
     // 1. 设置位置（相对 worldNode）和锚点
-    node->setPosition(gridToWorld(gridX, gridY));
-    node->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
+    node->setPosition(vecToWorld(cocos2d::Vec2{gridX+0.5f*width, gridY+0.5f*length}));
+    node->setAnchorPoint(cocos2d::Vec2(0.5f, 0.4f));
 
     // 2. 设置缩放适配格子
     auto sprite = dynamic_cast<cocos2d::Sprite*>(node);
@@ -360,7 +294,7 @@ void MapManager::setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int w
                               (node->getName() == "BuildingInCombat") ||
                               (dynamic_cast<BuildingInCombat*>(node) != nullptr);
 
-            float fitFactor = isBuilding ? 0.6f : 1.0f; 
+            float fitFactor = isBuilding ? 0.8f : 1.0f;
             float targetWidth = visualWidthOnMap * fitFactor;
             
             float scale = targetWidth / sprite->getContentSize().width;

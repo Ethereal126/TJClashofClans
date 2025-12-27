@@ -70,9 +70,7 @@ public:
 
     void setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int width, int length);
 
-    // // 预加载动画资源
-    // void preloadAllSoldierAnimations();
-    
+
     // 将世界坐标转换为格子坐标
     // 内部会自动处理 _worldNode 的拖拽和缩放转换
     std::pair<int, int> worldToGrid(const cocos2d::Vec2& worldPos) const;

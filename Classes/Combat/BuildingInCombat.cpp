@@ -133,7 +133,6 @@ void AttackBuildingInCombat::ChooseTarget(){
     if(current_target_) return;
     auto soldiers = CombatManager::GetInstance()->live_soldiers_;
     if(soldiers.empty()) {
-        CCLOG("no target for building");
         current_target_ = nullptr;
         return;
     }

@@ -59,8 +59,9 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
         CCLOG("SoldierInCombat init failed: Invalid map!");
         return false;
     }
-    this->setPosition(map_->vecToWorld(spawn_pos));
-    this->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
+    map_->setupNodeOnMap(this,floor(spawn_pos.x),floor(spawn_pos.y),1,1);
+//    this->setPosition(map_->vecToWorld(spawn_pos));
+//    this->setAnchorPoint(cocos2d::Vec2(0.5f, 0.4f));
     // 根据地图缩放系数调整士兵大小，保持视觉比例
     this->setScale(0.5f * map_->getGridScaleFactor());
     map_->addToWorld(this);
