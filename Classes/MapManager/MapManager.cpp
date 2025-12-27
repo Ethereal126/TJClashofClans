@@ -277,7 +277,8 @@ void MapManager::setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int w
 
     // 1. 设置位置（相对 worldNode）和锚点
     node->setPosition(vecToWorld(cocos2d::Vec2{gridX+0.5f*width, gridY+0.5f*length}));
-    node->setAnchorPoint(cocos2d::Vec2(0.5f, 0.4f));
+    //为了适配不同类型的图片，最好分别设置AnchorPoint
+    //node->setAnchorPoint(cocos2d::Vec2(0.5f, 0.7f));
 
     // 2. 设置缩放适配格子
     auto sprite = dynamic_cast<cocos2d::Sprite*>(node);

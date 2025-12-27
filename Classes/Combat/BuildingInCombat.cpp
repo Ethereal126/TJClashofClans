@@ -51,6 +51,7 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     this->position_ = building_template->GetPosition();
     map_->setupNodeOnMap(this,static_cast<int>(position_.x),static_cast<int>(position_.y),
                          building_template_->GetWidth(),building_template_->GetLength());
+    this->setAnchorPoint(this->building_template_->getAnchorPoint());
 
 
     auto building_size = this->getContentSize();

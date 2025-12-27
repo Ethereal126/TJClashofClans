@@ -322,8 +322,8 @@ WallBuilding* WallBuilding::Create(const std::string& name, int base,
         if (wall->initWithFile(texture)) {
             wall->autorelease();
 
-            // 设置墙体锚点为底部中心，方便放置
-            wall->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
+            //napper:设置墙体锚点以使其正确显示在格子内部
+            wall->setAnchorPoint(cocos2d::Vec2(0.5f, 0.7f));
 
             cocos2d::log("创建城墙: %s (位置: %.1f,%.1f)",
                 name.c_str(), position.x, position.y);
