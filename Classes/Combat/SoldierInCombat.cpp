@@ -59,8 +59,9 @@ bool SoldierInCombat::Init(const Soldier* soldier_template, const cocos2d::Vec2&
         CCLOG("SoldierInCombat init failed: Invalid map!");
         return false;
     }
-    this->setPosition(map_->vecToWorld(spawn_pos));
-    this->setAnchorPoint(cocos2d::Vec2(0.5f, 0.0f));
+    map_->setupNodeOnMap(this,std::floor(spawn_pos.x),std::floor(spawn_pos.y),1,1);
+//    this->setPosition(map_->vecToWorld(spawn_pos));
+//    this->setAnchorPoint(cocos2d::Vec2(0.5f, 0.4f));
     // 根据地图缩放系数调整士兵大小，保持视觉比例
     this->setScale(0.5f * map_->getGridScaleFactor());
     map_->addToWorld(this);
@@ -212,7 +213,7 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
 void SoldierInCombat::DoAllMyActions(){
     BuildingInCombat* next_target = GetNextTarget();  // 寻找下一个目标
     if (next_target) {
-        current_target_ = next_target;
+        ChooseTarget(next_target);
         MoveToTargetAndStartAttack();  // 移动到新目标继续攻击
     }
 }
@@ -434,6 +435,7 @@ std::vector<cocos2d::Vec2> PathFinder::FindPath(cocos2d::Vec2 start_tile,cocos2d
                 path.push_back(temp_pos);
                 temp_pos = node_map[temp_pos].parent_pos;
             }
+            path.push_back(start_tile);
             std::reverse(path.begin(), path.end());  // 反转路径为起点→终点
             return path;
         }
@@ -490,11 +492,22 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
             }//ptr指向超出攻击范围的第一个点
             // 此时 ptr 指向的是我们要保留的倒数第二个点
             // 删除 ptr 后一点之后的所有点
-            auto last_to_keep = std::next(ptr);
+            auto last_to_keep = ptr->distance(new_target) <= this->soldier_template_->GetAttackRange()
+                                            ? ptr: std::next(ptr);
             if (last_to_keep == path.end()) break;
             auto start_erase = std::next(last_to_keep);
             if (start_erase != path.end()) {
                 path.erase(start_erase, path.end());
+            }
+            auto buildings = CombatManager::GetInstance()->live_buildings_;
+            auto it =  find_if(buildings.begin(),buildings.end(),[&](BuildingInCombat* b){
+                return b->building_template_ == map_->getBuildingAt(floor(new_target.x),floor(new_target.y));
+            });
+            if(it!=buildings.end()){
+                ChooseTarget(*it);
+            }
+            else{
+                CCLOG("warning : SoldierInCombat fail to change target when RedirectPath");
             }
             break;
         }
@@ -536,7 +549,7 @@ void LogVec2(const cocos2d::Vec2& pos,std::string& s){
     s += std::to_string(pos.y);
     s +=")";
 }
-void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2>& path){
+void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2>& path) const{
     std::string s = soldier_template_->GetName() + " find path:";
     for(auto i : path){
         LogVec2(i,s);
@@ -548,7 +561,7 @@ void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2>& path){
     LogVec2(up_right,s);
     CCLOG("%s",s.c_str());
 }
-BuildingInCombat* SoldierInCombat::GetNextTarget() {
+BuildingInCombat* SoldierInCombat::GetNextTarget() const {
     auto buildings = CombatManager::GetInstance()->live_buildings_;
     if(buildings.empty()) return nullptr;
     else{
@@ -570,8 +583,14 @@ BuildingInCombat* SoldierInCombat::GetNextTarget() {
 
         return this->position_.distance(a->position_) < this->position_.distance(b->position_);
     });
-    target->subscribers.push_back(this);
     return target;
+}
+
+void SoldierInCombat::ChooseTarget(BuildingInCombat *b) {
+    if(b) {
+        this->current_target_ = b;
+        b->subscribers.push_back(this);
+    }
 }
 
 void SoldierInCombat::MoveToTargetAndStartAttack() {

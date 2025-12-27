@@ -8,9 +8,19 @@
   "map_layout": {
     "buildings": [
       { "type": "TownHall", "x": 11, "y": 11, "level": 2 },
-      { "type": "ArcherTower", "x": 4, "y": 28, "level": 2 },
-      { "type": "ElixirStorage", "x": 27, "y": 11, "level": 2 },
-      { "type": "Wall", "x": 10, "y": 10, "level": 1 }
+      { "type": "Archer Tower", "x": 4, "y": 5, "level": 2 },
+      { "type": "Wall", "x": 3, "y": 5, "level": 1 },
+      { "type": "Wall", "x": 3, "y": 6, "level": 1 },
+      { "type": "Wall", "x": 6, "y": 5, "level": 1 },
+      { "type": "Wall", "x": 6, "y": 6, "level": 1 },
+      { "type": "Wall", "x": 4, "y": 7, "level": 1 },
+      { "type": "Wall", "x": 5, "y": 7, "level": 1 },
+      { "type": "Wall", "x": 4, "y": 4, "level": 1 },
+      { "type": "Wall", "x": 5, "y": 4, "level": 1 },
+      { "type": "Wall", "x": 3, "y": 4, "level": 1 },
+      { "type": "Wall", "x": 3, "y": 7, "level": 1 },
+      { "type": "Wall", "x": 6, "y": 4, "level": 1 },
+      { "type": "Wall", "x": 6, "y": 7, "level": 1 }
     ],
     "obstacles": []
   }

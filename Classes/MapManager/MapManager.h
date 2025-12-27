@@ -70,9 +70,7 @@ public:
 
     void setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int width, int length);
 
-    // // 预加载动画资源
-    // void preloadAllSoldierAnimations();
-    
+
     // 将世界坐标转换为格子坐标
     // 内部会自动处理 _worldNode 的拖拽和缩放转换
     std::pair<int, int> worldToGrid(const cocos2d::Vec2& worldPos) const;
@@ -151,13 +149,13 @@ public:
     //napper:设为公有以供士兵类调用
     void updateYOrder(cocos2d::Node* node);
 
+    void updateEmptyBuildingGrids(const Building* building);
+
     // 获取地图奖励信息
     int getBaseGoldReward() const { return _baseGoldReward; }
     int getBaseElixirReward() const { return _baseElixirReward; }
 
-    // 更新建筑占用的格子状态
-    void updateBuildingGrids(Building* building, int gridX, int gridY, bool occupy);
-    
+
 protected:
     MapManager();
     virtual ~MapManager();
@@ -171,6 +169,9 @@ protected:
 
     // 获取格子状态
     GridState getGridState(int gridX, int gridY) const;
+
+    // 更新建筑占用的格子状态
+    void updateBuildingGrids(Building* building, int gridX, int gridY, bool occupy);
 
 private:
     int _baseGoldReward = 0;

@@ -51,6 +51,7 @@ bool BuildingInCombat::Init(const Building* building_template,MapManager* map) {
     this->position_ = building_template->GetPosition();
     map_->setupNodeOnMap(this,static_cast<int>(position_.x),static_cast<int>(position_.y),
                          building_template_->GetWidth(),building_template_->GetLength());
+    this->setAnchorPoint(this->building_template_->getAnchorPoint());
 
 
     auto building_size = this->getContentSize();
@@ -133,7 +134,6 @@ void AttackBuildingInCombat::ChooseTarget(){
     if(current_target_) return;
     auto soldiers = CombatManager::GetInstance()->live_soldiers_;
     if(soldiers.empty()) {
-        CCLOG("no target for building");
         current_target_ = nullptr;
         return;
     }
@@ -180,6 +180,9 @@ void BuildingInCombat::Die() {
     else{
         CCLOG("dead building not found");
     }
+
+    map_->updateEmptyBuildingGrids(this->building_template_);
+
     for(auto s:subscribers){
         s->DoAllMyActions();
     }
