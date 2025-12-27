@@ -65,6 +65,15 @@ bool UIManager::init(Scene* rootScene) {
 
 // ==================== 面板管理 ====================
 void UIManager::showPanel(UIPanelType panelType, UILayer layer, bool modal) {
+    // 回放模式拦截：只允许显示 HUD、结算界面、确认框和提示
+    if (_isReplayMode) {
+        if (panelType != UIPanelType::BattleHUD && 
+            panelType != UIPanelType::BattleResult && 
+            panelType != UIPanelType::ConfirmDialog && 
+            panelType != UIPanelType::ToastMessage) {
+            return;
+        }
+    }
     // 检查是否已存在
     auto it = _panels.find(panelType);
     if (it != _panels.end() && it->second) {
@@ -159,7 +168,7 @@ Node* UIManager::createPanel(UIPanelType panelType) {
         case UIPanelType::MapSelection:
             return createMapSelection();
         case UIPanelType::BattleHUD:
-            return createBattleHUD();
+            return _isReplayMode ? createReplayHUD() : createBattleHUD();
         default:
             return nullptr;
     }
@@ -1378,7 +1387,7 @@ Node* UIManager::createArmyTraining(Building* building) {
         // ===== 右侧：可选士兵 =====
         auto rightItem = Node::create();
         rightItem->setContentSize(Size(iconSize, iconSize));
-        rightItem->setPosition(Vec2(xPos, yPos + 10 * _scaleFactor));
+        rightItem->setPosition(Vec2(xPos, yPos));
         rightItem->setName("right_" + tmpl.name_);
 
         // 右侧图标
@@ -1570,7 +1579,7 @@ Node* UIManager::createBattleHUD() {
         // 士兵按钮容器
         auto btnContainer = Node::create();
         btnContainer->setContentSize(Size(btnSize + 6 * _scaleFactor, btnSize + 6 * _scaleFactor));
-        btnContainer->setPosition(Vec2(startX + i * (btnSize + btnMargin), bottomBarHeight / 2));
+        btnContainer->setPosition(Vec2(startX + i * (btnSize + btnMargin), bottomBarHeight / 6));
         btnContainer->setName("troopBtn_" + std::to_string(i));
 
         // 选中边框（默认隐藏）
@@ -1674,6 +1683,13 @@ Node* UIManager::createBattleHUD() {
     destroyLabel->setColor(Color3B(255, 200, 100));
     destroyLabel->setName("destroyLabel");
     statusBar->addChild(destroyLabel, 1);
+
+    // 倒计时标签
+    auto timerLabel = Label::createWithTTF("3:00", "fonts/arial.ttf", 24 * _scaleFactor);
+    timerLabel->setPosition(Vec2(_visibleSize.width / 2, _visibleSize.height - 30 * _scaleFactor));
+    timerLabel->setColor(Color3B::WHITE);
+    timerLabel->setName("CountdownLabel");
+    panel->addChild(timerLabel, 1);
 
     return panel;
 }
@@ -1807,6 +1823,8 @@ void UIManager::enterBattleMode(MapManager* battleMap) {
     }
 
     _isBattleMode = true;
+    _isReplayMode = false;
+    _recordedSteps.clear();
     _currentBattleMap = battleMap;
     _selectedTroopIndex = -1;
     _selectedTroopName = "";
@@ -1841,12 +1859,14 @@ void UIManager::exitBattleMode() {
     if (!_isBattleMode) return;
 
     _isBattleMode = false;
+    _isReplayMode = false;
     _currentBattleMap = nullptr;
     _selectedTroopIndex = -1;
     _selectedTroopName = "";
 
     // 隐藏战斗 HUD
     hidePanel(UIPanelType::BattleHUD, true);
+    //hidePanel(UIPanelType::BattleResult, true);
 
     // 移除触摸监听
     removeBattleTouchListener();
@@ -1856,6 +1876,93 @@ void UIManager::exitBattleMode() {
     _battleTroopNames.clear();
 
     CCLOG("UIManager: Exited battle mode");
+}
+
+// ==================== 回放模式相关 ====================
+
+void UIManager::enterReplayMode(MapManager* battleMap, const std::vector<ReplayStep>& steps) {
+    CCLOG("UIManager::enterReplayMode called! Map: %p, Steps: %d", battleMap, (int)steps.size());
+    _currentBattleMap = battleMap;
+    _isBattleMode = false;
+    _isReplayMode = true;
+    _playbackSteps = steps;
+    _replayTimer = 0.0f;
+    _nextReplayStepIndex = 0;
+
+    // 显示回放极简 HUD
+    showPanel(UIPanelType::BattleHUD, UILayer::HUD, false);
+}
+
+void UIManager::exitReplayMode() {
+    _isReplayMode = false;
+    _currentBattleMap = nullptr;
+    _recordedSteps.clear();
+    _playbackSteps.clear();
+}
+
+void UIManager::update(float dt) {
+    // 刷新倒计时（仅在战斗模式下）
+    if (_isBattleMode || _isReplayMode) {
+        auto hud = getPanel(UIPanelType::BattleHUD);
+        if (hud) {
+            auto timerLabel = dynamic_cast<Label*>(hud->getChildByName("CountdownLabel"));
+            if (timerLabel) {
+                auto combatMgr = CombatManager::GetInstance();
+                if (combatMgr) {
+                    float remaining = combatMgr->getRemainingTime();
+                    int minutes = static_cast<int>(remaining) / 60;
+                    int seconds = static_cast<int>(remaining) % 60;
+                    timerLabel->setString(StringUtils::format("%d:%02d", minutes, seconds));
+                    
+                    // 最后30秒变红
+                    if (remaining < 30.0f) {
+                        timerLabel->setColor(Color3B::RED);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void UIManager::updateReplay() {
+    if (!_isReplayMode || !_currentBattleMap || _playbackSteps.empty()) return;
+
+    // 直接同步 CombatManager 的战斗时间
+    auto combatMgr = CombatManager::GetInstance();
+    if (!combatMgr) return;
+    
+    float currentCombatTime = combatMgr->getCombatTime();
+
+    // 检查并执行回放步骤
+    while (_nextReplayStepIndex < _playbackSteps.size() && 
+           currentCombatTime >= _playbackSteps[_nextReplayStepIndex].time) {
+        
+        const auto& step = _playbackSteps[_nextReplayStepIndex];
+        CCLOG("Replay attempt: step %d, troop: %s, time: %.2f (current: %.2f)", 
+            _nextReplayStepIndex, step.troopName.c_str(), step.time, currentCombatTime);
+        
+        // 关键修复：从 TownHall 获取士兵创建函数
+        auto townHall = TownHall::GetInstance();
+        auto soldier_template = townHall->GetSoldierCategory();
+        
+        Soldier* soldier = nullptr;
+        for (const auto& tmpl : soldier_template) {
+            if (tmpl.name_ == step.troopName) {
+                soldier = tmpl.createFunc();
+                break;
+            }
+        }
+
+        if (soldier) {
+            combatMgr->SendSoldier(soldier, step.pos);
+            CCLOG("Replay SUCCESS: Deployed '%s' at (%.2f, %.2f)", step.troopName.c_str(), step.pos.x, step.pos.y);
+        } else {
+            CCLOG("Replay ERROR: Could not create soldier '%s'. Template size: %d", 
+                step.troopName.c_str(), (int)soldier_template.size());
+        }
+
+        _nextReplayStepIndex++;
+    }
 }
 
 void UIManager::setupBattleTouchListener() {
@@ -1932,6 +2039,18 @@ bool UIManager::deploySoldierAt(const cocos2d::Vec2& screenPos) {
             soldier = tmpl.createFunc();
         }
     }
+
+    // 录制步骤
+    if (!_isReplayMode) {
+        ReplayStep step;
+        step.time = CombatManager::GetInstance()->getCombatTime();
+        step.troopName = _selectedTroopName;
+        step.pos = vecPos;
+        _recordedSteps.push_back(step);
+        CCLOG("RECORDED: %s at %.2f, total steps: %d", 
+            step.troopName.c_str(), step.time, (int)_recordedSteps.size());
+    }
+
     CombatManager::GetInstance()->SendSoldier(soldier, vecPos);
 
     // 更新 UI 数量
@@ -1946,30 +2065,64 @@ bool UIManager::deploySoldierAt(const cocos2d::Vec2& screenPos) {
 // ==================== 结束战斗 ====================
 
 void UIManager::endBattle(int stars, int destroyPercent) {
-    if (!_isBattleMode) return;
+    // 如果既不是战斗模式也不是回放模式，才返回
+    if (!_isBattleMode && !_isReplayMode) return;
 
-    // 隐藏战斗 HUD
-    hidePanel(UIPanelType::BattleHUD, true);
-
-    // 移除触摸监听
+    // 移除触摸监听（如果是战斗模式，立即停止下兵响应）
     removeBattleTouchListener();
-    _isBattleMode = false;
 
-    // 等待 1 秒后显示结算面板
+    // 等待 1 秒后同时收起 HUD 并显示结算面板
     if (_rootScene) {
-        _rootScene->scheduleOnce([this, stars, destroyPercent](float dt) {
+        bool wasReplay = _isReplayMode;
+        _rootScene->scheduleOnce([this, stars, destroyPercent, wasReplay](float dt) {
+            // 隐藏当前的 HUD (无论是 BattleHUD 还是 ReplayHUD)
+            hidePanel(UIPanelType::BattleHUD, true);
+
+            // 重置模式标记
+            _isBattleMode = false;
+            _isReplayMode = false;
+
             // 创建并显示结算面板
-            auto panel = createBattleResult(stars, destroyPercent);
+            auto panel = createBattleResult(stars, destroyPercent, wasReplay);
             if (panel) {
                 _panels[UIPanelType::BattleResult] = panel;
                 addPanelToScene(panel, UILayer::Dialog, true);
                 playShowAnimation(panel);
             }
-            }, 1.0f, "showBattleResult");
+        }, 1.0f, "showBattleResult");
     }
 }
 
-Node* UIManager::createBattleResult(int stars, int destroyPercent) {
+Node* UIManager::createReplayHUD() {
+    auto panel = Node::create();
+    panel->setContentSize(_visibleSize);
+
+    // 顶部状态条：显示 "REPLAY MODE"
+    auto topBar = LayerColor::create(Color4B(0, 0, 0, 100), _visibleSize.width, 40 * _scaleFactor);
+    topBar->setPosition(Vec2(0, _visibleSize.height - 40 * _scaleFactor));
+    panel->addChild(topBar);
+
+    auto label = Label::createWithTTF("REPLAY MODE", "fonts/arial.ttf", 20 * _scaleFactor);
+    label->setPosition(Vec2(_visibleSize.width / 2, 20 * _scaleFactor));
+    label->setColor(Color3B::YELLOW);
+    topBar->addChild(label);
+
+    // 左下角：退出回放按钮
+    auto exitBtn = Button::create();
+    exitBtn->setTitleText("Exit Replay");
+    exitBtn->setTitleFontSize(16 * _scaleFactor);
+    exitBtn->setContentSize(Size(120 * _scaleFactor, 40 * _scaleFactor));
+    exitBtn->setScale9Enabled(true);
+    exitBtn->setPosition(Vec2(80 * _scaleFactor, 80 * _scaleFactor));
+    exitBtn->addClickEventListener([this](Ref* sender) {
+        triggerUIEvent("OnRequestExitReplay");
+    });
+    panel->addChild(exitBtn);
+
+    return panel;
+}
+
+Node* UIManager::createBattleResult(int stars, int destroyPercent, bool isReplay) {
     auto panel = Node::create();
 
     Size panelSize(400 * _scaleFactor, 300 * _scaleFactor);
@@ -2016,18 +2169,68 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent) {
     // 摧毁率
     auto destroyLabel = Label::createWithTTF("Destruction: " + std::to_string(destroyPercent) + "%",
         "fonts/arial.ttf", 22 * _scaleFactor);
-    destroyLabel->setPosition(Vec2(panelSize.width / 2, panelSize.height - 170 * _scaleFactor));
+    destroyLabel->setPosition(Vec2(panelSize.width / 2, panelSize.height - 160 * _scaleFactor));
     destroyLabel->setColor(Color3B(255, 200, 100));
     panel->addChild(destroyLabel, 1);
+
+    // 奖励显示 (仅在非回放模式下显示)
+    int earnedGold = 0;
+    int earnedElixir = 0;
+    if (_currentBattleMap && !isReplay) {
+        int baseGold = _currentBattleMap->getBaseGoldReward();
+        int baseElixir = _currentBattleMap->getBaseElixirReward();
+        earnedGold = baseGold * destroyPercent / 100;
+        earnedElixir = baseElixir * destroyPercent / 100;
+
+        float rewardY = 115 * _scaleFactor;
+        float iconScale = 0.4f * _scaleFactor;
+
+        // 金币奖励
+        auto goldIcon = Sprite::create("UI/icon_gold.png");
+        if (goldIcon) {
+            goldIcon->setScale(iconScale);
+            goldIcon->setPosition(Vec2(panelSize.width / 2 - 120 * _scaleFactor, rewardY - 10 * _scaleFactor));
+            panel->addChild(goldIcon, 1);
+        }
+
+        auto goldLabel = Label::createWithTTF("gold: " + std::to_string(earnedGold), "fonts/arial.ttf", 18 * _scaleFactor);
+        goldLabel->setAnchorPoint(Vec2(0, 0.5f));
+        goldLabel->setPosition(Vec2(panelSize.width / 2 - 80 * _scaleFactor, rewardY - 10 * _scaleFactor));
+        goldLabel->setColor(Color3B(255, 255, 255));
+        panel->addChild(goldLabel, 1);
+
+        // 圣水奖励
+        auto elixirIcon = Sprite::create("UI/icon_elixir.png");
+        if (elixirIcon) {
+            elixirIcon->setScale(iconScale);
+            elixirIcon->setPosition(Vec2(panelSize.width / 2 + 30 * _scaleFactor, rewardY - 10 * _scaleFactor));
+            panel->addChild(elixirIcon, 1);
+        }
+
+        auto elixirLabel = Label::createWithTTF("elixir: " + std::to_string(earnedElixir), "fonts/arial.ttf", 18 * _scaleFactor);
+        elixirLabel->setAnchorPoint(Vec2(0, 0.5f));
+        elixirLabel->setPosition(Vec2(panelSize.width / 2 + 60 * _scaleFactor, rewardY - 10 * _scaleFactor));
+        elixirLabel->setColor(Color3B(255, 255, 255));
+        panel->addChild(elixirLabel, 1);
+    }
 
     // 确认按钮
     auto confirmBtn = Button::create();
     confirmBtn->setTitleText("Confirm");
     confirmBtn->setTitleFontSize(20 * _scaleFactor);
-    confirmBtn->setContentSize(Size(150 * _scaleFactor, 50 * _scaleFactor));
+    confirmBtn->setContentSize(Size(140 * _scaleFactor, 50 * _scaleFactor));
     confirmBtn->setScale9Enabled(true);
-    confirmBtn->setPosition(Vec2(panelSize.width / 2, 60 * _scaleFactor));
-    confirmBtn->addClickEventListener([this](Ref* sender) {
+    confirmBtn->setPosition(Vec2(panelSize.width / 2 - 80 * _scaleFactor, 35 * _scaleFactor ));
+    confirmBtn->addClickEventListener([this, earnedGold, earnedElixir, isReplay](Ref* sender) {
+        // 增加玩家资源 (仅在非回放模式下)
+        if (!isReplay) {
+            auto townHall = TownHall::GetInstance();
+            if (townHall) {
+                townHall->AddGold(earnedGold);
+                townHall->AddElixir(earnedElixir);
+            }
+        }
+
         // 隐藏结算面板
         hidePanel(UIPanelType::BattleResult, true);
 
@@ -2037,6 +2240,7 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent) {
             _currentBattleMap = nullptr;
             _battleTroopCounts.clear();
             _battleTroopNames.clear();
+            _recordedSteps.clear();
 
             // 返回主场景
             auto mainScene = MainScene::createScene();
@@ -2044,6 +2248,19 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent) {
             });
         });
     panel->addChild(confirmBtn, 1);
+
+    // 回放按钮
+    auto replayBtn = Button::create();
+    replayBtn->setTitleText("Replay");
+    replayBtn->setTitleFontSize(20 * _scaleFactor);
+    replayBtn->setContentSize(Size(140 * _scaleFactor, 50 * _scaleFactor));
+    replayBtn->setScale9Enabled(true);
+    replayBtn->setPosition(Vec2(panelSize.width / 2 + 80 * _scaleFactor, 35 * _scaleFactor));
+    replayBtn->addClickEventListener([this](Ref* sender) {
+        // 发送 UI 事件，让外部处理回放请求
+        triggerUIEvent("OnRequestReplay");
+    });
+    panel->addChild(replayBtn, 1);
 
     return panel;
 }

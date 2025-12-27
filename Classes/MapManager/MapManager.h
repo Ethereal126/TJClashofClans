@@ -152,6 +152,12 @@ public:
     void updateYOrder(cocos2d::Node* node);
 
     void updateEmptyBuildingGrids(const Building* building);
+
+    // 获取地图奖励信息
+    int getBaseGoldReward() const { return _baseGoldReward; }
+    int getBaseElixirReward() const { return _baseElixirReward; }
+
+
 protected:
     MapManager();
     virtual ~MapManager();
@@ -170,6 +176,8 @@ protected:
     void updateBuildingGrids(Building* building, int gridX, int gridY, bool occupy);
 
 private:
+    int _baseGoldReward = 0;
+    int _baseElixirReward = 0;
     int _width;               // 地图宽度（格子数）
     int _length;              // 地图高度（格子数）
     int _gridSize;            // 每个格子的像素大小

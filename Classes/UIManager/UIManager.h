@@ -64,6 +64,13 @@ enum class ResourceType {
     Elixir,           // 圣水
 };
 
+// 回放步骤结构体
+struct ReplayStep {
+    float time;          // 战斗开始后的秒数
+    std::string troopName; 
+    cocos2d::Vec2 pos;    // 地图坐标
+};
+
 // 建筑类型枚举（用于判断BuildingOptions显示哪些按钮）
 enum class BuildingCategory {
     Normal,           // 普通建筑（信息/升级）
@@ -204,6 +211,24 @@ public:
     // 是否处于战斗模式
     bool isInBattleMode() const { return _isBattleMode; }
 
+    // ========== 回放模式（新增）==========
+    // 进入回放模式
+    void enterReplayMode(MapManager* battleMap, const std::vector<ReplayStep>& steps);
+    // 退出回放模式
+    void exitReplayMode();
+    // 是否处于回放模式
+    bool isInReplayMode() const { return _isReplayMode; }
+    // 更新回放逻辑（由 CombatManager 调用）
+    void updateReplay();
+    // 更新战斗 UI（倒计时等）
+    void update(float dt);
+
+    // 获取/记录相关
+    void setCurrentLevelId(int levelId) { _currentLevelId = levelId; }
+    int getCurrentLevelId() const { return _currentLevelId; }
+    const std::vector<ReplayStep>& getRecordedSteps() const { return _recordedSteps; }
+    const std::vector<ReplayStep>& getPlaybackSteps() const { return _playbackSteps; }
+    
     // 检查所有士兵是否已部署完毕
     bool areAllTroopsDeployed() const;
 
@@ -241,7 +266,8 @@ protected:
     cocos2d::Node* createBuildingUpgrade(Building* building);
     cocos2d::Node* createArmyTraining(Building* building);
     cocos2d::Node* createBattleHUD();
-    cocos2d::Node* createBattleResult(int stars, int destroyPercent);
+    cocos2d::Node* createReplayHUD(); // 新增回放HUD
+    cocos2d::Node* createBattleResult(int stars, int destroyPercent, bool isReplay = false);
     cocos2d::Node* createUpgradeProgressOverlay(Building* building, float totalTime, float remainingTime);
 
     // 创建通用关闭按钮（右上角叉）
@@ -298,6 +324,14 @@ private:
     void saveArmyConfig();
     std::map<std::string, int> loadArmyConfig();
     void refreshArmyTrainingUI(cocos2d::Node* panel);
+
+    // 回放相关私有变量
+    bool _isReplayMode = false;
+    float _replayTimer = 0.0f;
+    int _nextReplayStepIndex = 0;
+    std::vector<ReplayStep> _recordedSteps; // 录制容器
+    std::vector<ReplayStep> _playbackSteps; // 回放容器
+    int _currentLevelId = 0;                // 当前关卡ID
 
     // ========== 战斗模式相关（新增）==========
     bool _isBattleMode = false;
