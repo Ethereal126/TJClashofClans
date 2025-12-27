@@ -266,38 +266,6 @@ public:
     int GetTotalElixirFromStorages() const;
 
     /**
-     * @brief 计算所有金币池的总容量
-     * 遍历所有管理的金币池，汇总它们的存储容量。
-     * @return 所有金币池的总容量。
-     */
-    int GetTotalGoldCapacity() const;
-
-    /**
-     * @brief 计算所有圣水池的总容量
-     * 遍历所有管理的圣水池，汇总它们的存储容量。
-     * @return 所有圣水池的总容量。
-     */
-    int GetTotalElixirCapacity() const;
-
-    /**
-     * @brief 更新金币持有上限
-     * 重新计算所有金币池的总容量并更新上限值。
-     */
-    void UpdateMaxGoldCapacity();
-
-    /**
-     * @brief 更新圣水持有上限
-     * 重新计算所有圣水池的总容量并更新上限值。
-     */
-    void UpdateMaxElixirCapacity();
-
-    /**
-     * @brief 更新所有资源持有上限
-     * 同时更新金币和圣水的持有上限。
-     */
-    void UpdateAllResourceCapacities();
-
-    /**
      * @brief 获取最大可持有金币上限
      * 返回所有金币池的总容量。
      * @return 最大可持有金币数量。
@@ -310,20 +278,6 @@ public:
      * @return 最大可持有圣水数量。
      */
     int GetMaxElixirCapacity() const { return max_elixir_capacity_; }
-
-    /**
-     * @brief 检查金币是否已达上限
-     * 判断当前金币存储量是否已达到最大容量。
-     * @return 如果金币已满返回 true，否则返回 false。
-     */
-    bool IsGoldFull() const;
-
-    /**
-     * @brief 检查圣水是否已达上限
-     * 判断当前圣水存储量是否已达到最大容量。
-     * @return 如果圣水已满返回 true，否则返回 false。
-     */
-    bool IsElixirFull() const;
 
     // ==================== 军队容量相关接口 ====================
 
