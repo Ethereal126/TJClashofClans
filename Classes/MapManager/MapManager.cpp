@@ -297,6 +297,24 @@ void MapManager::updateBuildingGrids(Building* building, int gridX, int gridY, b
     }
 }
 
+//由于combat相关实现中Building*具有const标签，对这一函数做重新实现
+void MapManager::updateEmptyBuildingGrids(const Building* building){
+    const int gridX = floor(building->GetPosition().x);
+    const int gridY = floor(building->GetPosition().y);
+
+    const int bw = building ? building->GetWidth() : 1;
+    const int bh = building ? building->GetLength() : 1;
+
+    for (int x = gridX; x < gridX + bw; ++x) {
+        for (int y = gridY; y < gridY + bh; ++y) {
+            if (!isValidGrid(x, y)) continue;
+            _gridStates[x][y] = GridState::Empty;
+            _gridBuildings[x][y] = nullptr;
+        }
+    }
+}
+
+
 void MapManager::addToWorld(cocos2d::Node* node, int zOrder) {
     if (_worldNode && node) {
         _worldNode->addChild(node, zOrder);

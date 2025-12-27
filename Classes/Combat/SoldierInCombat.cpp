@@ -536,7 +536,7 @@ void LogVec2(const cocos2d::Vec2& pos,std::string& s){
     s += std::to_string(pos.y);
     s +=")";
 }
-void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2>& path){
+void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2>& path) const{
     std::string s = soldier_template_->GetName() + " find path:";
     for(auto i : path){
         LogVec2(i,s);

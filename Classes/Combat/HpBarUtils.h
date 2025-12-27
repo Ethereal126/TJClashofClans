@@ -15,8 +15,8 @@ public:
     static HpBarComponents createHpBar(
             cocos2d::Node* hostNode,        // 宿主节点（士兵/建筑，血条会添加为它的子节点）
             float hostHeight,               // 宿主高度（用于计算血条Y坐标）
-            float hpOffsetRatio = 1.2f,     // 血条偏移比例（默认1.4，可按需调整）
-            float hpWidth = 20.0f,          // 血条宽度（默认20，可自定义）
+            float hpOffsetRatio = 1.2f,     // 血条偏移比例
+            float hpWidth = 20.0f,          // 血条宽度
             const std::string& bgPath = "UI/slider_bg.png",      // 血条背景路径
             const std::string& progressPath = "UI/slider_progress.png" // 血条进度条路径
     );

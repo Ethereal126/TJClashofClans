@@ -1836,7 +1836,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         20,   // 训练时间（秒）
         []() -> Soldier* {
             // 使用 Soldier 构造函数创建野蛮人
-            return new Soldier(SoldierType::kBarbarian, 50, 5, 1.0f, 1.0f, 1.0f);
+            return new Soldier(SoldierType::kBarbarian, 50, 5, 1.0f, 0.4f, 1.0f);
         }
     );
 
@@ -1876,7 +1876,7 @@ std::vector<SoldierTemplate> TownHall::GetSoldierCategory() {
         60,
         []() -> Soldier* {
             // 需要先在 SoldierType 枚举中添加 WallBreaker
-            return new Soldier(SoldierType::kBomber, 20, 5, 1.5f, 1.0f, 1.0f);
+            return new Soldier(SoldierType::kBomber, 20, 5, 1.5f, 0.5f, 1.0f);
         }
     );
 

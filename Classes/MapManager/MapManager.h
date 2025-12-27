@@ -150,6 +150,8 @@ public:
 
     //napper:设为公有以供士兵类调用
     void updateYOrder(cocos2d::Node* node);
+
+    void updateEmptyBuildingGrids(const Building* building);
 protected:
     MapManager();
     virtual ~MapManager();

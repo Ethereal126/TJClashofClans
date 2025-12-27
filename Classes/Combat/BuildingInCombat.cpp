@@ -180,6 +180,9 @@ void BuildingInCombat::Die() {
     else{
         CCLOG("dead building not found");
     }
+
+    map_->updateEmptyBuildingGrids(this->building_template_);
+
     for(auto s:subscribers){
         s->DoAllMyActions();
     }
