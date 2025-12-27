@@ -812,7 +812,7 @@ void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory categ
         if (parent) {
             // 如果提供了父节点（通常是 MapManager 的 _worldNode），则添加到该节点
             // 此时 position 应该是相对于该父节点的本地坐标
-            parent->addChild(panel, 1000);
+            parent->addChild(panel, 99999);
             
             // 在父节点空间中，不需要根据屏幕边缘限制位置，直接居中于建筑下方即可
             panel->setPosition(position.x - panel->getContentSize().width / 2, 
@@ -1842,6 +1842,11 @@ void UIManager::enterBattleMode(MapManager* battleMap) {
 }
 
 bool UIManager::areAllTroopsDeployed() const {
+    // 如果是回放模式，判断回放步骤是否全部执行完毕
+    if (_isReplayMode) {
+        return _nextReplayStepIndex >= _playbackSteps.size();
+    }
+
     if (!_isBattleMode) return false;
     
     // 如果没有任何士兵配置，视为已“部署”完（没有可部署的）
@@ -2212,6 +2217,15 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent, bool isReplay
         elixirLabel->setPosition(Vec2(panelSize.width / 2 + 60 * _scaleFactor, rewardY - 10 * _scaleFactor));
         elixirLabel->setColor(Color3B(255, 255, 255));
         panel->addChild(elixirLabel, 1);
+
+        // 增加玩家资源 (仅在非回放模式下)
+        if (!isReplay) {
+            auto townHall = TownHall::GetInstance();
+            if (townHall) {
+                townHall->AddGold(earnedGold);
+                townHall->AddElixir(earnedElixir);
+            }
+        }
     }
 
     // 确认按钮
@@ -2222,14 +2236,6 @@ Node* UIManager::createBattleResult(int stars, int destroyPercent, bool isReplay
     confirmBtn->setScale9Enabled(true);
     confirmBtn->setPosition(Vec2(panelSize.width / 2 - 80 * _scaleFactor, 35 * _scaleFactor ));
     confirmBtn->addClickEventListener([this, earnedGold, earnedElixir, isReplay](Ref* sender) {
-        // 增加玩家资源 (仅在非回放模式下)
-        if (!isReplay) {
-            auto townHall = TownHall::GetInstance();
-            if (townHall) {
-                townHall->AddGold(earnedGold);
-                townHall->AddElixir(earnedElixir);
-            }
-        }
 
         // 隐藏结算面板
         hidePanel(UIPanelType::BattleResult, true);

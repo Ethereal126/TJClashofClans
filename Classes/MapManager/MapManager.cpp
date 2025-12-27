@@ -295,7 +295,33 @@ void MapManager::setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int w
                               (node->getName() == "BuildingInCombat") ||
                               (dynamic_cast<BuildingInCombat*>(node) != nullptr);
 
-            float fitFactor = isBuilding ? 0.8f : 1.0f;
+            float fitFactor = 1.0f;
+            if (isBuilding) {
+                fitFactor = 0.8f;
+                // 针对圣水储存器和圣水收集器进一步缩小
+                Building* b = dynamic_cast<Building*>(node);
+                if (!b) {
+                    auto bInCombat = dynamic_cast<BuildingInCombat*>(node);
+                    if (bInCombat) {
+                        b = const_cast<Building*>(bInCombat->building_template_);
+                    }
+                }                
+                if (b) {
+                    std::string bName = b->GetName();
+                    if(bName == "Archer Tower" || bName == "Cannon"){
+                        fitFactor = 0.7f;
+                    }
+                    if(bName == "Gold Storage"){
+                        fitFactor = 0.6f;
+                    }
+                    if (bName == "Elixir Collector") {
+                        fitFactor = 0.55f;
+                    }
+                    if(bName == "Elixir Storage"){
+                        fitFactor = 0.60f;
+                    }
+                }
+            }
             float targetWidth = visualWidthOnMap * fitFactor;
             
             float scale = targetWidth / sprite->getContentSize().width;
@@ -309,10 +335,15 @@ void MapManager::setupNodeOnMap(cocos2d::Node* node, int gridX, int gridY, int w
 }
 
 void MapManager::updateYOrder(cocos2d::Node* node) {
-    if (!node) return;
+    if (!node) return;    
+    // 默认基础 ZOrder
+    int baseZ = 1000;    
+    // 如果是正在放置中的预览建筑，给予更高的基础 ZOrder，确保它在所有已放置建筑和高亮之上
+    if (_isPlacementMode && node == _pendingBuilding) {
+        baseZ = 5000;
+    }    
     // Y 坐标越小（越靠下），ZOrder 越高
-    // 我们给一个基础偏移 1000 保证在背景之上
-    node->setLocalZOrder(1000 - (int)node->getPositionY());
+    node->setLocalZOrder(baseZ - (int)node->getPositionY());
 }
 
 bool MapManager::removeBuilding(int gridX, int gridY) {
@@ -551,6 +582,9 @@ bool MapManager::confirmPlacement() {
     setupNodeOnMap(_pendingBuilding, _placementGridX, _placementGridY, _pendingBuilding->GetWidth(), _pendingBuilding->GetLength());
     _pendingBuilding->SetPosition({_placementGridX, _placementGridY});
 
+    // 记录放置成功的建筑，并在清除状态前恢复其正常的 Y-Sorting ZOrder
+    Building* placedBuilding = _pendingBuilding;
+
     // 注册到格子系统
     updateBuildingGrids(_pendingBuilding, _placementGridX, _placementGridY, true);
     _buildings.push_back(_pendingBuilding);
@@ -568,11 +602,12 @@ bool MapManager::confirmPlacement() {
         CCLOG("Auto-saved map to: %s", _currentSavePath.c_str());
     }
 
-    // 清理放置模式状态（不删除建筑，因为已放置成功）
-    Building* placedBuilding = _pendingBuilding;
-    _pendingBuilding = nullptr;  // 防止 exitPlacementMode 删除它
+    // 清理放置模式状态
+    _pendingBuilding = nullptr;  
     _isPlacementMode = false;
     _pendingBuildingCost = 0;
+    // 关键：恢复建筑正常的 Y-Sorting（此时 _isPlacementMode 为 false 且 _pendingBuilding 为空，将使用 1000 作为 base）
+    updateYOrder(placedBuilding);
 
     // 移除高亮和UI
     if (_placementHighlight) {
@@ -626,6 +661,9 @@ void MapManager::updatePlacementPreview(const cocos2d::Vec2& touchPos) {
 
 void MapManager::drawPlacementHighlight() {
     if (!_placementHighlight || !_pendingBuilding) return;
+
+    // 确保高亮始终在待放置建筑的下方
+    _placementHighlight->setLocalZOrder(_pendingBuilding->getLocalZOrder() - 1);
 
     _placementHighlight->clear();
 
@@ -809,8 +847,8 @@ void MapManager::setupInputListener() {
     _inputListener->onTouchEnded = [this](cocos2d::Touch* touch, cocos2d::Event*) {
         if (_isPlacementMode) return;
         if (!_isMapDragging) {
-            // 如果是战斗模式，禁止点击建筑弹出面板
-            if (UIManager::getInstance()->isInBattleMode()) {
+            // 如果是战斗模式或回放模式，禁止点击建筑弹出面板
+            if (UIManager::getInstance()->isInBattleMode() || UIManager::getInstance()->isInReplayMode()) {
                 return;
             }
             auto gridIdx = worldToGrid(touch->getLocation());
