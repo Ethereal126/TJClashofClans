@@ -832,9 +832,6 @@ void TownHall::Upgrade() {
     army_capacity_ += 8;                   // 每级增加5个军队容量
     wall_capacity_ += 5;                   // 每级增加5个城墙容量
 
-    // 更新资源持有上限
-    UpdateAllResourceCapacities();
-
     // 更新等级显示
     UpdateLevelLabel();
 
@@ -1312,7 +1309,7 @@ bool TownHall::SpendGold(int amount) {
         cocos2d::log("金币不足，需要: %d，现有: %d", amount, total_gold);
         return false;
     }
-
+    /*
     // 从金币池消耗
     int remaining = amount;
     for (auto* storage : gold_storages_) {
@@ -1325,6 +1322,7 @@ bool TownHall::SpendGold(int amount) {
             remaining -= deduct_from_storage;
         }
     }
+    */
 
     //更新大本营金币数量
     gold_ -= amount;
@@ -1444,7 +1442,7 @@ bool TownHall::SpendElixir(int amount) {
         cocos2d::log("圣水不足，需要: %d，现有: %d", amount, total_elixir);
         return false;
     }
-
+    /*
     // 从圣水池消耗
     int remaining = amount;
     for (auto* storage : elixir_storages_) {
@@ -1457,6 +1455,7 @@ bool TownHall::SpendElixir(int amount) {
             remaining -= deduct_from_storage;
         }
     }
+    */
 
     //更新大本营圣水数量
     elixir_ -= amount;
@@ -1507,18 +1506,17 @@ void TownHall::AddGoldStorage(ProductionBuilding* gold_storage) {
     if (!gold_storage) {
         return;
     }
-
+    /*
     // 检查是否已达到上限
     if (static_cast<int>(gold_storages_.size()) >= gold_storage_capacity_) {
         cocos2d::log("已达到金币池上限，无法添加更多金币池");
         return;
-    }
+    }*/
 
     // 检查是否已存在
     auto it = std::find(gold_storages_.begin(), gold_storages_.end(), gold_storage);
     if (it == gold_storages_.end()) {
         gold_storages_.push_back(gold_storage);
-        UpdateMaxGoldCapacity();
         cocos2d::log("添加金币池，当前数量: %zu", gold_storages_.size());
     }
 }
@@ -1531,7 +1529,6 @@ void TownHall::RemoveGoldStorage(ProductionBuilding* gold_storage) {
     auto it = std::find(gold_storages_.begin(), gold_storages_.end(), gold_storage);
     if (it != gold_storages_.end()) {
         gold_storages_.erase(it);
-        UpdateMaxGoldCapacity();
         cocos2d::log("移除金币池，剩余数量: %zu", gold_storages_.size());
     }
 }
@@ -1540,18 +1537,17 @@ void TownHall::AddElixirStorage(ProductionBuilding* elixir_storage) {
     if (!elixir_storage) {
         return;
     }
-
+    /*
     // 检查是否已达到上限
     if (static_cast<int>(elixir_storages_.size()) >= elixir_storage_capacity_) {
         cocos2d::log("已达到圣水池上限，无法添加更多圣水池");
         return;
-    }
+    }*/
 
     // 检查是否已存在
     auto it = std::find(elixir_storages_.begin(), elixir_storages_.end(), elixir_storage);
     if (it == elixir_storages_.end()) {
         elixir_storages_.push_back(elixir_storage);
-        UpdateMaxElixirCapacity();
         cocos2d::log("添加圣水池，当前数量: %zu", elixir_storages_.size());
     }
 }
@@ -1564,7 +1560,6 @@ void TownHall::RemoveElixirStorage(ProductionBuilding* elixir_storage) {
     auto it = std::find(elixir_storages_.begin(), elixir_storages_.end(), elixir_storage);
     if (it != elixir_storages_.end()) {
         elixir_storages_.erase(it);
-        UpdateMaxElixirCapacity();
         cocos2d::log("移除圣水池，剩余数量: %zu", elixir_storages_.size());
     }
 }
@@ -1587,69 +1582,6 @@ int TownHall::GetTotalElixirFromStorages() const {
         }
     }
     return total;
-}
-
-int TownHall::GetTotalGoldCapacity() const {
-    // 计算金币池的总容量
-    int total = 0;
-    for (const auto* storage : gold_storages_) {
-        if (storage && storage->IsActive()) {
-            total += storage->GetCapacity();
-        }
-    }
-    return total;
-}
-
-int TownHall::GetTotalElixirCapacity() const {
-    // 计算圣水池的总容量
-    int total = 0;
-    for (const auto* storage : elixir_storages_) {
-        if (storage && storage->IsActive()) {
-            total += storage->GetCapacity();
-        }
-    }
-    return total;
-}
-
-void TownHall::UpdateMaxGoldCapacity() {
-    // 计算金币池的总容量并更新大本营的金币容量
-    max_gold_capacity_ = GetTotalGoldCapacity();
-
-    // 同时更新UI
-    if (level_label_) {
-        UpdateLevelLabel();
-    }
-
-    cocos2d::log("更新金币持有上限: %d", max_gold_capacity_);
-}
-
-void TownHall::UpdateMaxElixirCapacity() {
-    // 计算圣水池的总容量并更新大本营的圣水容量
-    max_elixir_capacity_ = GetTotalElixirCapacity();
-
-    // 同时更新UI
-    if (level_label_) {
-        UpdateLevelLabel();
-    }
-
-    cocos2d::log("更新圣水持有上限: %d", max_elixir_capacity_);
-}
-
-void TownHall::UpdateAllResourceCapacities() {
-    UpdateMaxGoldCapacity();
-    UpdateMaxElixirCapacity();
-}
-
-bool TownHall::IsGoldFull() const {
-    int total_gold = gold_ + GetTotalGoldFromStorages();
-    int total_capacity = GetTotalGoldCapacity();
-    return total_gold >= total_capacity;
-}
-
-bool TownHall::IsElixirFull() const {
-    int total_elixir = elixir_ + GetTotalElixirFromStorages();
-    int total_capacity = GetTotalElixirCapacity();
-    return total_elixir >= total_capacity;
 }
 
 void TownHall::UpdateLevelLabel() {
@@ -1725,31 +1657,6 @@ void TownHall::ShowInfo() const {
     cocos2d::log("军营数量: %zu", all_barracks_.size());
     cocos2d::log("大本营金币: %d/%d", gold_, max_gold_capacity_);
     cocos2d::log("大本营圣水: %d/%d", elixir_, max_elixir_capacity_);
-    cocos2d::log("总金币: %d/%d (%.1f%%)",
-        gold_ + GetTotalGoldFromStorages(),
-        GetTotalGoldCapacity(),
-        GetTotalGoldCapacity() > 0 ?
-        (gold_ + GetTotalGoldFromStorages()) * 100.0f / GetTotalGoldCapacity() : 0);
-    cocos2d::log("总圣水: %d/%d (%.1f%%)",
-        elixir_ + GetTotalElixirFromStorages(),
-        GetTotalElixirCapacity(),
-        GetTotalElixirCapacity() > 0 ?
-        (elixir_ + GetTotalElixirFromStorages()) * 100.0f / GetTotalElixirCapacity() : 0);
-    cocos2d::log("军队容量: %d/%d (%.1f%%)",
-        current_army_count_,
-        army_capacity_,
-        army_capacity_ > 0 ? current_army_count_ * 100.0f / army_capacity_ : 0);
-    cocos2d::log("城墙数量: %d/%d", GetCurrentWallCount(), wall_capacity_);
-    cocos2d::log("金币已满: %s", IsGoldFull() ? "是" : "否");
-    cocos2d::log("圣水已满: %s", IsElixirFull() ? "是" : "否");
-
-    // 显示生产信息
-    if (GetTotalGoldMineCount() > 0) {
-        cocos2d::log("金矿总产量: %d/小时", GetTotalGoldProduction());
-    }
-    if (GetTotalElixirCollectorCount() > 0) {
-        cocos2d::log("圣水收集器总产量: %d/小时", GetTotalElixirProduction());
-    }
 }
 
 std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
