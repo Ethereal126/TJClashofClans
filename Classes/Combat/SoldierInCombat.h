@@ -44,7 +44,8 @@ protected:
     void DealDamageToBuilding(BuildingInCombat* target) const;
     void DealSplashDamage(const cocos2d::Vec2& pos);
     void UpdatePosition();
-    BuildingInCombat* GetNextTarget();
+    BuildingInCombat* GetNextTarget() const;
+    void ChooseTarget(BuildingInCombat *b);
     void NotifyManagerDie();
 
     cocos2d::Spawn* CreateStraightMoveAction(const cocos2d::Vec2& start_map_pos,const cocos2d::Vec2& target_map_pos);
