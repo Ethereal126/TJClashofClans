@@ -92,7 +92,7 @@ struct SoldierTemplate {
     // 工厂函数，用于创建士兵
     std::function<Soldier* ()> createFunc;
 
-    // 获取士兵属性的函数（可选，如果需要的话）
+    // 获取士兵属性的函数
     std::function<int()> get_health_func_;
     std::function<int()> get_damage_func_;
     std::function<float()> get_move_speed_func_;

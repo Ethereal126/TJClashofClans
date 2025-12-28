@@ -265,8 +265,6 @@ void ResourceStorage::TriggerCapacityFull() {
     }
 }
 
-
-
 // ==================== ProductionBuilding 实现 ====================
 
 ProductionBuilding::~ProductionBuilding() {
@@ -289,9 +287,7 @@ ProductionBuilding* ProductionBuilding::Create(const std::string& name, int base
     auto building = new (std::nothrow) ProductionBuilding(name, base, position, texture, resourceType);
 
     if (building) {
-        // 设置资源类型（如果构造函数没有设置的话）
-        // 注意：这里假设ProductionBuilding类有一个SetResourceType方法
-        // 如果没有，可以在构造函数中直接设置
+        // 设置资源类型
         if (building->initWithFile(texture)) {
             // 标记为自动释放（Cocos2d-x的内存管理机制）
             building->autorelease();
@@ -445,8 +441,6 @@ ElixirStorage::ElixirStorage(const std::string& name, int base, cocos2d::Vec2 po
     : ProductionBuilding(name, base, position, texture.empty() ? "buildings/elixirmine.png" : texture, "Elixir")
     , collectionRadius_(100.0f)
     , elixirColor_(Color4F(0.8f, 0.2f, 0.8f, 1.0f)) {  // 紫色
-    // 初始化创建时间为当前系统时间（已在父类中初始化，这里仅作说明）
-    // creationTime_ 已在 ResourceStorage 构造函数中初始化
 }
 
 bool ElixirStorage::Init() {
@@ -604,8 +598,6 @@ GoldStorage::GoldStorage(const std::string& name, int base, cocos2d::Vec2 positi
     , protectionPercentage_(0.3f)
     , protectionShield_(nullptr)
     , shieldEffect_(nullptr) {
-    // 初始化创建时间为当前系统时间（已在父类中初始化，这里仅作说明）
-    // creationTime_ 已在 ResourceStorage 构造函数中初始化
 }
 
 bool GoldStorage::Init() {
@@ -663,7 +655,6 @@ void GoldStorage::Upgrade() {
 
     ProductionBuilding::Upgrade();
 
-    // 金币建筑升级提升保护效果
     if (GetLevel() >= 3) {  // 3级开始有保护
         if (!isVaultProtected_) {
             ActivateProtection(true);
@@ -755,7 +746,7 @@ bool Barracks::Init() {
     availableTroops_.push_back("Archer");
     availableTroops_.push_back("Giant");
     availableTroops_.push_back("Bomber");
-    // 将兵种添加到基类列表（如果需要）
+    // 将兵种添加到基类列表
     AddAvailableUnitName("Barbarian");
     AddAvailableUnitName("Archer");
     AddAvailableUnitName("Giant");
