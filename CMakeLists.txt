@@ -110,7 +110,6 @@ list(APPEND GAME_HEADER
    Classes/AudioManager/AudioManager.h
    # Classes/ResourceStorage/ResourceStorage.h   
    Classes/MainScene.h
-  # Classes/CombatManager/CombatTest.h
    Classes/Combat/CombatAll.h
    Classes/BattleScene.h
    Classes/TownHall/TownHall.h
@@ -189,8 +188,6 @@ endif()
 
 
 target_link_libraries(${APP_NAME} PRIVATE
-#gmock
-#gtest
 cocos2d
 )
 target_include_directories(${APP_NAME}

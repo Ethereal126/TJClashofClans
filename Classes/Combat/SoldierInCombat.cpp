@@ -162,7 +162,7 @@ Direction GetDirection(const cocos2d::Vec2& delta){
     else return Direction::DOWN;
 }
 
-const float kCheckInterval = 0.01f;
+const float kUpdateInterval = 0.01f;
 // -------------------------- 核心：封装单段直线移动Action（Spawn同步MoveTo+动画） --------------------------
 cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& start_map_pos,const cocos2d::Vec2& target_map_pos) {
     // 1. 计算移动参数
@@ -193,21 +193,21 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
     auto whole_animate = cocos2d::Sequence::create(set_dir,animate, nullptr);
 
     // 4. 构建“延迟+检测”的循环动作（每0.1秒检测一次）
-    auto check_target = cocos2d::CallFunc::create([this]() {
+    auto update_position = cocos2d::CallFunc::create([this]() {
         this->UpdatePosition();
     });
     // 单轮检测：延迟0.1秒 → 执行检测
-    auto single_check_loop = cocos2d::Sequence::create(
-            cocos2d::DelayTime::create(kCheckInterval),
-            check_target,
+    auto single_update_loop = cocos2d::Sequence::create(
+            cocos2d::DelayTime::create(kUpdateInterval),
+            update_position,
             nullptr
     );
     // 循环次数：移动总时长 / 检测间隔（确保移动过程中持续检测）
-    int check_repeat_count = static_cast<int>(move_time / kCheckInterval);
+    int check_repeat_count = static_cast<int>(move_time / kUpdateInterval);
     // 避免除数为0（移动时间极短时）
     check_repeat_count = std::max(check_repeat_count, 1);
     // 循环执行检测
-    auto repeat_check = cocos2d::Repeat::create(single_check_loop, check_repeat_count);
+    auto repeat_check = cocos2d::Repeat::create(single_update_loop, check_repeat_count);
     return cocos2d::Spawn::create(move_to,whole_animate,repeat_check,nullptr);
 }
 
@@ -260,7 +260,7 @@ void SoldierInCombat::Die() {
     this->runAction(remove_self);
 }
 
-void SoldierInCombat::Attack(const cocos2d::Vec2& pos) {
+void SoldierInCombat::StartAttack(const cocos2d::Vec2& pos) {
     if(this->soldier_template_->GetSoldierType()==SoldierType::kBomber){
         BomberAttack(pos);
         return;
@@ -617,8 +617,8 @@ void SoldierInCombat::MoveToTargetAndStartAttack() {
         moves.pushBack(CreateStraightMoveAction(path[i-1],path[i]));
     }
     auto start_attack = cocos2d::CallFunc::create([this,path]() {
-        if (path.empty()) this->Attack(this->position_);
-        else this->Attack(path.back());
+        if (path.empty()) this->StartAttack(this->position_);
+        else this->StartAttack(path.back());
     });
     moves.pushBack(start_attack);
     cocos2d::Sequence* seq = cocos2d::Sequence::create(moves);

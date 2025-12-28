@@ -40,7 +40,7 @@ protected:
 
     ~SoldierInCombat() override;
     void MoveToTargetAndStartAttack();
-    void Attack(const cocos2d::Vec2& pos);
+    void StartAttack(const cocos2d::Vec2& pos);
     void BomberAttack(const cocos2d::Vec2& pos);
     void DealDamageToBuilding(BuildingInCombat* target) const;
     void DealSplashDamage(const cocos2d::Vec2& pos);
