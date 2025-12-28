@@ -159,15 +159,12 @@ public:
      */
     void ResetTownHall();
 
-
-
     /**
      * @brief 重写升级接口
      * 在基类 Building::Upgrade 的基础上，额外提升资源容量、军队容量等属性，
      * 并根据等级更新大本营的贴图与 UI 显示效果。
      */
     virtual void Upgrade() override;
-
 
     // ==================== 资源操作接口 ====================
 
@@ -505,6 +502,5 @@ public:
      */
     static std::vector<::SoldierTemplate> GetSoldierCategory();
 };
-
 
 #endif // __TOWN_HALL_H__

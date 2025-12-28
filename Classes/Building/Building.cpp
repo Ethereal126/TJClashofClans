@@ -54,7 +54,6 @@ void Building::StartUpgrade(float upgrade_time) {
     cocos2d::log("建筑 %s 开始升级，需要 %.1f 秒", name_.c_str(), upgrade_time);
 
     // 启动升级计时器
-    // 注意：这里假设 Building 继承自 cocos2d::Sprite，可以使用 schedule
     this->schedule([this](float dt) {
         upgrade_remaining_time_ -= dt;
         if (upgrade_remaining_time_ <= 0.0f) {
@@ -237,9 +236,7 @@ SourceBuilding* SourceBuilding::Create(const std::string& name, int base,
     auto building = new (std::nothrow) SourceBuilding(name, base, position, texture);
 
     if (building) {
-        // 设置资源类型（如果构造函数没有设置的话）
-        // 注意：这里假设SourceBuilding类有一个SetResourceType方法
-        // 如果没有，可以在构造函数中直接设置
+        // 设置资源类型
         if (building->initWithFile(texture)) {
             // 标记为自动释放（Cocos2d-x的内存管理机制）
             building->autorelease();
@@ -506,9 +503,7 @@ TrainingBuilding* TrainingBuilding::Create(const std::string& name, int base,
     auto building = new (std::nothrow) TrainingBuilding(name, base, position, texture, capacity, speed);
 
     if (building) {
-        // 设置资源类型（如果构造函数没有设置的话）
-        // 注意：这里假设SourceBuilding类有一个SetResourceType方法
-        // 如果没有，可以在构造函数中直接设置
+        // 设置资源类型
         if (building->initWithFile(texture)) {
             // 标记为自动释放（Cocos2d-x的内存管理机制）
             building->autorelease();
@@ -662,7 +657,6 @@ int TrainingBuilding::CalculateTrainingTime(SoldierType soldier_type, int count)
     if (!tmpl) return 0;
 
     // 训练时间 = 单个士兵训练时间 × 数量 / 训练速度
-    // 注意：这里假设训练速度是倍数，实际可能需要调整公式
     return (tmpl->training_time_ * count) / training_speed_;
 }
 
@@ -673,8 +667,6 @@ std::pair<int, int> TrainingBuilding::CalculateTrainingCost(SoldierType soldier_
     const SoldierTemplate* tmpl = TownHall::GetSoldierTemplate(soldier_type);
     if (!tmpl) return { 0, 0 };
 
-    // 这里简单处理：所有士兵都用金币训练
-    // 实际上部落冲突中不同士兵消耗不同资源，你可以根据需要扩展
     return { tmpl->training_cost_ * count, 0 };
 }
 
@@ -759,5 +751,3 @@ void TrainingBuilding::ShowInfo() const {
     cocos2d::log("训练队列: %d个项目，占用人口: %d/%d",
         static_cast<int>(training_queue_.size()), GetTrainingQueuePopulation(), training_capacity_);
 }
-
-// ... 其他辅助函数的实现 ...

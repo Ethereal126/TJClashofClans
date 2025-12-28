@@ -42,7 +42,7 @@ static bool LoadPlayerDataFromJSON(const std::string& file_path,
     std::string fullPath = cocos2d::FileUtils::getInstance()->fullPathForFilename(file_path);
     cocos2d::log("尝试加载JSON文件: %s -> %s", file_path.c_str(), fullPath.c_str());
 
-    // 读取并显示文件内容（仅用于调试）
+    // 读取并显示文件内容
     if (cocos2d::FileUtils::getInstance()->isFileExist(fullPath)) {
         std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(fullPath);
         cocos2d::log("JSON文件内容: %s", content.c_str());
@@ -648,7 +648,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
     // 从JSON文件读取玩家数据（备用）
     int json_gold = 0;
     int json_elixir = 0;
-    int json_level = base; // 使用base作为默认等级
+    int json_level = base;
 
     // 每次启动时都从Resources目录重新复制JSON文件，确保使用最新配置
     std::string json_file_path = cocos2d::FileUtils::getInstance()->getWritablePath() + "player_save.json";
@@ -672,7 +672,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
             // 如果UserDefault中没有数据，则从JSON文件加载
             cocos2d::log("UserDefault中没有资源数据，从JSON文件加载");
             
-            // ✅ 只在第一次没有存档文件时，才从Resources复制一份初始存档
+            // 只在第一次没有存档文件时，才从Resources复制一份初始存档
             if (!cocos2d::FileUtils::getInstance()->isFileExist(json_file_path)) {
                 if (cocos2d::FileUtils::getInstance()->isFileExist(source_path)) {
                     std::string content = cocos2d::FileUtils::getInstance()->getStringFromFile(source_path);
@@ -695,16 +695,12 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
                 cocos2d::log("已存在存档，跳过复制覆盖: %s", json_file_path.c_str());
             }
 
-            // （强烈建议）打印你真正读写的存说明确路径，避免你盯着Resources那份看
             cocos2d::log("SAVE FILE PATH = %s", json_file_path.c_str());
 
 
             // 添加额外的强制重新加载选项，可通过构造函数参数控制
             // 如果构造函数传入force_reload_from_resources参数为true，则强制重新复制
             // 这个功能可以在需要重置玩家数据时使用
-            // 例如：TownHall("大本营", 1, {0,0}, "buildings/TownHall1.png", true) // 强制重新加载
-            // 注意：这需要修改构造函数签名以添加force_reload_from_resources参数
-
             json_load_success = LoadPlayerDataFromJSON(json_file_path, json_gold, json_elixir, json_level);
 
             if (json_load_success) {
@@ -716,9 +712,7 @@ TownHall::TownHall(std::string name, int base, cocos2d::Vec2 position, std::stri
                 cocos2d::log("从JSON文件成功初始化大本营数据: 金币=%d, 圣水=%d, 等级=%d",
                     json_gold, json_elixir, level_);
 
-                // 将圣水值分配给储罐（如果有）
-                // 注意：这需要在储罐被添加到TownHall之后调用，所以我们需要延迟执行
-                // 使用scheduleOnce确保在下一帧执行，此时所有建筑已经加载完成
+                // 将圣水值分配给储罐
                 auto distributeElixir = [this, json_elixir](float) {
                     if (!elixir_storages_.empty() && json_elixir > 0) {
                         int remaining = json_elixir;
@@ -1009,8 +1003,6 @@ void TownHall::UpdateArmyCapacityFromBarracks() {
     for (const auto* barracks : all_barracks_) {
         if (barracks && barracks->IsActive()) {
             // 获取军营的训练容量
-            // 注意：这里假设Barracks有一个GetTrainingCapacity()方法
-            // 如果Barracks类中没有这个方法，需要在Barracks类中添加
             total_barracks_capacity += barracks->GetTrainingCapacity();
         }
     }
@@ -1102,10 +1094,10 @@ int TownHall::UpgradeAllWalls() {
         }
 
 
-        // 计算升级成本（简化处理）
+        // 计算升级成本
         int upgrade_cost = wall->GetNextBuildCost();
 
-        // 检查资源是否足够（这里只检查金币）
+        // 检查资源是否足够
         if (SpendGold(upgrade_cost)) {
             wall->StartUpgrade(wall->GetNextBuildTime());
             upgraded_count++;
@@ -1135,7 +1127,7 @@ int TownHall::RepairAllDamagedWalls() {
 
         // 检查是否需要修复
         if (wall->GetHealth() < wall->GetMaxHealth()) {
-            // 计算修复成本（简化处理：修复成本为缺失生命值的5%）
+            // 计算修复成本
             int repair_cost = (wall->GetMaxHealth() - wall->GetHealth()) / 20;
 
             if (repair_cost <= 0) {
@@ -1868,13 +1860,10 @@ std::vector<Soldier*> TownHall::GetAllTrainedSoldiers() const {
 int TownHall::GetTotalTrainedSoldierCount() const {
     int total = 0;
     for (const auto* barracks : all_barracks_) {
-        // 需要 Barracks 类提供获取已训练士兵数量的方法
         // total += barracks->GetTrainedSoldierCount();
     }
     return total;
 }
-
-// 在 TownHall.cpp 文件的末尾，最后一个函数之后添加：
 
 // ==================== 士兵模板管理函数实现 ====================
 
@@ -1926,10 +1915,9 @@ bool TownHall::AddTrainedSoldier(Soldier* soldier) {
     // 更新军队人数（人口占用）
     UpdateArmyCount(tmpl->housing_space_);
 
-    // 存储士兵指针（如果需要后续使用）
-    // 注意：这里根据你的需求决定是否存储士兵对象
-    // 如果只需要计数，可以删除士兵对象
-    delete soldier; // 先删除，如果后续需要存储，注释掉这行并添加到容器
+
+    // 只需要计数，可以删除士兵对象
+    delete soldier;
 
     cocos2d::log("士兵 %s 已成功添加到军队", tmpl->name_.c_str());
     return true;
