@@ -5,6 +5,7 @@
 #include "BuildingInCombat.h"
 #include "Combat.h"
 #include <unordered_set>
+#include <string>
 
 
 bool SoldierInCombat::is_animation_loaded_[];
@@ -161,7 +162,7 @@ Direction GetDirection(const cocos2d::Vec2& delta){
     else return Direction::DOWN;
 }
 
-const float kCheckInterval = 0.1f;
+const float kCheckInterval = 0.01f;
 // -------------------------- 核心：封装单段直线移动Action（Spawn同步MoveTo+动画） --------------------------
 cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& start_map_pos,const cocos2d::Vec2& target_map_pos) {
     // 1. 计算移动参数
@@ -213,7 +214,7 @@ cocos2d::Spawn* SoldierInCombat::CreateStraightMoveAction(const cocos2d::Vec2& s
 void SoldierInCombat::DoAllMyActions(){
     BuildingInCombat* next_target = GetNextTarget();  // 寻找下一个目标
     if (next_target) {
-        ChooseTarget(next_target);
+        SubscribeTarget(next_target);
         MoveToTargetAndStartAttack();  // 移动到新目标继续攻击
     }
 }
@@ -251,11 +252,7 @@ void SoldierInCombat::Die() {
     this->stopAllActions();  // 停止所有当前动作
 
     auto remove_self = cocos2d::CallFunc::create([this]() {
-        if (current_target_){
-            auto it = std::find(current_target_->subscribers.begin(),
-                                current_target_->subscribers.end(),this);
-            if (it != current_target_->subscribers.end()) current_target_->subscribers.erase(it);
-        }
+        UnsubscribeTarget(current_target_);
         NotifyManagerDie();
         AudioManager::getInstance()->playDie();
         this->removeFromParent();
@@ -482,7 +479,7 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
     if(path.empty()){
         CCLOG("empty path");
     }
-    LogPath(path);
+    LogPath(path, "RedirectPath");
     for(auto ptr = path.begin();ptr != path.end();ptr++){
         if(!map_->IsGridAvailable(*ptr)){
             //CCLOG("(%f,%f) in path not available",ptr->x,ptr->y);
@@ -504,7 +501,8 @@ void SoldierInCombat::RedirectPath(std::vector<cocos2d::Vec2>& path){
                 return b->building_template_ == map_->getBuildingAt(floor(new_target.x),floor(new_target.y));
             });
             if(it!=buildings.end()){
-                ChooseTarget(*it);
+                UnsubscribeTarget(current_target_);
+                SubscribeTarget(*it);
             }
             else{
                 CCLOG("warning : SoldierInCombat fail to change target when RedirectPath");
@@ -549,8 +547,8 @@ void LogVec2(const cocos2d::Vec2& pos,std::string& s){
     s += std::to_string(pos.y);
     s +=")";
 }
-void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2>& path) const{
-    std::string s = soldier_template_->GetName() + " find path:";
+void SoldierInCombat::LogPath(const std::vector<cocos2d::Vec2> &path, const std::string &prompt) const{
+    std::string s = prompt + " " + soldier_template_->GetName() + " find path:";
     for(auto i : path){
         LogVec2(i,s);
     }
@@ -571,25 +569,38 @@ BuildingInCombat* SoldierInCombat::GetNextTarget() const {
 
     BuildingInCombat* target = *std::min_element(buildings.begin(),buildings.end(),
                                                  [&](BuildingInCombat* a,BuildingInCombat* b){
-        if(this->soldier_template_->building_preference_.has_value()) {
-            std::type_index ta = typeid(*a->building_template_),tb = typeid(*b->building_template_);
+        std::type_index ta = typeid(*a->building_template_),tb = typeid(*b->building_template_);
+        if(this->soldier_template_->building_preference_.has_value()) {//优先判断建筑偏好
             std::type_index preference = this->soldier_template_->building_preference_.value();
             bool aIsTarget = (ta == preference), bIsTarget = (tb == preference);
-            CCLOG("a:%s,b:%s,preference:%s", ta.name(), tb.name(), preference.name());
+//            CCLOG("a:%s,b:%s,preference:%s", ta.name(), tb.name(), preference.name());
             if (aIsTarget != bIsTarget) {
                 return aIsTarget;
             }
         }
-
+        std::type_index unpreference = typeid(WallBuilding);//优先攻击非墙体目标（炸弹兵索敌不受影响）
+        bool aIsTarget = (ta == unpreference), bIsTarget = (tb == unpreference);
+        if (aIsTarget != bIsTarget) {
+            return bIsTarget;
+        }
+        //最后按距离排序
         return this->position_.distance(a->position_) < this->position_.distance(b->position_);
     });
     return target;
 }
 
-void SoldierInCombat::ChooseTarget(BuildingInCombat *b) {
+void SoldierInCombat::SubscribeTarget(BuildingInCombat *b) {
     if(b) {
         this->current_target_ = b;
         b->subscribers.push_back(this);
+    }
+}
+
+void SoldierInCombat::UnsubscribeTarget(BuildingInCombat *b){
+    if(b){
+        this->current_target_ = nullptr;
+        auto it = find(b->subscribers.begin(),b->subscribers.end(),this);
+        if(it!=b->subscribers.end()) b->subscribers.erase(it);
     }
 }
 
@@ -600,7 +611,7 @@ void SoldierInCombat::MoveToTargetAndStartAttack() {
                             this->soldier_template_->GetAttackRange(),width,length);
     RedirectPath(path);
     SimplifyPath(path);
-    LogPath(path);
+    LogPath(path, "Simplified Path");
     cocos2d::Vector<cocos2d::FiniteTimeAction*> moves;
     for(int i=1;i<path.size();i++){
         moves.pushBack(CreateStraightMoveAction(path[i-1],path[i]));
