@@ -7,20 +7,212 @@
   },
   "map_layout": {
     "buildings": [
-      { "type": "TownHall", "x": 11, "y": 11, "level": 2 },
-      { "type": "Archer Tower", "x": 4, "y": 5, "level": 2 },
-      { "type": "Wall", "x": 3, "y": 5, "level": 1 },
-      { "type": "Wall", "x": 3, "y": 6, "level": 1 },
-      { "type": "Wall", "x": 6, "y": 5, "level": 1 },
-      { "type": "Wall", "x": 6, "y": 6, "level": 1 },
-      { "type": "Wall", "x": 4, "y": 7, "level": 1 },
-      { "type": "Wall", "x": 5, "y": 7, "level": 1 },
-      { "type": "Wall", "x": 4, "y": 4, "level": 1 },
-      { "type": "Wall", "x": 5, "y": 4, "level": 1 },
-      { "type": "Wall", "x": 3, "y": 4, "level": 1 },
-      { "type": "Wall", "x": 3, "y": 7, "level": 1 },
-      { "type": "Wall", "x": 6, "y": 4, "level": 1 },
-      { "type": "Wall", "x": 6, "y": 7, "level": 1 }
+                      { "type": "TownHall", "x": 14, "y": 14, "level": 3 },
+
+                      { "type": "Elixir Storage", "x": 14, "y": 11, "level": 2 },
+
+                      { "type": "Elixir Storage", "x": 15, "y": 18, "level": 2 },
+
+                      { "type": "Gold Storage", "x": 11, "y": 15, "level": 2 },
+
+                      { "type": "Gold Storage", "x": 18, "y": 14, "level": 2 },
+
+
+                      { "type": "Wall", "x": 10, "y": 14, "level": 2 },
+
+                      { "type": "Wall", "x": 10, "y": 15, "level": 2 },
+
+                      { "type": "Wall", "x": 10, "y": 16, "level": 2 },
+
+                      { "type": "Wall", "x": 10, "y": 17, "level": 2 },
+
+                      { "type": "Wall", "x": 10, "y": 18, "level": 2 },
+
+                      { "type": "Wall", "x": 11, "y": 18, "level": 2 },
+
+                      { "type": "Wall", "x": 12, "y": 18, "level": 2 },
+
+                      { "type": "Wall", "x": 13, "y": 18, "level": 2 },
+
+                      { "type": "Wall", "x": 13, "y": 19, "level": 2 },
+
+                      { "type": "Wall", "x": 13, "y": 20, "level": 2 },
+
+                      { "type": "Wall", "x": 13, "y": 21, "level": 2 },
+
+                      { "type": "Wall", "x": 14, "y": 21, "level": 2 },
+
+                      { "type": "Wall", "x": 15, "y": 21, "level": 2 },
+
+                      { "type": "Wall", "x": 16, "y": 21, "level": 2 },
+
+                      { "type": "Wall", "x": 17, "y": 21, "level": 2 },
+
+                      { "type": "Wall", "x": 18, "y": 21, "level": 2 },
+
+                      { "type": "Wall", "x": 18, "y": 20, "level": 2 },
+
+                      { "type": "Wall", "x": 18, "y": 19, "level": 2 },
+
+                      { "type": "Wall", "x": 18, "y": 18, "level": 2 },
+      { "type": "Wall", "x": 19, "y": 18, "level": 2 },
+      { "type": "Wall", "x": 20, "y": 18, "level": 2 },
+      { "type": "Wall", "x": 21, "y": 18, "level": 2 },
+      { "type": "Wall", "x": 21, "y": 17, "level": 2 },
+      { "type": "Wall", "x": 21, "y": 16, "level": 2 },
+      { "type": "Wall", "x": 21, "y": 15, "level": 2 },
+      { "type": "Wall", "x": 21, "y": 14, "level": 2 },
+      { "type": "Wall", "x": 21, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 20, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 19, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 18, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 17, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 17, "y": 12, "level": 2 },
+      { "type": "Wall", "x": 17, "y": 11, "level": 2 },
+      { "type": "Wall", "x": 17, "y": 10, "level": 2 },
+      { "type": "Wall", "x": 16, "y": 10, "level": 2 },
+      { "type": "Wall", "x": 15, "y": 10, "level": 2 },
+      { "type": "Wall", "x": 14, "y": 10, "level": 2 },
+      { "type": "Wall", "x": 13, "y": 10, "level": 2 },
+      { "type": "Wall", "x": 13, "y": 11, "level": 2 },
+      { "type": "Wall", "x": 13, "y": 12, "level": 2 },
+      { "type": "Wall", "x": 13, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 12, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 11, "y": 13, "level": 2 },
+      { "type": "Wall", "x": 10, "y": 13, "level": 2 },
+
+
+      { "type": "Archer Tower", "x": 10, "y": 10, "level": 2 },
+      { "type": "Cannon", "x": 10, "y": 19, "level": 2 },
+
+      { "type": "Cannon", "x": 19, "y": 10, "level": 2 },
+
+      { "type": "Archer Tower", "x": 19, "y": 19, "level": 2 },
+
+
+      { "type": "Wall", "x": 9, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 10, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 11, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 12, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 13, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 14, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 15, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 16, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 17, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 18, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 19, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 20, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 21, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 9, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 10, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 11, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 12, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 13, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 14, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 15, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 16, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 17, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 18, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 19, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 20, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 21, "level": 2 },
+
+      { "type": "Wall", "x": 22, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 21, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 20, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 19, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 18, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 17, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 16, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 15, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 14, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 13, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 12, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 11, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 10, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 22, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 21, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 20, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 19, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 18, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 17, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 16, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 15, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 14, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 13, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 12, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 11, "level": 2 },
+
+      { "type": "Wall", "x": 9, "y": 10, "level": 2 },
+
+                      { "type": "Training Camp", "x": 2, "y": 26, "level": 2 },
+
+                      { "type": "Barracks", "x": 26, "y": 2, "level": 2 },
+
+                      { "type": "Gold Mine", "x": 2, "y": 8, "level": 2 },
+
+                      { "type": "Gold Mine", "x": 2, "y": 20, "level": 2 },
+
+                      { "type": "Gold Mine", "x": 26, "y": 8, "level": 2 },
+
+                      { "type": "Gold Mine", "x": 26, "y": 20, "level": 2 },
+
+                      { "type": "Elixir Collector", "x": 13, "y": 2, "level": 2 },
+
+                      { "type": "Elixir Collector", "x": 18, "y": 2, "level": 2 },
+
+                      { "type": "Elixir Collector", "x": 13, "y": 26, "level": 2 },
+
+                      { "type": "Elixir Collector", "x": 18, "y": 26, "level": 2 }
     ],
     "obstacles": []
   }

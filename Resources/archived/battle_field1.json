@@ -5,21 +5,102 @@
     "reward_gold": 1000,
     "reward_elixir": 800
   },
-  "map_layout": {
-    "buildings": [
-      { "type": "TownHall", "x": 20, "y": 20, "level": 2 },
-      { "type": "Gold Mine", "x": 8, "y": 12, "level": 2 },
-      { "type": "Archer Tower", "x": 12, "y": 8, "level": 2 },
-      { "type": "Gold Storage", "x": 3, "y": 6, "level": 2 },
-      { "type": "Training Camp", "x": 25, "y": 12, "level": 2 },
-      { "type": "Cannon", "x": 23, "y": 3, "level": 2 },
-      { "type": "Wall", "x": 3, "y": 4, "level": 2 },
-      { "type": "Wall", "x": 4, "y": 4, "level": 2 },
-      { "type": "Wall", "x": 5, "y": 4, "level": 2 },
-      { "type": "Wall", "x": 4, "y": 5, "level": 2 }
-    ],
+"map_layout": {
+        "buildings": [
+
+           { "type": "TownHall", "x": 13, "y": 13, "level": 3 },
+
+           { "type": "Cannon", "x": 9, "y": 9, "level": 2 },
+
+           { "type": "Gold Storage", "x": 13, "y": 9, "level": 2 },
+
+           { "type": "Elixir Storage", "x": 9, "y": 13, "level": 2 },
+
+           { "type": "Gold Mine", "x": 22, "y": 22, "level": 2 },
+
+           { "type": "Elixir Collector", "x": 22, "y": 5, "level": 2 },
+
+           { "type": "Barracks", "x": 5, "y": 22, "level": 2 },
+
+           { "type": "Wall", "x": 8, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 9, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 10, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 11, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 12, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 13, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 14, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 15, "y": 8, "level": 1 },
+
+          { "type": "Wall", "x": 16, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 8, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 9, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 10, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 11, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 12, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 13, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 14, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 15, "level": 1 },
+
+           { "type": "Wall", "x": 17, "y": 16, "level": 1 },
+
+          { "type": "Wall", "x": 17, "y": 17, "level": 1 },
+
+          { "type": "Wall", "x": 16, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 15, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 14, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 13, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 12, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 11, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 10, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 9, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 8, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 17, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 16, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 15, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 14, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 13, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 12, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 11, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 10, "level": 1 },
+
+          { "type": "Wall", "x": 7, "y": 9, "level": 1 },
+
+           { "type": "Wall", "x": 7, "y": 8, "level": 1 }
+
+        ],
     "obstacles": [
-      { "type": "Bones", "x": 5, "y": 5 }
+      { "type": "Bones", "x": 3, "y": 3 }
     ]
   }
 }
