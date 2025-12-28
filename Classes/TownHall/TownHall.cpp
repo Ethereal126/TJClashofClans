@@ -3,6 +3,7 @@
 //
 
 #include "TownHall.h"
+#include "UIManager/UIManager.h"
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -1683,7 +1684,8 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,    // 长度
         []() -> Building* {
             auto temp = SourceBuilding::Create("Gold Mine", 15, { 0, 0 }, "buildings/goldmine.png", "Gold");
-            TownHall::GetInstance()->AddGoldMine(temp);
+            if (!UIManager::getInstance()->isInBattleMode() && !UIManager::getInstance()->isInReplayMode())
+                TownHall::GetInstance()->AddGoldMine(temp);
             return temp;
         }
     );
@@ -1697,7 +1699,8 @@ std::vector<TownHall::BuildingTemplate> TownHall::GetAllBuildingTemplates() {
         3,
         []() -> Building* {
             auto temp = SourceBuilding::Create("Elixir Collector", 15, { 0, 0 }, "buildings/elixirmine0.png", "Elixir");
-			TownHall::GetInstance()->AddElixirCollector(temp);
+            if (!UIManager::getInstance()->isInBattleMode() && !UIManager::getInstance()->isInReplayMode())
+                TownHall::GetInstance()->AddElixirCollector(temp);
             return temp;
         }
     );

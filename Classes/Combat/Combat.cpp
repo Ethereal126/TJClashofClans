@@ -159,6 +159,7 @@ void CombatManager::update(float dt) {
 
     //TODO:轮询逻辑应当并非必须，在soldier和building相关实现处进行check
     if (IsCombatEnd()) {
+        EndCombat();
         return; // 已结束，无需后续逻辑
     }
 }
