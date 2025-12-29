@@ -584,6 +584,7 @@ Node* UIManager::createShop() {
 
     for (size_t i = 0; i < buildingTemplates.size(); i++) {
         const auto& tmpl = buildingTemplates[i];
+        if(tmpl.name_ == "TownHall") continue;
         float itemY = container->getContentSize().height - (i + 1) * itemHeight + itemHeight / 2;
 
         // 建筑项背景
@@ -826,11 +827,15 @@ void UIManager::showBuildingOptions(const Vec2& position, BuildingCategory categ
 
 Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory category) {
     auto panel = Node::create();
+    bool canDelete = (_selectedBuilding && _selectedBuilding->GetName() != "TownHall");
 
     int buttonCount = 2;
     if (category == BuildingCategory::Military || category == BuildingCategory::Resource) {
         buttonCount = 3;
-    }    
+    }   
+    if (canDelete) {
+        buttonCount++;
+    } 
     float buttonSize = 100 * _scaleFactor;
     float buttonMargin = 10 * _scaleFactor;
     float panelWidth = buttonCount * buttonSize + (buttonCount + 1) * buttonMargin;
@@ -926,8 +931,8 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
                 CCLOG("Collecting resources from building: %s", _selectedBuilding->GetName().c_str());
                 AudioManager::getInstance()->playResourceCollect();
                 TownHall* th = TownHall::GetInstance();
-                th->AddElixir();
-                th->AddGold();                
+                th->AddElixir(500);
+                th->AddGold(500);                
                 updateResourceDisplay(ResourceType::Gold, th->GetGold());
                 updateResourceDisplay(ResourceType::Elixir, th->GetElixir());                
                 showToast("Resources Collected!");
@@ -935,6 +940,7 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
             hidePanel(UIPanelType::BuildingOptions, true);
         });
         panel->addChild(collectBtn, 1);
+        currentX += buttonSize + buttonMargin;
     }
 
     // 训练按钮（仅军营）
@@ -956,6 +962,43 @@ Node* UIManager::createBuildingOptions(const Vec2& position, BuildingCategory ca
             showArmyTraining(_selectedBuilding);
             });
         panel->addChild(trainBtn, 1);
+        currentX += buttonSize + buttonMargin;
+    }
+
+    // 删除按钮（大本营不可删除）
+    if (canDelete) {
+        auto deleteBtn = Button::create();
+        deleteBtn->setTitleText("DELETE");
+        deleteBtn->setTitleFontSize(18 * _scaleFactor); // 增大字体以显得加粗
+        deleteBtn->setTitleColor(Color3B::WHITE);
+        deleteBtn->setContentSize(Size(buttonSize * 0.9f, buttonSize * 0.9f));
+        deleteBtn->setScale9Enabled(true);
+
+        // 添加红色背景
+        auto bg = LayerColor::create(Color4B(200, 50, 50, 255), deleteBtn->getContentSize().width, deleteBtn->getContentSize().height);
+        bg->setIgnoreAnchorPointForPosition(false);
+        bg->setAnchorPoint(Vec2(0.5f, 0.5f));
+        bg->setPosition(Vec2(deleteBtn->getContentSize().width / 2, deleteBtn->getContentSize().height / 2));
+        deleteBtn->addChild(bg, -1);
+        
+        deleteBtn->setPosition(Vec2(currentX, centerY));
+        deleteBtn->addClickEventListener([this, panel](Ref* sender) {
+            if (_selectedBuilding) {
+                // 通过父节点链找到 MapManager (panel -> _worldNode -> MapManager)
+                Node* worldNode = panel->getParent();
+                if (worldNode) {
+                    MapManager* mapMgr = dynamic_cast<MapManager*>(worldNode->getParent());
+                    if (mapMgr) {
+                        Vec2 pos = _selectedBuilding->GetPosition();
+                        CCLOG("Deleting building: %s at (%d, %d)", _selectedBuilding->GetName().c_str(), (int)pos.x, (int)pos.y);
+                        mapMgr->removeBuilding((int)pos.x, (int)pos.y);
+                        showToast("Building Removed");
+                    }
+                }
+            }
+            hidePanel(UIPanelType::BuildingOptions, true);
+        });
+        panel->addChild(deleteBtn, 1);
     }
 
     // 点击面板外部关闭
@@ -1896,6 +1939,10 @@ void UIManager::enterReplayMode(MapManager* battleMap, const std::vector<ReplayS
 
     // 显示回放极简 HUD
     showPanel(UIPanelType::BattleHUD, UILayer::HUD, false);
+    auto hud = getPanel(UIPanelType::BattleHUD);
+    if (hud) {
+        hud->setVisible(false);
+    }
 }
 
 void UIManager::exitReplayMode() {
@@ -1961,6 +2008,13 @@ void UIManager::updateReplay() {
         if (soldier) {
             combatMgr->SendSoldier(soldier, step.pos);
             CCLOG("Replay SUCCESS: Deployed '%s' at (%.2f, %.2f)", step.troopName.c_str(), step.pos.x, step.pos.y);
+            auto hud = getPanel(UIPanelType::BattleHUD);
+            if (hud && !hud->isVisible()) {
+                hud->setVisible(true);
+                // 播放一个渐现动画
+                hud->setOpacity(0);
+                hud->runAction(FadeIn::create(0.5f));
+            }
         } else {
             CCLOG("Replay ERROR: Could not create soldier '%s'. Template size: %d", 
                 step.troopName.c_str(), (int)soldier_template.size());
